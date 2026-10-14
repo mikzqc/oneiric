@@ -1,7 +1,7 @@
 {
   "version": 2,
   "source": "oneiric",
-  "exportedAt": "2026-10-14T13:41:53.058Z",
+  "exportedAt": "2026-10-14T13:47:27.535Z",
   "dreams": [
     {
       "id": "user-dream-20260724",
@@ -351,5 +351,123 @@
       "updatedAt": 1792002600000
     }
   ],
-  "techniqueLogs": []
+  "techniqueLogs": [
+    {
+      "id": "norecall-20260725",
+      "date": "2026-07-25",
+      "technique": "Failed tech",
+      "outcome": "no_recall",
+      "notes": "Failed tech",
+      "createdAt": 1785004200000,
+      "updatedAt": 1785004200000
+    },
+    {
+      "id": "norecall-20260726",
+      "date": "2026-07-26",
+      "technique": "Slept over alarm",
+      "outcome": "no_recall",
+      "notes": "Slept over alarm",
+      "createdAt": 1785090600000,
+      "updatedAt": 1785090600000
+    },
+    {
+      "id": "norecall-20260727",
+      "date": "2026-07-27",
+      "technique": "Slept over alarm",
+      "outcome": "no_recall",
+      "notes": "Slept over alarm",
+      "createdAt": 1785177000000,
+      "updatedAt": 1785177000000
+    },
+    {
+      "id": "norecall-20260728",
+      "date": "2026-07-28",
+      "technique": "Woke up early",
+      "outcome": "no_recall",
+      "notes": "Had to wake up early for funeral",
+      "createdAt": 1785263400000,
+      "updatedAt": 1785263400000
+    },
+    {
+      "id": "norecall-20260923",
+      "date": "2026-09-23",
+      "technique": "No dream",
+      "outcome": "no_recall",
+      "notes": "No dream lol",
+      "createdAt": 1790188200000,
+      "updatedAt": 1790188200000
+    },
+    {
+      "id": "norecall-20260929",
+      "date": "2026-09-29",
+      "technique": "No dream",
+      "outcome": "no_recall",
+      "notes": "I don't remember any dream",
+      "createdAt": 1790706600000,
+      "updatedAt": 1790706600000
+    },
+    {
+      "id": "norecall-20261001",
+      "date": "2026-10-01",
+      "technique": "No dream",
+      "outcome": "no_recall",
+      "notes": "I don’t remember any dream 😓",
+      "createdAt": 1790879400000,
+      "updatedAt": 1790879400000
+    },
+    {
+      "id": "norecall-20261005",
+      "date": "2026-10-05",
+      "technique": "No dream",
+      "outcome": "no_recall",
+      "notes": "I don't remember any dreams",
+      "createdAt": 1791225000000,
+      "updatedAt": 1791225000000
+    },
+    {
+      "id": "norecall-20261006",
+      "date": "2026-10-06",
+      "technique": "No dream",
+      "outcome": "no_recall",
+      "notes": "I don't remember any dreams",
+      "createdAt": 1791311400000,
+      "updatedAt": 1791311400000
+    },
+    {
+      "id": "norecall-20261010",
+      "date": "2026-10-10",
+      "technique": "No dream",
+      "outcome": "no_recall",
+      "notes": "I don't remember any dreams",
+      "createdAt": 1791657000000,
+      "updatedAt": 1791657000000
+    },
+    {
+      "id": "norecall-20261011",
+      "date": "2026-10-11",
+      "technique": "No dream",
+      "outcome": "no_recall",
+      "notes": "I don't remember any dreams",
+      "createdAt": 1791743400000,
+      "updatedAt": 1791743400000
+    },
+    {
+      "id": "norecall-20261012",
+      "date": "2026-10-12",
+      "technique": "No dream",
+      "outcome": "no_recall",
+      "notes": "I don't remember any dreams",
+      "createdAt": 1791829800000,
+      "updatedAt": 1791829800000
+    },
+    {
+      "id": "norecall-20261013",
+      "date": "2026-10-13",
+      "technique": "No dream",
+      "outcome": "no_recall",
+      "notes": "I don't remember any dreams",
+      "createdAt": 1791916200000,
+      "updatedAt": 1791916200000
+    }
+  ]
 }
