@@ -37,7 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
         { to: '/signs', label: 'Dream Signs', icon: Sparkles, highlight: true },
         { to: '/lucid', label: 'Lucid Dreams', icon: Eye },
         { to: '/false-awakenings', label: 'False Awakenings', icon: AlertTriangle },
-        { to: '/techniques', label: 'Techniques Lab', icon: Compass },
+        { to: '/techniques', label: 'Techniques Guide', icon: Compass },
       ],
     },
     {

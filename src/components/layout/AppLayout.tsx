@@ -55,7 +55,7 @@ export const AppLayout: React.FC = () => {
     if (path.startsWith('/timeline')) return { title: 'Dream Timeline', subtitle: 'Chronological nocturnal stream of dreams and techniques' };
     if (path.startsWith('/lucid')) return { title: 'Lucid Dreams', subtitle: 'Archive of conscious nocturnal awakenings' };
     if (path.startsWith('/false-awakenings')) return { title: 'False Awakenings', subtitle: 'Track simulated awakenings, belief status, and lucidity transitions' };
-    if (path.startsWith('/techniques')) return { title: 'Techniques Lab', subtitle: 'Lucid dream induction methods & experimental outcomes' };
+    if (path.startsWith('/techniques')) return { title: 'Techniques Guide', subtitle: 'Scientific lucid dreaming protocols & induction encyclopedia' };
     if (path.startsWith('/settings')) return { title: 'Settings', subtitle: 'Backups, imports, and privacy settings' };
     return { title: 'Oneiric', subtitle: 'Lucid Dream Studio' };
   };

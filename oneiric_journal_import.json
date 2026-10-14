@@ -1,7 +1,7 @@
 {
   "version": 2,
   "source": "oneiric",
-  "exportedAt": "2026-10-14T13:13:16.289Z",
+  "exportedAt": "2026-10-14T13:41:53.058Z",
   "dreams": [
     {
       "id": "user-dream-20260724",
@@ -27,9 +27,9 @@
     {
       "id": "user-dream-20260825",
       "title": "Hotel porn shoot",
-      "narrative": "I was going to my room, and I was in an elevator and was talking to a guy. I reached my floor, and the guy was on my same floor, and I heard a woman moaning. I remember talking to the guy, and I saw him go into the room with the moaning and see him take his shirt off along with a camera crew go in with him. I remember thinking to myself that it was a porn shooting, and I was booked in the room next to them and felt uncomfortable. It was pretty vivid.",
+      "narrative": "I was going to my room, and I was in an elevator and was talking to a guy. I reached my floor, and the guy was on my same floor, and I heard a woman moaning. I remember talking to a guy, and I saw him go into the room with the moaning and see him take his shirt off along with a camera crew go in with him. I remember thinking to myself that it was a porn shooting, and I was in the room next to them and felt uncomfortable. It was pretty vivid.",
       "date": "2026-08-25",
-      "vividness": 3,
+      "vividness": 4,
       "recallQuality": "vivid",
       "lucidity": "non-lucid",
       "emotions": [
@@ -50,7 +50,7 @@
       "title": "School ends at 11",
       "narrative": "I had a dream where I was in my current school, and since we had an exam, school would end at 11. So I was telling this girl how school ends at 11 enthusiastically.",
       "date": "2026-09-24",
-      "vividness": 2,
+      "vividness": 3,
       "recallQuality": "detailed",
       "lucidity": "non-lucid",
       "emotions": [
@@ -204,7 +204,7 @@
     {
       "id": "user-dream-20261002",
       "title": "Sky parkour & witherer rocket fireworks",
-      "narrative": "I was first in a parkour playplace in my native mom’s house, and there were a lot of old curvy steps, and my friend Josef from my current school was there in the beginning, then I lost him. Then, after going up a lot of steps, I reached, like, a pretty scary parkour that hung over the sky, and if I slipped I probably would've woken up. But I made it across into this cool, like, rocket firework making place, and I saw Josef already there doing stuff. And it was like this place where you learn to make firework rockets, and there was this, like, North Indian guy called \"The Witherer\" (his username, I guess), who was teaching us how to do it in person. And then somehow we ragebaited him, I don't know, by reading his messages or something, and then he got really angry. And then he went to, like, his secret admin place higher up and then just started shooting rocket fireworks at us from above, and we were genuinely getting barraged by the fireworks! And somehow I just went to just below where he was shooting them, and he didn't notice me from there cause I was directly underneath him. But when he realized, he started going higher to be able to shoot me, and then he still missed, but then the dream ended.",
+      "narrative": "I had 2 dreams. I was first in a parkour playplace in my native mom’s house, and there were a lot of old curvy steps, and my friend Josef from my current school was there in the beginning, then I lost him. Then, after going up a lot of steps, I reached, like, a pretty scary parkour that hung over the sky, and if I slipped I probably would've woken up. But I made it across into this cool, like, rocket firework making place, and I saw Josef already there doing stuff. And it was like this place where you learn to make firework rockets, and there was this, like, North Indian guy called \"The Witherer\" (his username, I guess), who was teaching us how to do it in person. And then somehow we ragebaited him, I don't know, by reading his messages or something, and then he got really angry. And then he went to, like, his secret admin place higher up and then just started shooting rocket fireworks at us from above, and we were genuinely getting barraged by the fireworks! And somehow I just went to just below where he was shooting them, and he didn't notice me from there cause I was directly underneath him. But when he realized, he started going higher to be able to shoot me, and then he still missed, but then the dream ended.",
       "date": "2026-10-02",
       "vividness": 4,
       "recallQuality": "vivid",
@@ -351,125 +351,5 @@
       "updatedAt": 1792002600000
     }
   ],
-  "techniqueLogs": [
-    {
-      "id": "tech-20260725",
-      "date": "2026-07-25",
-      "technique": "Other",
-      "customTechniqueName": "Induction Attempt",
-      "outcome": "no_recall",
-      "notes": "Failed tech",
-      "createdAt": 1785004200000,
-      "updatedAt": 1785004200000
-    },
-    {
-      "id": "tech-20260726",
-      "date": "2026-07-26",
-      "technique": "WBTB",
-      "outcome": "no_recall",
-      "notes": "Slept over alarm",
-      "createdAt": 1785090600000,
-      "updatedAt": 1785090600000
-    },
-    {
-      "id": "tech-20260727",
-      "date": "2026-07-27",
-      "technique": "WBTB",
-      "outcome": "no_recall",
-      "notes": "Slept over alarm",
-      "createdAt": 1785177000000,
-      "updatedAt": 1785177000000
-    },
-    {
-      "id": "tech-20260728",
-      "date": "2026-07-28",
-      "technique": "Other",
-      "customTechniqueName": "Early Awakening",
-      "outcome": "no_recall",
-      "notes": "Had to wake up early for funeral",
-      "createdAt": 1785263400000,
-      "updatedAt": 1785263400000
-    },
-    {
-      "id": "tech-20260923",
-      "date": "2026-09-23",
-      "technique": "Intention",
-      "outcome": "no_recall",
-      "notes": "No dream recalled",
-      "createdAt": 1790188200000,
-      "updatedAt": 1790188200000
-    },
-    {
-      "id": "tech-20260929",
-      "date": "2026-09-29",
-      "technique": "Intention",
-      "outcome": "no_recall",
-      "notes": "Did not remember any dream",
-      "createdAt": 1790706600000,
-      "updatedAt": 1790706600000
-    },
-    {
-      "id": "tech-20261001",
-      "date": "2026-10-01",
-      "technique": "Intention",
-      "outcome": "no_recall",
-      "notes": "No dream remembered",
-      "createdAt": 1790879400000,
-      "updatedAt": 1790879400000
-    },
-    {
-      "id": "tech-20261005",
-      "date": "2026-10-05",
-      "technique": "Intention",
-      "outcome": "no_recall",
-      "notes": "No dreams remembered",
-      "createdAt": 1791225000000,
-      "updatedAt": 1791225000000
-    },
-    {
-      "id": "tech-20261006",
-      "date": "2026-10-06",
-      "technique": "Intention",
-      "outcome": "no_recall",
-      "notes": "No dreams remembered",
-      "createdAt": 1791311400000,
-      "updatedAt": 1791311400000
-    },
-    {
-      "id": "tech-20261010",
-      "date": "2026-10-10",
-      "technique": "Intention",
-      "outcome": "no_recall",
-      "notes": "No dreams remembered",
-      "createdAt": 1791657000000,
-      "updatedAt": 1791657000000
-    },
-    {
-      "id": "tech-20261011",
-      "date": "2026-10-11",
-      "technique": "Intention",
-      "outcome": "no_recall",
-      "notes": "No dreams remembered",
-      "createdAt": 1791743400000,
-      "updatedAt": 1791743400000
-    },
-    {
-      "id": "tech-20261012",
-      "date": "2026-10-12",
-      "technique": "Intention",
-      "outcome": "no_recall",
-      "notes": "No dreams remembered",
-      "createdAt": 1791829800000,
-      "updatedAt": 1791829800000
-    },
-    {
-      "id": "tech-20261013",
-      "date": "2026-10-13",
-      "technique": "Intention",
-      "outcome": "no_recall",
-      "notes": "No dreams remembered",
-      "createdAt": 1791916200000,
-      "updatedAt": 1791916200000
-    }
-  ]
+  "techniqueLogs": []
 }

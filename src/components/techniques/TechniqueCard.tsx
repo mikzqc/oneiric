@@ -1,90 +1,177 @@
 import React, { useState } from 'react';
 import { TechniqueInfo } from '../../types/technique';
-import { Button } from '../common/Button';
-import { Clock, CheckCircle2, ChevronDown, ChevronUp, Plus } from 'lucide-react';
+import {
+  Clock,
+  CheckCircle2,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  Brain,
+  Sparkles,
+  Link2,
+} from 'lucide-react';
 
 interface TechniqueCardProps {
   info: TechniqueInfo;
-  onLogThisTechnique: (technique: TechniqueInfo['id']) => void;
 }
 
-export const TechniqueCard: React.FC<TechniqueCardProps> = ({
-  info,
-  onLogThisTechnique,
-}) => {
+export const TechniqueCard: React.FC<TechniqueCardProps> = ({ info }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const getDifficultyColor = (diff: TechniqueInfo['difficulty']) => {
+    switch (diff) {
+      case 'Beginner':
+        return 'bg-emerald-950/80 text-emerald-300 border-emerald-700/60';
+      case 'Intermediate':
+        return 'bg-cyan-950/80 text-cyan-300 border-cyan-700/60';
+      case 'Advanced':
+        return 'bg-violet-950/80 text-violet-300 border-violet-700/60';
+      default:
+        return 'bg-slate-800 text-slate-300 border-slate-700';
+    }
+  };
+
   return (
-    <div className="p-5 sm:p-6 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 hover:border-slate-700/80 transition-all flex flex-col justify-between shadow-md">
-      <div>
-        {/* Header */}
-        <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
-          <h3 className="text-base font-bold text-slate-100">{info.name}</h3>
-          <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-indigo-950/80 text-indigo-300 border border-indigo-700/50 flex items-center gap-1 shrink-0">
+    <div className="p-5 sm:p-6 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 hover:border-slate-700/80 transition-all flex flex-col justify-between shadow-lg">
+      <div className="space-y-3">
+        {/* Top Badges & Timing */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-950/90 text-indigo-300 border border-indigo-700/60 font-mono">
+              {info.acronym}
+            </span>
+            <span
+              className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md border ${getDifficultyColor(
+                info.difficulty
+              )}`}
+            >
+              {info.difficulty}
+            </span>
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
+              {info.category}
+            </span>
+          </div>
+
+          <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-900/90 text-slate-400 border border-slate-800 flex items-center gap-1 shrink-0">
             <Clock className="w-3 h-3 text-indigo-400" />
             <span>{info.recommendedTiming}</span>
           </span>
         </div>
 
-        {/* Short description */}
-        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mb-4">
-          {info.shortDesc}
-        </p>
+        {/* Name & Short Description */}
+        <div>
+          <h3 className="text-base sm:text-lg font-bold text-slate-100">{info.name}</h3>
+          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mt-1">
+            {info.shortDesc}
+          </p>
+        </div>
 
-        {/* Expanded Steps & Best Practices */}
+        {/* Prerequisites note */}
+        {info.prerequisites && (
+          <div className="text-[11px] text-slate-400 flex items-center gap-1.5 bg-slate-900/40 px-2.5 py-1.5 rounded-lg border border-slate-800/60">
+            <Sparkles className="w-3 h-3 text-indigo-400 shrink-0" />
+            <span><strong>Prerequisite:</strong> {info.prerequisites}</span>
+          </div>
+        )}
+
+        {/* Expanded Protocol Details */}
         {isExpanded && (
           <div className="space-y-4 pt-3 border-t border-slate-800/80 text-xs text-slate-300 animate-fadeIn">
             <p className="leading-relaxed text-slate-400">{info.description}</p>
 
+            {/* Scientific Mechanism */}
+            <div className="p-3.5 rounded-xl bg-indigo-950/20 border border-indigo-800/40 text-slate-300 space-y-1">
+              <div className="flex items-center gap-1.5 font-semibold text-indigo-300 uppercase tracking-wider text-[10px]">
+                <Brain className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Neurocognitive Mechanism</span>
+              </div>
+              <p className="text-[11px] leading-relaxed text-indigo-200/90">
+                {info.scientificMechanism}
+              </p>
+            </div>
+
+            {/* Step-by-Step Protocol */}
             <div>
               <h4 className="font-semibold text-slate-200 mb-2 uppercase tracking-wider text-[11px]">
-                Execution Protocol:
+                Step-by-Step Execution Protocol:
               </h4>
               <ol className="space-y-2 list-decimal list-inside text-slate-300 leading-relaxed">
                 {info.steps.map((step, idx) => (
                   <li key={idx} className="pl-1">
-                    <span>{step}</span>
+                    <span className="text-slate-200">{step}</span>
                   </li>
                 ))}
               </ol>
             </div>
 
+            {/* Keys to Success */}
             <div>
               <h4 className="font-semibold text-slate-200 mb-2 uppercase tracking-wider text-[11px]">
-                Keys to Success:
+                Keys to Success & Best Practices:
               </h4>
               <ul className="space-y-1.5 text-slate-300">
                 {info.bestPractices.map((bp, idx) => (
                   <li key={idx} className="flex items-start gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                     <span>{bp}</span>
                   </li>
                 ))}
               </ul>
             </div>
+
+            {/* Common Pitfalls */}
+            {info.commonPitfalls && info.commonPitfalls.length > 0 && (
+              <div>
+                <h4 className="font-semibold text-amber-300/90 mb-2 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Common Pitfalls to Avoid:</span>
+                </h4>
+                <ul className="space-y-1.5 text-slate-400 text-[11px]">
+                  {info.commonPitfalls.map((pitfall, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-amber-400 font-bold">•</span>
+                      <span>{pitfall}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Synergies */}
+            {info.synergies && info.synergies.length > 0 && (
+              <div className="pt-2 border-t border-slate-800/60 flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] uppercase tracking-wider text-slate-400 flex items-center gap-1 font-semibold">
+                  <Link2 className="w-3 h-3 text-indigo-400" />
+                  <span>Best Paired With:</span>
+                </span>
+                {info.synergies.map((syn) => (
+                  <span
+                    key={syn}
+                    className="px-2 py-0.5 rounded text-[10px] bg-slate-900 text-indigo-300 border border-slate-700 font-mono"
+                  >
+                    +{syn}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Action buttons */}
-      <div className="pt-4 mt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
+      {/* Expand / Collapse Action */}
+      <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center justify-between">
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-xs text-indigo-400 hover:text-indigo-200 flex items-center gap-1 cursor-pointer font-medium p-1"
+          className="text-xs text-indigo-400 hover:text-indigo-200 flex items-center gap-1.5 cursor-pointer font-medium p-1 transition-colors"
         >
-          <span>{isExpanded ? 'Less detail' : 'View full guide'}</span>
+          <span>{isExpanded ? 'Collapse guide' : 'View full protocol & science'}</span>
           {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
         </button>
 
-        <Button
-          size="sm"
-          variant="secondary"
-          icon={<Plus className="w-3.5 h-3.5 text-indigo-400" />}
-          onClick={() => onLogThisTechnique(info.id)}
-        >
-          Log Practice
-        </Button>
+        <span className="text-[10px] text-slate-400 font-mono">
+          {info.steps.length} steps
+        </span>
       </div>
     </div>
   );
