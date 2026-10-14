@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { dreamService } from '../services/dreamService';
+import { techniqueService } from '../services/techniqueService';
 import { DreamEntry } from '../types/dream';
+import { TechniqueLog } from '../types/technique';
 import { MonthCalendar } from '../components/calendar/MonthCalendar';
 import { DreamCard } from '../components/journal/DreamCard';
 import { DreamDetailModal } from '../components/journal/DreamDetailModal';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { getTodayDateString, formatDate } from '../utils/dateUtils';
 import { Button } from '../components/common/Button';
-import { CalendarDays, Plus, Sparkles } from 'lucide-react';
+import { CalendarDays, Plus, Sparkles, Moon } from 'lucide-react';
 
 interface CalendarPageProps {
   onOpenNewDream: (prefillDate?: string) => void;
@@ -19,6 +21,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
   onEditDream,
 }) => {
   const [dreams, setDreams] = useState<DreamEntry[]>([]);
+  const [techniqueLogs, setTechniqueLogs] = useState<TechniqueLog[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>(getTodayDateString());
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,8 +33,12 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const allDreams = await dreamService.getAllDreams();
+      const [allDreams, allTechLogs] = await Promise.all([
+        dreamService.getAllDreams(),
+        techniqueService.getAllLogs(),
+      ]);
       setDreams(allDreams);
+      setTechniqueLogs(allTechLogs);
     } finally {
       setIsLoading(false);
     }
@@ -53,8 +60,9 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
     }
   };
 
-  // Dreams for selected date
+  // Dreams and recall logs for selected date
   const selectedDateDreams = dreams.filter((d) => d.date === selectedDate);
+  const selectedDateRecallLog = techniqueLogs.find((t) => t.date === selectedDate);
   const hasLucidOnDate = selectedDateDreams.some((d) => d.lucidity === 'lucid');
 
   return (
@@ -90,6 +98,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
           <div className="lg:col-span-7">
             <MonthCalendar
               dreams={dreams}
+              techniqueLogs={techniqueLogs}
               selectedDate={selectedDate}
               onSelectDate={setSelectedDate}
               onAddDreamForDate={(d) => onOpenNewDream(d)}
@@ -107,6 +116,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
                   <p className="text-xs text-slate-400">
                     {selectedDateDreams.length}{' '}
                     {selectedDateDreams.length === 1 ? 'dream entry' : 'dream entries'} on this date
+                    {selectedDateRecallLog && selectedDateDreams.length === 0 && ' • No recall logged'}
                   </p>
                 </div>
 
@@ -118,16 +128,38 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
                 )}
               </div>
 
+              {/* Selected date recall check-in */}
+              {selectedDateRecallLog && (
+                <div className="mb-4 p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-3">
+                  <Moon className="w-4 h-4 text-indigo-400 mt-0.5 shrink-0" />
+                  <div className="space-y-1 text-xs min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-200">Recall Check-in</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                        {selectedDateRecallLog.outcome === 'no_recall' ? 'No Recall' : selectedDateRecallLog.technique}
+                      </span>
+                    </div>
+                    <p className="text-slate-400 italic">
+                      "{selectedDateRecallLog.notes || 'No dreams remembered'}"
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {selectedDateDreams.length === 0 ? (
-                <div className="py-12 text-center text-xs text-slate-400 space-y-3">
-                  <p>No dreams recorded for this date.</p>
+                <div className="py-10 text-center text-xs text-slate-400 space-y-3">
+                  <p>
+                    {selectedDateRecallLog
+                      ? 'No dreams remembered on this date.'
+                      : 'No dreams recorded for this date.'}
+                  </p>
                   <Button
                     size="sm"
                     variant="outline"
                     icon={<Plus className="w-3.5 h-3.5" />}
                     onClick={() => onOpenNewDream(selectedDate)}
                   >
-                    Record for {formatDate(selectedDate)}
+                    Add Dream for {formatDate(selectedDate)}
                   </Button>
                 </div>
               ) : (

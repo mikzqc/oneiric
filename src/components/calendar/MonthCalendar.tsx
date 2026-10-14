@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { DreamEntry } from '../../types/dream';
+import { TechniqueLog } from '../../types/technique';
 import { getTodayDateString, formatDate, parseLocalDate } from '../../utils/dateUtils';
-import { ChevronLeft, ChevronRight, Sparkles, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles, Plus, Moon } from 'lucide-react';
 import { Button } from '../common/Button';
 
 interface MonthCalendarProps {
   dreams: DreamEntry[];
+  techniqueLogs?: TechniqueLog[];
   selectedDate: string;
   onSelectDate: (dateStr: string) => void;
   onAddDreamForDate: (dateStr: string) => void;
@@ -13,6 +15,7 @@ interface MonthCalendarProps {
 
 export const MonthCalendar: React.FC<MonthCalendarProps> = ({
   dreams,
+  techniqueLogs,
   selectedDate,
   onSelectDate,
   onAddDreamForDate,
@@ -34,6 +37,14 @@ export const MonthCalendar: React.FC<MonthCalendarProps> = ({
     const list = dreamsByDate.get(dream.date) || [];
     list.push(dream);
     dreamsByDate.set(dream.date, list);
+  });
+
+  // Map recall logs by date
+  const noRecallByDate = new Map<string, TechniqueLog>();
+  techniqueLogs?.forEach((log) => {
+    if (log.outcome === 'no_recall') {
+      noRecallByDate.set(log.date, log);
+    }
   });
 
   const handlePrevMonth = () => {
@@ -130,6 +141,8 @@ export const MonthCalendar: React.FC<MonthCalendarProps> = ({
           const dayDreams = dreamsByDate.get(dateStr) || [];
           const hasDreams = dayDreams.length > 0;
           const hasLucid = dayDreams.some((d) => d.lucidity === 'lucid');
+          const dayNoRecall = !hasDreams ? noRecallByDate.get(dateStr) : undefined;
+          const hasNoRecall = !!dayNoRecall;
           const isSelected = selectedDate === dateStr;
           const isToday = todayStr === dateStr;
 
@@ -145,6 +158,8 @@ export const MonthCalendar: React.FC<MonthCalendarProps> = ({
                   ? 'bg-cyan-950/30 border-cyan-700/50 hover:border-cyan-500/60'
                   : hasDreams
                   ? 'bg-slate-900/80 border-slate-700/70 hover:border-slate-600'
+                  : hasNoRecall
+                  ? 'bg-slate-900/50 border-slate-800 hover:border-slate-700'
                   : 'bg-slate-950/40 border-slate-900/60 hover:bg-slate-900/40 hover:border-slate-800'
               }`}
             >
@@ -181,6 +196,12 @@ export const MonthCalendar: React.FC<MonthCalendarProps> = ({
                     )}
                   </div>
                 )}
+                {hasNoRecall && (
+                  <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-slate-800/80 text-slate-400 border border-slate-700/60 flex items-center gap-1 truncate w-full">
+                    <Moon className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                    <span className="truncate">No recall</span>
+                  </span>
+                )}
               </div>
             </button>
           );
@@ -197,6 +218,10 @@ export const MonthCalendar: React.FC<MonthCalendarProps> = ({
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400" />
             <span>Lucid Dream</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-slate-800 border border-slate-700" />
+            <span>No Recall</span>
           </div>
         </div>
 

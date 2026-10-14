@@ -56,10 +56,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentTechniques, setRecentTechniques] = useState<TechniqueLog[]>([]);
+  const [allTechniques, setAllTechniques] = useState<TechniqueLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // No-recall log state & modal
   const [isNoRecallModalOpen, setIsNoRecallModalOpen] = useState(false);
+  const [isAllRecallModalOpen, setIsAllRecallModalOpen] = useState(false);
   const [noRecallDate, setNoRecallDate] = useState(getTodayDateString());
   const [noRecallNotes, setNoRecallNotes] = useState('No dreams remembered');
   const [isSavingNoRecall, setIsSavingNoRecall] = useState(false);
@@ -78,6 +80,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         techniqueService.getAllLogs(),
       ]);
       setStats(dashStats);
+      setAllTechniques(techLogs);
       setRecentTechniques(techLogs.slice(0, 5));
     } finally {
       setIsLoading(false);
@@ -265,18 +268,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <Moon className="w-4 h-4 text-indigo-400" />
                   <span>No-Dream Days & Recall</span>
                 </h2>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNoRecallDate(getTodayDateString());
-                    setNoRecallNotes('No dreams remembered');
-                    setIsNoRecallModalOpen(true);
-                  }}
-                  className="inline-flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-200 cursor-pointer font-medium bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1 rounded-lg border border-indigo-500/20 transition-all"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Log Day</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  {allTechniques.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setIsAllRecallModalOpen(true)}
+                      className="text-xs text-indigo-400 hover:text-indigo-200 cursor-pointer font-medium"
+                    >
+                      View all ({allTechniques.length})
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNoRecallDate(getTodayDateString());
+                      setNoRecallNotes('No dreams remembered');
+                      setIsNoRecallModalOpen(true);
+                    }}
+                    className="inline-flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-200 cursor-pointer font-medium bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1 rounded-lg border border-indigo-500/20 transition-all"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Log Day</span>
+                  </button>
+                </div>
               </div>
 
               {recentTechniques.length === 0 ? (
@@ -337,23 +351,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
               <button
                 type="button"
-                onClick={() => navigate('/analytics')}
+                onClick={() => navigate('/timeline')}
                 className="text-xs font-medium text-slate-400 hover:text-slate-200 transition-all flex items-center gap-1 cursor-pointer"
               >
-                <span>View Recall Trends</span>
+                <span>View Timeline</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setNoRecallDate(getTodayDateString());
-                  setNoRecallNotes('No dreams remembered');
-                  setIsNoRecallModalOpen(true);
-                }}
-                className="text-xs text-indigo-400 hover:text-indigo-300 font-medium cursor-pointer"
-              >
-                + Add Check-in
-              </button>
+              {allTechniques.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setIsAllRecallModalOpen(true)}
+                  className="text-xs text-indigo-400 hover:text-indigo-300 font-medium cursor-pointer"
+                >
+                  View all {allTechniques.length} days &rarr;
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -510,6 +522,85 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* View All No-Dream Days Modal */}
+      <Modal
+        isOpen={isAllRecallModalOpen}
+        onClose={() => setIsAllRecallModalOpen(false)}
+        title={`All Logged No-Dream Days (${allTechniques.length})`}
+        subtitle="Chronological archive of nights without dream recall"
+        maxWidth="lg"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
+            <p className="text-xs text-slate-400">
+              Listing all recorded unremembered nights and recall check-ins
+            </p>
+            <Button
+              size="sm"
+              variant="celestial"
+              icon={<Plus className="w-3.5 h-3.5" />}
+              onClick={() => {
+                setNoRecallDate(getTodayDateString());
+                setNoRecallNotes('No dreams remembered');
+                setIsNoRecallModalOpen(true);
+              }}
+            >
+              + Log Day
+            </Button>
+          </div>
+
+          <div className="max-h-[60vh] overflow-y-auto space-y-2 pr-1">
+            {allTechniques.length === 0 ? (
+              <div className="p-8 text-center text-xs text-slate-400 bg-slate-900/40 rounded-xl border border-slate-800">
+                No unremembered nights logged yet.
+              </div>
+            ) : (
+              allTechniques.map((tech) => (
+                <div
+                  key={tech.id}
+                  className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-3 group hover:border-slate-700 transition-all"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-slate-200">
+                        {formatDate(tech.date)}
+                      </span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-slate-800 text-slate-400 border border-slate-700/60">
+                        {tech.outcome === 'no_recall' ? 'No Recall' : tech.technique}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1">
+                      {tech.notes || (tech.outcome === 'no_recall' ? 'No dreams remembered' : tech.technique)}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    title="Delete check-in"
+                    disabled={deletingLogId === tech.id}
+                    onClick={() => handleDeleteRecallLog(tech.id)}
+                    className="opacity-40 group-hover:opacity-100 hover:text-rose-400 text-slate-400 p-2 rounded-lg hover:bg-rose-500/10 transition-all cursor-pointer shrink-0"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="pt-3 border-t border-slate-800 flex justify-end">
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsAllRecallModalOpen(false)}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );
