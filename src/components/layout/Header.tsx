@@ -19,7 +19,7 @@ export const Header: React.FC<HeaderProps> = ({
   const todayFormatted = formatFullDate(getTodayDateString());
 
   return (
-    <header className="h-16 px-4 sm:px-8 border-b border-slate-800/80 bg-[#070a13]/80 backdrop-blur-md flex items-center justify-between shrink-0 sticky top-0 z-30">
+    <header className="h-16 px-4 sm:px-8 border-b border-slate-800/80 bg-[#0b132b]/95 backdrop-blur-md flex items-center justify-between shrink-0 sticky top-0 z-30">
       <div className="flex items-center gap-3">
         {/* Mobile menu trigger */}
         <button

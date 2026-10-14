@@ -151,7 +151,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="space-y-8 animate-fadeIn">
       {/* Top Banner / Hero Welcome */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[#121829] via-[#0f172a] to-[#0b0f19] border border-slate-800/80 shadow-2xl relative overflow-hidden celestial-glow">
+      <div className="p-6 sm:p-8 rounded-3xl bg-[#0e1730] border border-slate-800/80 shadow-2xl relative overflow-hidden celestial-glow">
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-xl">

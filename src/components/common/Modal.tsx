@@ -62,11 +62,11 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* Modal Container */}
       <div
-        className={`relative w-full ${maxWidthClasses[maxWidth]} bg-[#0f172a] border border-slate-700/70 rounded-2xl shadow-2xl shadow-black/80 z-10 overflow-hidden my-auto max-h-[90vh] flex flex-col transition-all duration-200 celestial-glow`}
+        className={`relative w-full ${maxWidthClasses[maxWidth]} bg-[#0e1730] border border-slate-700/70 rounded-2xl shadow-2xl shadow-black/80 z-10 overflow-hidden my-auto max-h-[90vh] flex flex-col transition-all duration-200 celestial-glow`}
       >
         {/* Header */}
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/80 bg-[#0b0f19]/70 shrink-0">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800/80 bg-[#0b132b]/80 shrink-0">
             <div>
               {title && <h2 className="text-lg font-semibold text-slate-100">{title}</h2>}
               {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}

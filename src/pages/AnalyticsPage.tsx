@@ -235,7 +235,7 @@ export const AnalyticsPage: React.FC = () => {
                       if (active && payload && payload.length) {
                         const item = payload[0].payload;
                         return (
-                          <div className="p-3 bg-[#0b0f19] border border-slate-700/80 rounded-xl shadow-xl text-xs space-y-1">
+                          <div className="p-3 bg-[#0b132b] border border-slate-700/80 rounded-xl shadow-xl text-xs space-y-1">
                             <p className="font-semibold text-slate-200">{formatDate(item.date)}</p>
                             <p className="text-indigo-300">Total Dreams: <strong className="text-white">{item.total}</strong></p>
                             <p className="text-cyan-300">Lucid Dreams: <strong className="text-white">{item.lucid}</strong></p>

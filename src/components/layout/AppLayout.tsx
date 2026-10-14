@@ -90,7 +90,7 @@ export const AppLayout: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#070a13] text-slate-100 stars-bg">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#0b132b] text-slate-100">
       {/* Desktop Sidebar */}
       <div className="hidden md:flex md:shrink-0">
         <Sidebar />
@@ -104,7 +104,7 @@ export const AppLayout: React.FC = () => {
             onClick={() => setIsMobileMenuOpen(false)}
             aria-hidden="true"
           />
-          <div className="relative w-72 max-w-[80vw] h-full bg-[#0b0f19] border-r border-slate-800 shadow-2xl z-10 flex flex-col">
+          <div className="relative w-72 max-w-[80vw] h-full bg-[#0b132b] border-r border-slate-800 shadow-2xl z-10 flex flex-col">
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(false)}

@@ -66,7 +66,7 @@ export const RecallChart: React.FC<RecallChartProps> = ({ data }) => {
               if (active && payload && payload.length) {
                 const item = payload[0].payload as RecallChartDataPoint;
                 return (
-                  <div className="p-3 bg-[#0b0f19] border border-slate-700/80 rounded-xl shadow-xl text-xs space-y-1 celestial-glow">
+                  <div className="p-3 bg-[#0b132b] border border-slate-700/80 rounded-xl shadow-xl text-xs space-y-1 celestial-glow">
                     <p className="font-semibold text-slate-200">
                       {item.label} ({item.fullLabel})
                     </p>

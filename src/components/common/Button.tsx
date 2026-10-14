@@ -20,7 +20,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-[#070a13] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer select-none';
+    'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-[#0b132b] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer select-none';
 
   const sizeStyles = {
     sm: 'text-xs px-3 py-1.5 gap-1.5',
