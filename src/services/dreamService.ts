@@ -1,0 +1,229 @@
+import { db } from '../db/database';
+import { DreamDraft, DreamEntry } from '../types/dream';
+import { calculateJournalingStreak, getLastNDays, getTodayDateString } from '../utils/dateUtils';
+import { dreamSignService } from './dreamSignService';
+
+export interface TimelineNightGroup {
+  date: string;
+  dreams: DreamEntry[];
+  techniques: import('../types/technique').TechniqueLog[];
+  hasLucid: boolean;
+  hasFalseAwakening: boolean;
+  maxVividness: number;
+}
+
+export const dreamService = {
+  async getAllDreams(): Promise<DreamEntry[]> {
+    return await db.dreams.orderBy('date').reverse().toArray();
+  },
+
+  async getDreamById(id: string): Promise<DreamEntry | undefined> {
+    return await db.dreams.get(id);
+  },
+
+  async createDream(draft: DreamDraft): Promise<DreamEntry> {
+    const now = Date.now();
+    const entry: DreamEntry = {
+      ...draft,
+      id: crypto.randomUUID ? crypto.randomUUID() : `dream-${now}-${Math.random().toString(36).substring(2, 9)}`,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await db.dreams.add(entry);
+
+    // Also persist any new custom tags to the customTags table
+    if (draft.tags && draft.tags.length > 0) {
+      for (const tag of draft.tags) {
+        const trimmed = tag.trim();
+        if (trimmed) {
+          const existing = await db.customTags.where('name').equalsIgnoreCase(trimmed).first();
+          if (!existing) {
+            await db.customTags.add({
+              id: `tag-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+              name: trimmed,
+              createdAt: Date.now(),
+            });
+          }
+        }
+      }
+    }
+
+    // Trigger dream signs update in background
+    dreamSignService.scanAndDetectSigns().catch(() => {});
+
+    return entry;
+  },
+
+  async updateDream(id: string, updates: Partial<DreamDraft>): Promise<void> {
+    const existing = await db.dreams.get(id);
+    if (!existing) {
+      throw new Error(`Dream with id "${id}" not found.`);
+    }
+
+    await db.dreams.update(id, {
+      ...updates,
+      updatedAt: Date.now(),
+    });
+
+    if (updates.tags && updates.tags.length > 0) {
+      for (const tag of updates.tags) {
+        const trimmed = tag.trim();
+        if (trimmed) {
+          const exists = await db.customTags.where('name').equalsIgnoreCase(trimmed).first();
+          if (!exists) {
+            await db.customTags.add({
+              id: `tag-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+              name: trimmed,
+              createdAt: Date.now(),
+            });
+          }
+        }
+      }
+    }
+
+    // Trigger dream signs update in background
+    dreamSignService.scanAndDetectSigns().catch(() => {});
+  },
+
+  async deleteDream(id: string): Promise<void> {
+    await db.dreams.delete(id);
+    // Trigger dream signs update in background
+    dreamSignService.scanAndDetectSigns().catch(() => {});
+  },
+
+  async getLucidDreams(): Promise<DreamEntry[]> {
+    return await db.dreams.where('lucidity').equals('lucid').reverse().sortBy('date');
+  },
+
+  async getFalseAwakeningDreams(): Promise<DreamEntry[]> {
+    return await db.dreams.filter((d) => !!d.falseAwakening).reverse().sortBy('date');
+  },
+
+  async getDreamsByDate(dateStr: string): Promise<DreamEntry[]> {
+    return await db.dreams.where('date').equals(dateStr).toArray();
+  },
+
+  async getDistinctTags(): Promise<string[]> {
+    const allDreams = await db.dreams.toArray();
+    const customTags = await db.customTags.toArray();
+    const tagSet = new Set<string>();
+
+    for (const dream of allDreams) {
+      if (Array.isArray(dream.tags)) {
+        dream.tags.forEach((t) => tagSet.add(t));
+      }
+    }
+    for (const ct of customTags) {
+      tagSet.add(ct.name);
+    }
+
+    return Array.from(tagSet).sort();
+  },
+
+  async getDashboardStats(referenceDate: Date = new Date()) {
+    const allDreams = await db.dreams.toArray();
+    const totalDreams = allDreams.length;
+    const totalLucid = allDreams.filter((d) => d.lucidity === 'lucid').length;
+    const totalFalseAwakenings = allDreams.filter((d) => !!d.falseAwakening).length;
+
+    // 7-day recall calculations
+    const last7Days = getLastNDays(7, referenceDate);
+    const dateLookup = new Map<string, { total: number; lucid: number }>();
+    for (const day of last7Days) {
+      dateLookup.set(day.dateStr, { total: 0, lucid: 0 });
+    }
+
+    let weeklyDreams = 0;
+    for (const dream of allDreams) {
+      const entry = dateLookup.get(dream.date);
+      if (entry) {
+        entry.total += 1;
+        weeklyDreams += 1;
+        if (dream.lucidity === 'lucid') {
+          entry.lucid += 1;
+        }
+      }
+    }
+
+    const recallChartData = last7Days.map((d) => {
+      const stats = dateLookup.get(d.dateStr) || { total: 0, lucid: 0 };
+      return {
+        date: d.dateStr,
+        label: d.dayOfWeek,
+        fullLabel: d.label,
+        count: stats.total,
+        lucidCount: stats.lucid,
+      };
+    });
+
+    // Journaling streak calculation
+    const recordedDates = allDreams.map((d) => d.date);
+    const currentStreak = calculateJournalingStreak(recordedDates, referenceDate);
+
+    // Recent dreams sorted by date descending, then createdAt descending
+    const recentDreams = [...allDreams]
+      .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
+      .slice(0, 5);
+
+    return {
+      totalDreams,
+      totalLucid,
+      totalFalseAwakenings,
+      weeklyDreams,
+      currentStreak,
+      recentDreams,
+      recallChartData,
+      hasEntries: totalDreams > 0,
+      todayRecorded: recordedDates.includes(getTodayDateString(referenceDate)),
+    };
+  },
+
+  /**
+   * Generates chronological nocturnal timeline events grouped by date
+   */
+  async getTimelineEvents(): Promise<TimelineNightGroup[]> {
+    const [dreams, techniques] = await Promise.all([
+      db.dreams.toArray(),
+      db.techniqueLogs.toArray(),
+    ]);
+
+    // Group by date
+    const nightsMap = new Map<string, { dreams: DreamEntry[]; techniques: import('../types/technique').TechniqueLog[] }>();
+
+    for (const dream of dreams) {
+      if (!nightsMap.has(dream.date)) {
+        nightsMap.set(dream.date, { dreams: [], techniques: [] });
+      }
+      nightsMap.get(dream.date)!.dreams.push(dream);
+    }
+
+    for (const tech of techniques) {
+      if (!nightsMap.has(tech.date)) {
+        nightsMap.set(tech.date, { dreams: [], techniques: [] });
+      }
+      nightsMap.get(tech.date)!.techniques.push(tech);
+    }
+
+    const sortedDates = Array.from(nightsMap.keys()).sort((a, b) => b.localeCompare(a));
+
+    return sortedDates.map((date) => {
+      const data = nightsMap.get(date)!;
+      // Sort dreams by createdAt if available
+      data.dreams.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+
+      const hasLucid = data.dreams.some((d) => d.lucidity === 'lucid');
+      const hasFalseAwakening = data.dreams.some((d) => !!d.falseAwakening);
+      const maxVividness = data.dreams.length > 0 ? Math.max(...data.dreams.map((d) => d.vividness || 0)) : 0;
+
+      return {
+        date,
+        dreams: data.dreams,
+        techniques: data.techniques,
+        hasLucid,
+        hasFalseAwakening,
+        maxVividness,
+      };
+    });
+  },
+};

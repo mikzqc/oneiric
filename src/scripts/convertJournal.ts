@@ -1,0 +1,407 @@
+import fs from 'fs';
+import path from 'path';
+
+interface DreamEntry {
+  id: string;
+  title: string;
+  narrative: string;
+  date: string;
+  vividness: number;
+  recallQuality: 'vivid' | 'detailed' | 'fragment' | 'vague';
+  lucidity: 'non-lucid' | 'lucid' | 'uncertain';
+  emotions: string[];
+  tags: string[];
+  dreamSignsNotes?: string;
+  scenesCount?: number;
+  dreamControl?: number;
+  falseAwakening?: boolean;
+  falseAwakeningDetails?: {
+    believedAwake: boolean;
+    environmentDescription?: string;
+    triggerOrAnomaly?: string;
+    realityCheckPerformed?: boolean;
+    realityCheckNotes?: string;
+  };
+  createdAt: number;
+  updatedAt: number;
+}
+
+interface TechniqueLog {
+  id: string;
+  date: string;
+  technique: string;
+  customTechniqueName?: string;
+  outcome: 'lucid_dream' | 'dream_recalled' | 'no_recall';
+  notes?: string;
+  secondaryTechniques?: string[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+const baseTimestamp = new Date('2026-10-14T18:30:00Z').getTime();
+
+const dreams: DreamEntry[] = [
+  {
+    id: 'user-dream-20260724',
+    title: 'First school dream with classmates',
+    narrative: 'I had a normal dream where I was in a class with both of my classmates from different schools. I don\'t remember anything after. I remember green walls with a smartboard, and I was in my old school. I remember Reine, Elvin, and Aziz next to me.',
+    date: '2026-07-24',
+    vividness: 3,
+    recallQuality: 'detailed',
+    lucidity: 'non-lucid',
+    emotions: ['Nostalgia', 'Calm'],
+    tags: ['School', 'Classmates', 'Old School'],
+    dreamSignsNotes: 'Classmates from different schools merged into one room',
+    createdAt: baseTimestamp - 82 * 86400000,
+    updatedAt: baseTimestamp - 82 * 86400000,
+  },
+  {
+    id: 'user-dream-20260825',
+    title: 'Hotel porn shoot',
+    narrative: 'I was going to my room, and I was in an elevator and was talking to a guy. I reached my floor, and the guy was on my same floor, and I heard a woman moaning. I remember talking to a guy, and I saw him go into the room with the moaning and see him take his shirt off along with a camera crew go in with him. I remember thinking to myself that it was a porn shooting, and I was in the room next to them and felt uncomfortable. It was pretty vivid.',
+    date: '2026-08-25',
+    vividness: 4,
+    recallQuality: 'vivid',
+    lucidity: 'non-lucid',
+    emotions: ['Uncomfortable', 'Confusion'],
+    tags: ['Hotel', 'Elevator', 'Strange'],
+    dreamSignsNotes: 'Elevators and hotel corridors',
+    createdAt: baseTimestamp - 50 * 86400000,
+    updatedAt: baseTimestamp - 50 * 86400000,
+  },
+  {
+    id: 'user-dream-20260924',
+    title: 'School ends at 11',
+    narrative: 'I had a dream where I was in my current school, and since we had an exam, school would end at 11. So I was telling this girl how school ends at 11 enthusiastically.',
+    date: '2026-09-24',
+    vividness: 3,
+    recallQuality: 'detailed',
+    lucidity: 'non-lucid',
+    emotions: ['Excitement', 'Joy'],
+    tags: ['School', 'Exam'],
+    createdAt: baseTimestamp - 20 * 86400000,
+    updatedAt: baseTimestamp - 20 * 86400000,
+  },
+  {
+    id: 'user-dream-20260925',
+    title: 'Ocd scared',
+    narrative: 'I had a dream where I was doing my OCD routine at night and my mom could hear me from her room, where she was "sleeping" with the light on for some reason. And then I was washing my hands like 50 times, and my mom heard this and got up from her bed. I heard her get up, and I ran back to my bed and closed my eyes, and the dream ended.',
+    date: '2026-09-25',
+    vividness: 3,
+    recallQuality: 'detailed',
+    lucidity: 'non-lucid',
+    emotions: ['Anxiety', 'Fear'],
+    tags: ['Home', 'Routine', 'Nightmare'],
+    createdAt: baseTimestamp - 19 * 86400000,
+    updatedAt: baseTimestamp - 19 * 86400000,
+  },
+  {
+    id: 'user-dream-20260926',
+    title: 'School shenanigans',
+    narrative: 'I had several dreams, but only 1 was so vivid. I was in my old school with my current body and old friends, no conflicting people from my current school, so very normal. I was sitting next to my friend Marcus, and somehow, I remembered this girl that I knew called Bareerah, and they were dating?! Cause I\'m pretty sure Muslim girls can\'t date, and that should\'ve been my sign to realize I was lucid, but I didn\'t, but felt severely confused.\n\nThen, like, I timeskipped to when I was sitting next to my old friend Reine, and the teacher was like, "How are you going to study the chapters we already covered?" Then in my head I was thinking I shifted from my current IRL school back to my old school, and answered her with something I don\'t remember. And Reine had brought in like a bunch of plates or something, and all the plates fell down, and I was like, "What?"\n\nThen timeskip AGAIN: I was in the opposite end of the class, no one next to me, and some girl comes to me crying saying that she needed to fix all these wires coming from her keyboard. And I tried fixing the keyboard by stuffing it all in and, like, sticking the open end of the wire to the, like, receiving part, and it worked, but not that well. So I got sticky tape to stick it from my mom somehow when we are still in school. Then I stuck it, and it still somewhat worked, and then I woke. I almost forgot this dream today.',
+    date: '2026-09-26',
+    vividness: 4,
+    recallQuality: 'vivid',
+    lucidity: 'non-lucid',
+    emotions: ['Confusion', 'Curiosity'],
+    tags: ['School', 'Timeskip', 'Friends', 'Technology'],
+    dreamSignsNotes: 'Cultural inconsistency & sudden timeskips - missed lucidity cue',
+    scenesCount: 3,
+    createdAt: baseTimestamp - 18 * 86400000,
+    updatedAt: baseTimestamp - 18 * 86400000,
+  },
+  {
+    id: 'user-dream-20260927-1',
+    title: '2 dreams first time remembering both',
+    narrative: 'This was my first dream that I remember, and I know there is a bit of backstory to this, but I forgot it as it was kind of mundane. So I was in my mom\'s native house, and I was with my sister, and she wanted my other iPad. Apparently I had 2, and I gave it to her, whining it has low battery, and then she took it.\n\nTimeskip or it is another dream (it probably is), and I was in a creepy ass mansion with this small ghost demon child hunting me. And I was with my sister (I think) and someone else with some random aim. Then we split up, and this demon ghost baby girl thing just appears everywhere I go, and I had to, like, juke it to get past it. And finally, I got to a place where, like, the syllabus of the children in this mansion is, like, connected to the mansion, and it was connected to monitors. And I asked my sister and some random ass, slightly obese dude to teleport to me, and they did. And the dude started changing the syllabus to, like, 3(2+4)=18 or some BS like that — it was 3 outside the brackets and then the rest inside, IDK. And then, yeah, that\'s it: I had 2 dreams in 1 night.',
+    date: '2026-09-27',
+    vividness: 4,
+    recallQuality: 'detailed',
+    lucidity: 'non-lucid',
+    emotions: ['Fear', 'Confusion'],
+    tags: ['Native House', 'Mansion', 'Ghost', 'Teleportation'],
+    scenesCount: 2,
+    createdAt: baseTimestamp - 17 * 86400000,
+    updatedAt: baseTimestamp - 17 * 86400000,
+  },
+  {
+    id: 'user-dream-20260927-2',
+    title: 'Afternoon False Awakening',
+    narrative: 'I woke up from my sleep — basically a false awakening — and it was 5 PM, and my mom was calling my sis in her bed. And my sis was scared because the gov was coming to check her possessions or something, and then my mom said, "Don\'t be scared," and hung up. And I asked my mom for lunch, and I went and saw a cooker pot lid down, filled with rice and a fried fish.',
+    date: '2026-09-27',
+    vividness: 3,
+    recallQuality: 'detailed',
+    lucidity: 'non-lucid',
+    falseAwakening: true,
+    falseAwakeningDetails: {
+      believedAwake: true,
+      environmentDescription: 'Bedroom and kitchen at 5 PM',
+      triggerOrAnomaly: 'Waking up at 5 PM for lunch; government inspection call',
+      realityCheckPerformed: false,
+    },
+    emotions: ['Confusion', 'Anxiety'],
+    tags: ['False Awakening', 'Home', 'Family', 'Food'],
+    dreamSignsNotes: 'Simulated awakening at 5 PM',
+    createdAt: baseTimestamp - 17 * 86400000 + 3600000,
+    updatedAt: baseTimestamp - 17 * 86400000 + 3600000,
+  },
+  {
+    id: 'user-dream-20260928',
+    title: 'School trip to amusement park & elevator race',
+    narrative: 'I presume I went on a trip with my current school, and I saw Gowshik approach me and ask what I was doing (I was bored and on a higher ground looking through some bars down at a pool where my friends were having fun; we were in an amusement park). Then I saw Advait come up to me and told me whoever reaches the elevator last was gay or loses or something like that, and we started running to the elevator. And then we reached it, and I think Gowshik was last, and he was considered gay. Rest of the dream was a blur and I can\'t remember it, but it was fun, I think.',
+    date: '2026-09-28',
+    vividness: 3,
+    recallQuality: 'detailed',
+    lucidity: 'non-lucid',
+    emotions: ['Fun', 'Amusement'],
+    tags: ['School', 'Amusement Park', 'Elevator', 'Friends'],
+    createdAt: baseTimestamp - 16 * 86400000,
+    updatedAt: baseTimestamp - 16 * 86400000,
+  },
+  {
+    id: 'user-dream-20260930',
+    title: 'House encounter & sink incident',
+    narrative: 'I remember being in a house and excited because I was about to frick a girl, and I put it in her pussy and it felt so good, like a massage on my dih. Then I put it more in, but got scared because I thought I would get an STD. Another dream I had was my mom catching me pissing in the sink, and she didn\'t get mad for some reason, like what.',
+    date: '2026-09-30',
+    vividness: 4,
+    recallQuality: 'detailed',
+    lucidity: 'non-lucid',
+    emotions: ['Pleasure', 'Anxiety', 'Confusion'],
+    tags: ['House', 'Intimate', 'Strange'],
+    scenesCount: 2,
+    createdAt: baseTimestamp - 14 * 86400000,
+    updatedAt: baseTimestamp - 14 * 86400000,
+  },
+  {
+    id: 'user-dream-20261002',
+    title: 'Sky parkour & witherer rocket fireworks',
+    narrative: 'I had 2 dreams. I was first in a parkour playplace in my native mom’s house, and there were a lot of old curvy steps, and my friend Josef from my current school was there in the beginning, then I lost him. Then, after going up a lot of steps, I reached, like, a pretty scary parkour that hung over the sky, and if I slipped I probably would\'ve woken up. But I made it across into this cool, like, rocket firework making place, and I saw Josef already there doing stuff. And it was like this place where you learn to make firework rockets, and there was this, like, North Indian guy called "The Witherer" (his username, I guess), who was teaching us how to do it in person. And then somehow we ragebaited him, I don\'t know, by reading his messages or something, and then he got really angry. And then he went to, like, his secret admin place higher up and then just started shooting rocket fireworks at us from above, and we were genuinely getting barraged by the fireworks! And somehow I just went to just below where he was shooting them, and he didn\'t notice me from there cause I was directly underneath him. But when he realized, he started going higher to be able to shoot me, and then he still missed, but then the dream ended.',
+    date: '2026-10-02',
+    vividness: 4,
+    recallQuality: 'vivid',
+    lucidity: 'non-lucid',
+    emotions: ['Adrenaline', 'Excitement', 'Fear'],
+    tags: ['Parkour', 'Sky', 'Fireworks', 'Friends', 'Native House'],
+    dreamSignsNotes: 'Sky obstacles and administrative gamer avatars',
+    scenesCount: 2,
+    createdAt: baseTimestamp - 12 * 86400000,
+    updatedAt: baseTimestamp - 12 * 86400000,
+  },
+  {
+    id: 'user-dream-20261003',
+    title: 'Prepping for JEE',
+    narrative: 'I was prepping for JEE in my dream, and it felt so real, but very short.',
+    date: '2026-10-03',
+    vividness: 4,
+    recallQuality: 'fragment',
+    lucidity: 'non-lucid',
+    emotions: ['Anxiety', 'Focus'],
+    tags: ['Study', 'JEE', 'School'],
+    createdAt: baseTimestamp - 11 * 86400000,
+    updatedAt: baseTimestamp - 11 * 86400000,
+  },
+  {
+    id: 'user-dream-20261004',
+    title: 'Petting Tabby the wet cat',
+    narrative: 'I found a cute tabby cat called Tabby, and it was wet and I was petting it, and it felt like a real cat, although I don\'t remember the rest of the dream.',
+    date: '2026-10-04',
+    vividness: 4,
+    recallQuality: 'fragment',
+    lucidity: 'non-lucid',
+    emotions: ['Calm', 'Affection'],
+    tags: ['Cat', 'Animals'],
+    createdAt: baseTimestamp - 10 * 86400000,
+    updatedAt: baseTimestamp - 10 * 86400000,
+  },
+  {
+    id: 'user-dream-20261007',
+    title: 'Lotta peeing - Native house & mall',
+    narrative: 'Lotta peeing. I don\'t remember the order of dreams, but my first dream was in my mom’s native house again, and we were leaving the house to go somewhere early in the morning. A huge bus came in our house’s driveway, and I had to pee quickly, and I went back in the house. And when I went in the room, I saw a white cat and I scared it out of the room. Somehow the room was connected to the outside, but my brain didn\'t question it, and I just started peeing outside. Next dream: I was in Forum Mall, or some mix of LuLu and Forum Mall, and me and my mom were searching for my sister. Then we went to the food court and we found her, and all of us decided to go to the bathroom. I went in the males\' bathroom and pissed. That\'s it.',
+    date: '2026-10-07',
+    vividness: 3,
+    recallQuality: 'detailed',
+    lucidity: 'non-lucid',
+    emotions: ['Urgency', 'Neutral'],
+    tags: ['Native House', 'Bus', 'Cat', 'Mall'],
+    scenesCount: 2,
+    createdAt: baseTimestamp - 7 * 86400000,
+    updatedAt: baseTimestamp - 7 * 86400000,
+  },
+  {
+    id: 'user-dream-20261008',
+    title: 'Asking ChatGPT about dreams',
+    narrative: 'I remember in my dream I asked ChatGPT what dreams I dreamt right now, probably today, and it said some sport thing. I don\'t remember the rest.',
+    date: '2026-10-08',
+    vividness: 3,
+    recallQuality: 'fragment',
+    lucidity: 'non-lucid',
+    emotions: ['Curiosity'],
+    tags: ['AI', 'ChatGPT', 'Technology'],
+    createdAt: baseTimestamp - 6 * 86400000,
+    updatedAt: baseTimestamp - 6 * 86400000,
+  },
+  {
+    id: 'user-dream-20261009',
+    title: 'Dots and boxes with Gowshik in school',
+    narrative: 'I was playing dots and boxes with Gowshik. Finally I got a dream in my current school. I don\'t remember the rest.',
+    date: '2026-10-09',
+    vividness: 3,
+    recallQuality: 'fragment',
+    lucidity: 'non-lucid',
+    emotions: ['Calm', 'Playful'],
+    tags: ['School', 'Games', 'Friends'],
+    createdAt: baseTimestamp - 5 * 86400000,
+    updatedAt: baseTimestamp - 5 * 86400000,
+  },
+  {
+    id: 'user-dream-20261014',
+    title: 'Tour kissing swap, cereal girl & Barcelona roast',
+    narrative: 'I was in such a weird dream, I hated it, it was so uncomfortable. Basically, we were in this group of friends touring some place for some reason, and a pair of us would just start kissing each other without their partner knowing we were kissing their wife or something. So after the tour, I, like, kissed like 1 dude and 3 girls (FUCK BRO I DIDN\'T WANT TO KISS THAT DUDE, I SHOULD\'VE JUST BECOME LUCID THEN, I DON\'T KISS DUDES BRO, THAT\'S THE MEMORY THAT\'S MOST CLEAR) totally. And then when it was time to leave, the daughter (who I also kissed) of some father was the one who brought us here, so now we had to go. And the next place was some super obese girl\'s place, and when we got there she was so fat, bro, she was eating a fuckton of cereal and watching a TV show, and she took some of the cereal juice and threw it under her blanket into her puh. The daughter finally came in and saw the blanket and said it\'s comfy before trying to push her to do exercises by telling me what exercises she does. Now probably next dream or just a timeskip is me, this one girl named Barcelona, and some dude or something, I guess. And me and that dude were just roasting each other in this furniture shop, and then it got to a point where the dude was asking her name, but couldn\'t say it, but eventually could (what\'s so hard in saying Barcelona?). Then I don\'t remember the rest, but I finally remember my dream. I remember the dude making a dick joke and how his dick is bigger than mine, but I don\'t remember it fully. He was wearing a red t-shirt too.',
+    date: '2026-10-14',
+    vividness: 4,
+    recallQuality: 'vivid',
+    lucidity: 'non-lucid',
+    emotions: ['Uncomfortable', 'Confusion', 'Regret'],
+    tags: ['Tour', 'Friends', 'Timeskip', 'Bizarre'],
+    dreamSignsNotes: 'Intense social discomfort & kissing incongruity - missed lucidity check',
+    scenesCount: 3,
+    createdAt: baseTimestamp,
+    updatedAt: baseTimestamp,
+  },
+];
+
+const techniqueLogs: TechniqueLog[] = [
+  {
+    id: 'tech-20260725',
+    date: '2026-07-25',
+    technique: 'Other',
+    customTechniqueName: 'Induction Attempt',
+    outcome: 'no_recall',
+    notes: 'Failed tech',
+    createdAt: baseTimestamp - 81 * 86400000,
+    updatedAt: baseTimestamp - 81 * 86400000,
+  },
+  {
+    id: 'tech-20260726',
+    date: '2026-07-26',
+    technique: 'WBTB',
+    outcome: 'no_recall',
+    notes: 'Slept over alarm',
+    createdAt: baseTimestamp - 80 * 86400000,
+    updatedAt: baseTimestamp - 80 * 86400000,
+  },
+  {
+    id: 'tech-20260727',
+    date: '2026-07-27',
+    technique: 'WBTB',
+    outcome: 'no_recall',
+    notes: 'Slept over alarm',
+    createdAt: baseTimestamp - 79 * 86400000,
+    updatedAt: baseTimestamp - 79 * 86400000,
+  },
+  {
+    id: 'tech-20260728',
+    date: '2026-07-28',
+    technique: 'Other',
+    customTechniqueName: 'Early Awakening',
+    outcome: 'no_recall',
+    notes: 'Had to wake up early for funeral',
+    createdAt: baseTimestamp - 78 * 86400000,
+    updatedAt: baseTimestamp - 78 * 86400000,
+  },
+  {
+    id: 'tech-20260923',
+    date: '2026-09-23',
+    technique: 'Intention',
+    outcome: 'no_recall',
+    notes: 'No dream recalled',
+    createdAt: baseTimestamp - 21 * 86400000,
+    updatedAt: baseTimestamp - 21 * 86400000,
+  },
+  {
+    id: 'tech-20260929',
+    date: '2026-09-29',
+    technique: 'Intention',
+    outcome: 'no_recall',
+    notes: 'Did not remember any dream',
+    createdAt: baseTimestamp - 15 * 86400000,
+    updatedAt: baseTimestamp - 15 * 86400000,
+  },
+  {
+    id: 'tech-20261001',
+    date: '2026-10-01',
+    technique: 'Intention',
+    outcome: 'no_recall',
+    notes: 'No dream remembered',
+    createdAt: baseTimestamp - 13 * 86400000,
+    updatedAt: baseTimestamp - 13 * 86400000,
+  },
+  {
+    id: 'tech-20261005',
+    date: '2026-10-05',
+    technique: 'Intention',
+    outcome: 'no_recall',
+    notes: 'No dreams remembered',
+    createdAt: baseTimestamp - 9 * 86400000,
+    updatedAt: baseTimestamp - 9 * 86400000,
+  },
+  {
+    id: 'tech-20261006',
+    date: '2026-10-06',
+    technique: 'Intention',
+    outcome: 'no_recall',
+    notes: 'No dreams remembered',
+    createdAt: baseTimestamp - 8 * 86400000,
+    updatedAt: baseTimestamp - 8 * 86400000,
+  },
+  {
+    id: 'tech-20261010',
+    date: '2026-10-10',
+    technique: 'Intention',
+    outcome: 'no_recall',
+    notes: 'No dreams remembered',
+    createdAt: baseTimestamp - 4 * 86400000,
+    updatedAt: baseTimestamp - 4 * 86400000,
+  },
+  {
+    id: 'tech-20261011',
+    date: '2026-10-11',
+    technique: 'Intention',
+    outcome: 'no_recall',
+    notes: 'No dreams remembered',
+    createdAt: baseTimestamp - 3 * 86400000,
+    updatedAt: baseTimestamp - 3 * 86400000,
+  },
+  {
+    id: 'tech-20261012',
+    date: '2026-10-12',
+    technique: 'Intention',
+    outcome: 'no_recall',
+    notes: 'No dreams remembered',
+    createdAt: baseTimestamp - 2 * 86400000,
+    updatedAt: baseTimestamp - 2 * 86400000,
+  },
+  {
+    id: 'tech-20261013',
+    date: '2026-10-13',
+    technique: 'Intention',
+    outcome: 'no_recall',
+    notes: 'No dreams remembered',
+    createdAt: baseTimestamp - 1 * 86400000,
+    updatedAt: baseTimestamp - 1 * 86400000,
+  },
+];
+
+const backupPayload = {
+  version: 2,
+  source: 'oneiric',
+  exportedAt: new Date().toISOString(),
+  dreams,
+  techniqueLogs,
+};
+
+const outputPath = path.resolve('m:/Oneiric/oneiric_journal_import.json');
+fs.writeFileSync(outputPath, JSON.stringify(backupPayload, null, 2), 'utf-8');
+console.log(`Successfully generated Oneiric v2 backup JSON at: ${outputPath}`);
+console.log(`Total dreams parsed: ${dreams.length}`);
+console.log(`Total technique logs parsed: ${techniqueLogs.length}`);
