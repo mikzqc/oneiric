@@ -87,7 +87,7 @@ export const MonthCalendar: React.FC<MonthCalendarProps> = ({
         <div>
           <h2 className="text-lg font-bold text-slate-100">{monthName}</h2>
           <p className="text-xs text-slate-400">
-            Selected: <span className="text-indigo-300 font-medium">{formatDate(selectedDate)}</span>
+            Selected: <span className="text-blue-300 font-medium">{formatDate(selectedDate)}</span>
           </p>
         </div>
 
@@ -153,7 +153,7 @@ export const MonthCalendar: React.FC<MonthCalendarProps> = ({
               onClick={() => onSelectDate(dateStr)}
               className={`h-16 sm:h-20 p-1.5 sm:p-2 rounded-xl text-left border flex flex-col justify-between transition-all cursor-pointer relative group ${
                 isSelected
-                  ? 'bg-indigo-950/60 border-indigo-500 shadow-md celestial-glow ring-2 ring-indigo-500/40'
+                  ? 'bg-blue-950/70 border-blue-500 shadow-md celestial-glow ring-2 ring-blue-500/40'
                   : hasLucid
                   ? 'bg-cyan-950/30 border-cyan-700/50 hover:border-cyan-500/60'
                   : hasDreams
@@ -167,9 +167,9 @@ export const MonthCalendar: React.FC<MonthCalendarProps> = ({
                 <span
                   className={`text-xs font-semibold ${
                     isToday
-                      ? 'w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center'
+                      ? 'w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center'
                       : isSelected
-                      ? 'text-indigo-200'
+                      ? 'text-blue-200'
                       : 'text-slate-400 group-hover:text-slate-200'
                   }`}
                 >

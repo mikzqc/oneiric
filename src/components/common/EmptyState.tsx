@@ -28,10 +28,10 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       className={`flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-2xl border border-slate-800/80 bg-slate-900/30 backdrop-blur-sm ${className}`}
     >
       <div className="relative mb-4">
-        <div className="w-16 h-16 rounded-2xl bg-indigo-950/40 border border-indigo-800/30 flex items-center justify-center text-indigo-400 celestial-glow">
+        <div className="w-16 h-16 rounded-2xl bg-blue-950/50 border border-blue-800/40 flex items-center justify-center text-blue-400 celestial-glow">
           {icon || <Moon className="w-8 h-8" />}
         </div>
-        <Sparkles className="w-4 h-4 text-indigo-400 absolute -top-1 -right-1 animate-pulse" />
+        <Sparkles className="w-4 h-4 text-blue-400 absolute -top-1 -right-1 animate-pulse" />
       </div>
 
       <h3 className="text-lg font-semibold text-slate-100 mb-2">{title}</h3>

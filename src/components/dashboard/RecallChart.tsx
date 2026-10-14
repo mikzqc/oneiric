@@ -33,8 +33,8 @@ export const RecallChart: React.FC<RecallChartProps> = ({ data }) => {
         >
           <defs>
             <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
-              <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
+              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
+              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
             </linearGradient>
             <linearGradient id="colorLucid" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.6} />
@@ -70,8 +70,8 @@ export const RecallChart: React.FC<RecallChartProps> = ({ data }) => {
                     <p className="font-semibold text-slate-200">
                       {item.label} ({item.fullLabel})
                     </p>
-                    <div className="flex items-center gap-2 text-indigo-300">
-                      <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                    <div className="flex items-center gap-2 text-blue-300">
+                      <span className="w-2 h-2 rounded-full bg-blue-500" />
                       <span>Total Recalled: <strong className="text-white">{item.count}</strong></span>
                     </div>
                     <div className="flex items-center gap-2 text-cyan-300">
@@ -87,7 +87,7 @@ export const RecallChart: React.FC<RecallChartProps> = ({ data }) => {
           <Area
             type="monotone"
             dataKey="count"
-            stroke="#6366f1"
+            stroke="#3b82f6"
             strokeWidth={2.5}
             fillOpacity={1}
             fill="url(#colorTotal)"

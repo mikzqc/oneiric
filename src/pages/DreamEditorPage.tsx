@@ -36,7 +36,7 @@ export const DreamEditorPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+        <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
       </div>
     );
   }
@@ -71,7 +71,7 @@ export const DreamEditorPage: React.FC = () => {
         </Button>
 
         <div className="flex items-center gap-2 text-xs text-slate-400">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+          <Sparkles className="w-3.5 h-3.5 text-blue-400" />
           <span>{id ? 'Editing Recorded Dream' : 'New Dream Entry'}</span>
         </div>
       </div>

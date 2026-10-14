@@ -141,7 +141,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+          <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
           <p className="text-xs text-slate-400">Consulting the dream ledger...</p>
         </div>
       </div>
@@ -152,11 +152,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
     <div className="space-y-8 animate-fadeIn">
       {/* Top Banner / Hero Welcome */}
       <div className="p-6 sm:p-8 rounded-3xl bg-[#0e1730] border border-slate-800/80 shadow-2xl relative overflow-hidden celestial-glow">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-950/70 border border-indigo-700/50 text-xs text-indigo-300 font-medium mb-3">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-950/70 border border-blue-700/50 text-xs text-blue-300 font-medium mb-3">
+              <Sparkles className="w-3.5 h-3.5 text-blue-400" />
               <span>Conscious Dream Archive</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-tight leading-tight">
@@ -179,7 +179,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <Button
               variant="secondary"
               size="lg"
-              icon={<Compass className="w-4 h-4 text-indigo-400" />}
+              icon={<Compass className="w-4 h-4 text-blue-400" />}
               onClick={() => navigate('/techniques')}
             >
               Explore Techniques
@@ -247,7 +247,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
               <div className="flex items-center gap-4 text-xs">
                 <div className="flex items-center gap-1.5 text-slate-300">
-                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
                   <span>Total</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-cyan-300">
@@ -265,7 +265,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                  <Moon className="w-4 h-4 text-indigo-400" />
+                  <Moon className="w-4 h-4 text-blue-400" />
                   <span>No-Dream Days & Recall</span>
                 </h2>
                 <div className="flex items-center gap-2">
@@ -273,7 +273,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <button
                       type="button"
                       onClick={() => setIsAllRecallModalOpen(true)}
-                      className="text-xs text-indigo-400 hover:text-indigo-200 cursor-pointer font-medium"
+                      className="text-xs text-blue-400 hover:text-blue-200 cursor-pointer font-medium"
                     >
                       View all ({allTechniques.length})
                     </button>
@@ -285,7 +285,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       setNoRecallNotes('No dreams remembered');
                       setIsNoRecallModalOpen(true);
                     }}
-                    className="inline-flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-200 cursor-pointer font-medium bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1 rounded-lg border border-indigo-500/20 transition-all"
+                    className="inline-flex items-center gap-1 text-xs text-blue-300 hover:text-blue-100 cursor-pointer font-medium bg-blue-600/20 hover:bg-blue-600/30 px-2.5 py-1 rounded-lg border border-blue-500/30 transition-all"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Log Day</span>
@@ -361,7 +361,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsAllRecallModalOpen(true)}
-                  className="text-xs text-indigo-400 hover:text-indigo-300 font-medium cursor-pointer"
+                  className="text-xs text-blue-400 hover:text-blue-300 font-medium cursor-pointer"
                 >
                   View all {allTechniques.length} days &rarr;
                 </button>
@@ -459,7 +459,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               value={noRecallDate}
               onChange={(e) => setNoRecallDate(e.target.value)}
               required
-              className="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+              className="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
             />
           </div>
 
@@ -472,7 +472,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               value={noRecallNotes}
               onChange={(e) => setNoRecallNotes(e.target.value)}
               placeholder="e.g. No dreams remembered, Slept over alarm, etc."
-              className="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 focus:outline-none focus:border-indigo-500 transition-colors"
+              className="w-full px-3 py-2 text-sm bg-slate-900 border border-slate-700/80 rounded-xl text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
             />
 
             <div className="mt-3">
@@ -492,7 +492,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     onClick={() => setNoRecallNotes(reason)}
                     className={`text-[11px] px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
                       noRecallNotes === reason
-                        ? 'bg-indigo-600/30 text-indigo-300 border-indigo-500/50'
+                        ? 'bg-blue-600/30 text-blue-200 border-blue-500/50'
                         : 'bg-slate-800/60 text-slate-400 border-slate-700/60 hover:border-slate-600 hover:text-slate-200'
                     }`}
                   >

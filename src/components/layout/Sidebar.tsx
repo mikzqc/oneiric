@@ -52,13 +52,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
     <aside className="w-64 h-full flex flex-col bg-[#0b132b] border-r border-slate-800/80 text-slate-300 shrink-0 select-none">
       {/* Brand Header */}
       <div className="p-6 border-b border-slate-800/80 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-700 flex items-center justify-center text-white shadow-lg shadow-indigo-600/30 celestial-glow">
-          <Moon className="w-5 h-5 fill-indigo-200 text-indigo-100" />
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 flex items-center justify-center text-white shadow-lg shadow-blue-900/40 border border-blue-500/30">
+          <Moon className="w-5 h-5 fill-blue-200 text-blue-100" />
         </div>
         <div>
           <div className="flex items-center gap-1.5">
             <span className="font-bold text-base tracking-wider text-slate-100 uppercase">Oneiric</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-800/50 font-mono font-medium">v2.0</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800/50 font-mono font-medium">v2.0</span>
           </div>
           <p className="text-xs text-slate-400 font-medium tracking-tight">Lucid Dream Studio</p>
         </div>
@@ -82,7 +82,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium transition-all duration-150 ${
                       isActive
-                        ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 celestial-glow font-semibold'
+                        ? 'bg-blue-600/20 text-blue-300 border border-blue-500/40 font-semibold shadow-sm'
                         : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'
                     }`
                   }
@@ -92,7 +92,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                       <Icon
                         className={`w-4 h-4 shrink-0 transition-colors ${
                           isActive
-                            ? 'text-indigo-400'
+                            ? 'text-blue-400'
                             : item.highlight
                             ? 'text-cyan-400'
                             : 'text-slate-400 group-hover:text-slate-300'
@@ -113,8 +113,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
 
       {/* Bottom Privacy & Offline Info Card */}
       <div className="p-4 m-3 rounded-xl bg-slate-900/60 border border-slate-800/70 text-xs text-slate-400">
-        <div className="flex items-center gap-2 text-indigo-400 font-medium mb-1">
-          <ShieldCheck className="w-4 h-4 text-indigo-400 shrink-0" />
+        <div className="flex items-center gap-2 text-blue-400 font-medium mb-1">
+          <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0" />
           <span>Local & Private</span>
         </div>
         <p className="text-[11px] text-slate-300 leading-relaxed">

@@ -50,7 +50,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           className={`p-3 rounded-xl shrink-0 ${
             isDestructive
               ? 'bg-red-950/60 text-red-400 border border-red-800/50'
-              : 'bg-indigo-950/60 text-indigo-400 border border-indigo-800/50'
+              : 'bg-blue-950/60 text-blue-400 border border-blue-800/50'
           }`}
         >
           {isDestructive ? <AlertTriangle className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}

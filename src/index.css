@@ -8,7 +8,7 @@
     --bg-card: #0e1730;
     --bg-card-hover: #132247;
     --border-subtle: rgba(255, 255, 255, 0.08);
-    --border-glow: rgba(99, 102, 241, 0.3);
+    --border-glow: rgba(59, 130, 246, 0.3);
   }
 
   body {
@@ -28,7 +28,7 @@
 
 /* Subtle glow utility */
 .celestial-glow {
-  box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.18), 0 0 10px -5px rgba(167, 139, 250, 0.15);
+  box-shadow: 0 0 25px -5px rgba(37, 99, 235, 0.25), 0 0 10px -5px rgba(59, 130, 246, 0.2);
 }
 
 .lucid-glow {

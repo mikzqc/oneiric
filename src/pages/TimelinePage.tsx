@@ -49,7 +49,7 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-100 tracking-tight flex items-center gap-2">
-          <Clock className="w-6 h-6 text-indigo-400" />
+          <Clock className="w-6 h-6 text-blue-400" />
           <span>Chronological Nocturnal Timeline</span>
         </h1>
         <p className="text-xs sm:text-sm text-slate-400 mt-1">
@@ -59,7 +59,7 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({
 
       {isLoading ? (
         <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+          <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
         </div>
       ) : nights.length === 0 ? (
         <EmptyState
@@ -80,10 +80,10 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({
                     night.hasLucid
                       ? 'bg-cyan-950 border-cyan-400 text-cyan-300 shadow-md shadow-cyan-900/40 lucid-glow'
                       : night.hasFalseAwakening
-                      ? 'bg-violet-950 border-violet-400 text-violet-300'
+                      ? 'bg-blue-950 border-blue-400 text-blue-300'
                       : night.dreams.length === 0
                       ? 'bg-slate-900 border-slate-700 text-slate-400'
-                      : 'bg-[#0f172a] border-slate-700 text-indigo-400'
+                      : 'bg-[#0f172a] border-slate-700 text-blue-400'
                   }`}
                 >
                   {night.hasLucid ? (
@@ -119,7 +119,7 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({
                         </span>
                       )}
                       {night.hasFalseAwakening && (
-                        <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-violet-950 text-violet-300 border border-violet-700/50">
+                        <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-950 text-blue-300 border border-blue-700/50">
                           False Awakening
                         </span>
                       )}
@@ -136,7 +136,7 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({
                   {night.techniques.length > 0 && (
                     <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2">
                       <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                        <Compass className="w-3.5 h-3.5 text-indigo-400" />
+                        <Compass className="w-3.5 h-3.5 text-blue-400" />
                         <span>Check-ins & Observations:</span>
                       </span>
 
@@ -160,7 +160,7 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({
                                 </span>
                               )}
                               {tech.confidenceRating && (
-                                <span className="text-indigo-300 font-mono text-[11px]">
+                                <span className="text-blue-300 font-mono text-[11px]">
                                   Confidence: {tech.confidenceRating}/5
                                 </span>
                               )}
@@ -171,7 +171,7 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({
                                 tech.outcome === 'lucid_dream'
                                   ? 'bg-cyan-950 text-cyan-300 border border-cyan-800'
                                   : tech.outcome === 'dream_recalled'
-                                  ? 'bg-indigo-950 text-indigo-300 border border-indigo-800'
+                                  ? 'bg-blue-950 text-blue-300 border border-blue-800'
                                   : 'bg-slate-800 text-slate-400 border border-slate-700'
                               }`}
                             >
@@ -194,13 +194,13 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({
                         <div
                           key={dream.id}
                           onClick={() => setSelectedDreamForView(dream)}
-                          className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-indigo-500/60 transition-all cursor-pointer space-y-2.5 shadow-sm"
+                          className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-blue-500/60 transition-all cursor-pointer space-y-2.5 shadow-sm"
                         >
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
                               <LucidityBadge lucidity={dream.lucidity} size="sm" />
                               {dream.falseAwakening && (
-                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-950 text-violet-300 border border-violet-800">
+                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-950 text-blue-300 border border-blue-800">
                                   False Awakening
                                 </span>
                               )}
@@ -234,7 +234,7 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({
                             </div>
                           </div>
 
-                          <h3 className="text-sm sm:text-base font-bold text-slate-100 hover:text-indigo-200 transition-colors">
+                          <h3 className="text-sm sm:text-base font-bold text-slate-100 hover:text-blue-200 transition-colors">
                             {dream.title}
                           </h3>
 
@@ -242,7 +242,7 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({
                             {dream.narrative}
                           </p>
 
-                          <div className="flex items-center justify-between pt-1 text-[11px] text-indigo-400 font-medium">
+                          <div className="flex items-center justify-between pt-1 text-[11px] text-blue-400 font-medium">
                             <span>Open full narrative & inspection</span>
                             <ArrowRight className="w-3.5 h-3.5" />
                           </div>

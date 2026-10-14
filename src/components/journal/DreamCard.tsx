@@ -34,7 +34,7 @@ export const DreamCard: React.FC<DreamCardProps> = ({
           <div className="flex flex-wrap items-center gap-1.5">
             <LucidityBadge lucidity={dream.lucidity} size="sm" />
             {dream.falseAwakening && (
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-violet-950/80 text-violet-300 border border-violet-700/50">
+              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-950/80 text-blue-300 border border-blue-700/50">
                 FA
               </span>
             )}
@@ -66,7 +66,7 @@ export const DreamCard: React.FC<DreamCardProps> = ({
         </div>
 
         {/* Title */}
-        <h3 className="text-base font-semibold text-slate-100 group-hover:text-indigo-200 transition-colors line-clamp-1 mb-2">
+        <h3 className="text-base font-semibold text-slate-100 group-hover:text-blue-200 transition-colors line-clamp-1 mb-2">
           {dream.title}
         </h3>
 
@@ -118,7 +118,7 @@ export const DreamCard: React.FC<DreamCardProps> = ({
           <button
             type="button"
             onClick={() => onEdit(dream)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-300 hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-300 hover:bg-slate-800 transition-colors cursor-pointer"
             title="Edit entry"
             aria-label="Edit dream entry"
           >

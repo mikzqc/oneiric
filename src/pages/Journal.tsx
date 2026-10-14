@@ -154,7 +154,7 @@ export const Journal: React.FC<JournalProps> = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search dream titles, narratives, dream signs, tags..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {searchQuery && (
               <button
@@ -172,7 +172,7 @@ export const Journal: React.FC<JournalProps> = ({
             <Button
               variant="secondary"
               size="sm"
-              icon={<ArrowUpDown className="w-3.5 h-3.5 text-indigo-400" />}
+              icon={<ArrowUpDown className="w-3.5 h-3.5 text-blue-400" />}
               onClick={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}
             >
               <span>{sortOrder === 'newest' ? 'Newest First' : 'Oldest First'}</span>
@@ -192,7 +192,7 @@ export const Journal: React.FC<JournalProps> = ({
             value={lucidityFilter}
             onChange={(e) => setLucidityFilter(e.target.value as 'all' | LucidityLevel)}
             aria-label="Filter by lucidity"
-            className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700/80 text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+            className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700/80 text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
           >
             <option value="all">All Lucidity</option>
             <option value="lucid">Lucid Only</option>
@@ -205,7 +205,7 @@ export const Journal: React.FC<JournalProps> = ({
             value={selectedEmotion}
             onChange={(e) => setSelectedEmotion(e.target.value)}
             aria-label="Filter by emotion"
-            className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700/80 text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+            className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700/80 text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
           >
             <option value="all">All Emotions</option>
             {PREDEFINED_EMOTIONS.map((emotion) => (
@@ -221,7 +221,7 @@ export const Journal: React.FC<JournalProps> = ({
               value={selectedTag}
               onChange={(e) => setSelectedTag(e.target.value)}
               aria-label="Filter by tag"
-              className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700/80 text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+              className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700/80 text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
             >
               <option value="all">All Tags</option>
               {allTags.map((tag) => (
@@ -236,7 +236,7 @@ export const Journal: React.FC<JournalProps> = ({
             <button
               type="button"
               onClick={resetFilters}
-              className="ml-auto text-xs text-indigo-400 hover:text-indigo-200 underline cursor-pointer p-1"
+              className="ml-auto text-xs text-blue-400 hover:text-blue-200 underline cursor-pointer p-1"
             >
               Clear filters
             </button>
@@ -247,7 +247,7 @@ export const Journal: React.FC<JournalProps> = ({
       {/* Dreams List / Grid */}
       {isLoading ? (
         <div className="flex items-center justify-center min-h-[30vh]">
-          <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+          <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
         </div>
       ) : filteredDreams.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -185,7 +185,7 @@ export const SettingsPage: React.FC = () => {
       {/* Section 1: Backup & Restore */}
       <section className="p-6 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 shadow-xl space-y-5">
         <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
-          <Database className="w-5 h-5 text-indigo-400" />
+          <Database className="w-5 h-5 text-blue-400" />
           <div>
             <h2 className="text-base font-bold text-slate-100">Backup & Restore</h2>
             <p className="text-xs text-slate-400">Export your dream ledger or restore from a backup file</p>
@@ -197,7 +197,7 @@ export const SettingsPage: React.FC = () => {
           <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-200 mb-1">
-                <Download className="w-4 h-4 text-indigo-400" />
+                <Download className="w-4 h-4 text-blue-400" />
                 <span>Export Journal Backup</span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed mb-4">
@@ -294,7 +294,7 @@ export const SettingsPage: React.FC = () => {
           </p>
           <ul className="list-disc list-inside space-y-1.5 text-slate-400">
             <li>
-              <strong>Where is my data stored?</strong> Everything is persisted in your browser's private IndexedDB storage container (named <code className="text-indigo-300">OneiricDB</code>).
+              <strong>Where is my data stored?</strong> Everything is persisted in your browser's private IndexedDB storage container (named <code className="text-blue-300">OneiricDB</code>).
             </li>
             <li>
               <strong>Are dreams sent anywhere?</strong> No. No dream text, notes, or analytical metadata are ever transmitted to any external server, cloud sync, or third-party AI provider.
@@ -341,9 +341,9 @@ export const SettingsPage: React.FC = () => {
         >
           {importCandidate.valid && importCandidate.stats ? (
             <div className="space-y-4">
-              <div className="p-3.5 rounded-xl bg-indigo-950/40 border border-indigo-700/50 text-xs text-indigo-200 space-y-1">
-                <div className="flex items-center gap-1.5 font-semibold text-indigo-300">
-                  <FileText className="w-4 h-4 text-indigo-400" />
+              <div className="p-3.5 rounded-xl bg-blue-950/40 border border-blue-700/50 text-xs text-blue-200 space-y-1">
+                <div className="flex items-center gap-1.5 font-semibold text-blue-300">
+                  <FileText className="w-4 h-4 text-blue-400" />
                   <span>Backup Verified Successfully</span>
                 </div>
                 <p>• {importCandidate.stats.dreamCount} dream entries ({importCandidate.stats.lucidCount} lucid)</p>
@@ -362,7 +362,7 @@ export const SettingsPage: React.FC = () => {
                       value="merge"
                       checked={importMode === 'merge'}
                       onChange={() => setImportMode('merge')}
-                      className="mt-0.5 text-indigo-600 focus:ring-indigo-500"
+                      className="mt-0.5 text-blue-600 focus:ring-blue-500"
                     />
                     <div>
                       <span className="font-semibold text-slate-200 block">Merge with existing data (Recommended)</span>

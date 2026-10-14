@@ -71,7 +71,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-100 tracking-tight flex items-center gap-2">
-            <CalendarDays className="w-6 h-6 text-indigo-400" />
+            <CalendarDays className="w-6 h-6 text-blue-400" />
             <span>Lunar & Solar Calendar</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-400">
@@ -90,7 +90,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
 
       {isLoading ? (
         <div className="flex items-center justify-center min-h-[40vh]">
-          <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin" />
+          <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -131,7 +131,7 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
               {/* Selected date recall check-in */}
               {selectedDateRecallLog && (
                 <div className="mb-4 p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-3">
-                  <Moon className="w-4 h-4 text-indigo-400 mt-0.5 shrink-0" />
+                  <Moon className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
                   <div className="space-y-1 text-xs min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-slate-200">Recall Check-in</span>

@@ -111,7 +111,7 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
             id="tech-select"
             value={technique}
             onChange={(e) => setTechnique(e.target.value as TechniqueType)}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
           >
             <option value="MILD">MILD — Mnemonic Induction of Lucid Dreams</option>
             <option value="SSILD">SSILD — Senses Initiated Lucid Dream</option>
@@ -135,7 +135,7 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
               value={customTechniqueName}
               onChange={(e) => setCustomTechniqueName(e.target.value)}
               placeholder="e.g. Galantamine + Meditation, Lucid Mask, etc."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         )}
@@ -144,7 +144,7 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label htmlFor="tech-date" className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1 flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-indigo-400" />
+              <Calendar className="w-3.5 h-3.5 text-blue-400" />
               Date of Attempt
             </label>
             <input
@@ -152,13 +152,13 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-100 text-xs focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-100 text-xs focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
             <label htmlFor="bed-time" className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1 flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-indigo-400" />
+              <Clock className="w-3.5 h-3.5 text-blue-400" />
               Bedtime (Optional)
             </label>
             <input
@@ -167,13 +167,13 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
               value={bedTime}
               onChange={(e) => setBedTime(e.target.value)}
               placeholder="23:00"
-              className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-100 text-xs focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-100 text-xs focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
             <label htmlFor="wake-time" className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1 flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-indigo-400" />
+              <Clock className="w-3.5 h-3.5 text-blue-400" />
               Wake Time (Optional)
             </label>
             <input
@@ -182,7 +182,7 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
               value={wakeTime}
               onChange={(e) => setWakeTime(e.target.value)}
               placeholder="06:30"
-              className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-100 text-xs focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-100 text-xs focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
@@ -190,7 +190,7 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
         {/* Companion / Secondary techniques on the same night */}
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-indigo-400" />
+            <Layers className="w-3.5 h-3.5 text-blue-400" />
             <span>Companion Protocols (Combined on same night):</span>
           </label>
           <div className="flex flex-wrap gap-1.5">
@@ -203,7 +203,7 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
                   onClick={() => toggleSecondary(opt)}
                   className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-indigo-950 border-indigo-500 text-indigo-200'
+                      ? 'bg-blue-950 border-blue-500 text-blue-200'
                       : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
                   }`}
                 >
@@ -264,7 +264,7 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
               onClick={() => setOutcome('dream_recalled')}
               className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
                 outcome === 'dream_recalled'
-                  ? 'bg-indigo-950/70 border-indigo-500 text-indigo-200 font-semibold shadow-sm'
+                  ? 'bg-blue-950/70 border-blue-500 text-blue-200 font-semibold shadow-sm'
                   : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
               }`}
             >
@@ -291,7 +291,7 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
         {/* Notes */}
         <div>
           <label htmlFor="tech-notes" className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1 flex items-center gap-1.5">
-            <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
+            <BookOpen className="w-3.5 h-3.5 text-blue-400" />
             Attempt Notes & Observations (Optional)
           </label>
           <textarea
@@ -300,7 +300,7 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
             onChange={(e) => setNotes(e.target.value)}
             placeholder="e.g. Woke at 4:30 AM, read for 20 min, cycled senses 3 times before falling asleep..."
             rows={2}
-            className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-100 placeholder-slate-500 text-xs leading-relaxed focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-100 placeholder-slate-500 text-xs leading-relaxed focus:ring-2 focus:ring-blue-500"
           />
         </div>
 

@@ -71,7 +71,7 @@ export const TechniquesPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-100 tracking-tight flex items-center gap-2.5">
-            <Compass className="w-7 h-7 text-indigo-400" />
+            <Compass className="w-7 h-7 text-blue-400" />
             <span>Induction Protocols & Knowledge Base</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
@@ -80,7 +80,7 @@ export const TechniquesPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-indigo-950/80 text-indigo-300 border border-indigo-700/60 font-mono">
+          <span className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-blue-950/80 text-blue-300 border border-blue-700/60 font-mono">
             {filteredTechniques.length} of {TECHNIQUE_CATALOG.length} Protocols
           </span>
         </div>
@@ -97,7 +97,7 @@ export const TechniquesPage: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search protocols by name, acronym, mechanism, or keywords..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-200 text-xs sm:text-sm focus:outline-none focus:border-indigo-500/80 placeholder-slate-500 transition-colors shadow-inner"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-200 text-xs sm:text-sm focus:outline-none focus:border-blue-500/80 placeholder-slate-500 transition-colors shadow-inner"
             />
             {searchQuery && (
               <button
@@ -113,13 +113,13 @@ export const TechniquesPage: React.FC = () => {
           {/* Difficulty Dropdown */}
           <div className="flex items-center gap-2 shrink-0">
             <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
-              <Filter className="w-3.5 h-3.5 text-indigo-400" />
+              <Filter className="w-3.5 h-3.5 text-blue-400" />
               <span>Level:</span>
             </span>
             <select
               value={selectedDifficulty}
               onChange={(e) => setSelectedDifficulty(e.target.value)}
-              className="bg-slate-900/90 border border-slate-800 text-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 cursor-pointer shadow-sm"
+              className="bg-slate-900/90 border border-slate-800 text-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-blue-500 cursor-pointer shadow-sm"
             >
               {difficulties.map((diff) => (
                 <option key={diff} value={diff}>
@@ -139,7 +139,7 @@ export const TechniquesPage: React.FC = () => {
               onClick={() => setSelectedCategory(cat)}
               className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all duration-150 cursor-pointer border ${
                 selectedCategory === cat
-                  ? 'bg-indigo-600/20 text-indigo-300 border-indigo-500/50 shadow-sm shadow-indigo-950 font-semibold'
+                  ? 'bg-blue-600/20 text-blue-300 border-blue-500/50 shadow-sm shadow-blue-950 font-semibold'
                   : 'bg-slate-900/50 text-slate-400 border-slate-800 hover:bg-slate-800/60 hover:text-slate-300'
               }`}
             >
@@ -160,7 +160,7 @@ export const TechniquesPage: React.FC = () => {
               setSelectedCategory('All Protocols');
               setSelectedDifficulty('All Levels');
             }}
-            className="text-xs text-indigo-400 hover:text-indigo-300 font-medium underline cursor-pointer"
+            className="text-xs text-blue-400 hover:text-blue-300 font-medium underline cursor-pointer"
           >
             Reset Filters
           </button>
@@ -176,14 +176,14 @@ export const TechniquesPage: React.FC = () => {
       {/* Educational Fundamentals & Sleep Architecture Banner */}
       <div className="p-6 rounded-2xl bg-[#0c1222]/90 border border-slate-800/90 shadow-xl space-y-4">
         <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-          <Brain className="w-4 h-4 text-indigo-400" />
+          <Brain className="w-4 h-4 text-blue-400" />
           <span>Core Sleep Architecture & Induction Fundamentals</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-300">
           <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1.5">
-            <span className="font-semibold text-indigo-300 flex items-center gap-1.5 text-[11px] uppercase tracking-wide">
-              <Moon className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="font-semibold text-blue-300 flex items-center gap-1.5 text-[11px] uppercase tracking-wide">
+              <Moon className="w-3.5 h-3.5 text-blue-400" />
               <span>REM Sleep Distribution</span>
             </span>
             <p className="leading-relaxed text-slate-400 text-[11px]">

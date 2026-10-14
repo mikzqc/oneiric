@@ -20,7 +20,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-[#0b132b] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer select-none';
+    'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 focus-visible:ring-offset-[#0b132b] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer select-none';
 
   const sizeStyles = {
     sm: 'text-xs px-3 py-1.5 gap-1.5',
@@ -30,15 +30,15 @@ export const Button: React.FC<ButtonProps> = ({
 
   const variantStyles = {
     primary:
-      'bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white shadow-md shadow-indigo-950/50 hover:shadow-indigo-600/25',
+      'bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white shadow-md shadow-blue-950/50 hover:shadow-blue-600/25 border border-blue-500/40',
     celestial:
-      'bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg shadow-indigo-500/20 celestial-glow font-semibold',
+      'bg-gradient-to-r from-blue-700 via-blue-600 to-sky-700 hover:from-blue-600 hover:to-sky-600 text-white shadow-lg shadow-blue-950/40 border border-blue-400/30 font-semibold',
     secondary:
-      'bg-slate-800/80 hover:bg-slate-700/80 active:bg-slate-900 text-slate-200 border border-slate-700/60 hover:border-slate-600',
+      'bg-[#132347] hover:bg-[#1a3164] active:bg-[#0f1b38] text-blue-100 border border-blue-800/60 hover:border-blue-600',
     outline:
-      'bg-transparent hover:bg-slate-800/50 text-slate-300 border border-slate-700/70 hover:border-slate-500',
+      'bg-transparent hover:bg-blue-950/50 text-blue-200 border border-blue-800/60 hover:border-blue-500',
     ghost:
-      'bg-transparent hover:bg-slate-800/60 text-slate-400 hover:text-slate-100',
+      'bg-transparent hover:bg-blue-950/60 text-blue-300 hover:text-white',
     danger:
       'bg-red-950/60 hover:bg-red-900/80 text-red-200 border border-red-800/60 hover:border-red-600',
   };

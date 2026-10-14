@@ -58,7 +58,7 @@ export const EmotionBadge: React.FC<{ emotion: string; size?: 'sm' | 'md'; onRem
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-md bg-indigo-950/50 text-indigo-200 border border-indigo-800/40 ${sizeClasses}`}
+      className={`inline-flex items-center gap-1 rounded-md bg-blue-950/60 text-blue-200 border border-blue-800/50 ${sizeClasses}`}
     >
       <span>{emotion}</span>
       {onRemove && (
@@ -68,7 +68,7 @@ export const EmotionBadge: React.FC<{ emotion: string; size?: 'sm' | 'md'; onRem
             e.stopPropagation();
             onRemove();
           }}
-          className="text-indigo-400 hover:text-indigo-200 ml-0.5 cursor-pointer"
+          className="text-blue-400 hover:text-blue-200 ml-0.5 cursor-pointer"
           aria-label={`Remove emotion ${emotion}`}
         >
           &times;

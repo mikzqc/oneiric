@@ -25,7 +25,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           type="button"
           onClick={onOpenMobileMenu}
-          className="md:hidden p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+          className="md:hidden p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
           aria-label="Open mobile navigation menu"
         >
           <Menu className="w-5 h-5" />

@@ -127,7 +127,7 @@ export const LucidDreamsPage: React.FC<LucidDreamsPageProps> = ({
           </div>
 
           <div className="p-4 rounded-xl bg-cyan-950/20 border border-cyan-800/30 flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-cyan-950/60 border border-cyan-700/50 text-indigo-400">
+            <div className="p-2.5 rounded-lg bg-cyan-950/60 border border-cyan-700/50 text-blue-400">
               <Brain className="w-5 h-5" />
             </div>
             <div>
@@ -172,7 +172,7 @@ export const LucidDreamsPage: React.FC<LucidDreamsPageProps> = ({
           {/* Educational Guidance on Inducing & Marking Lucid Dreams */}
           <div className="p-6 rounded-2xl bg-[#0f172a]/60 border border-slate-800/80 shadow-lg space-y-4">
             <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-              <Compass className="w-4 h-4 text-indigo-400" />
+              <Compass className="w-4 h-4 text-blue-400" />
               <span>How to Recognize and Mark Lucid Dreams</span>
             </h3>
 

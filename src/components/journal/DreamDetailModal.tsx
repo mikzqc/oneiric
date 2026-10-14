@@ -45,8 +45,8 @@ export const DreamDetailModal: React.FC<DreamDetailModalProps> = ({
             <LucidityBadge lucidity={dream.lucidity} size="md" />
 
             {dream.falseAwakening && (
-              <span className="inline-flex items-center gap-1 font-semibold rounded-full bg-violet-950/80 text-violet-300 border border-violet-600/40 text-xs px-2.5 py-1">
-                <AlertTriangle className="w-3 h-3 text-violet-400" />
+              <span className="inline-flex items-center gap-1 font-semibold rounded-full bg-blue-950/80 text-blue-300 border border-blue-600/40 text-xs px-2.5 py-1">
+                <AlertTriangle className="w-3 h-3 text-blue-400" />
                 <span>False Awakening</span>
               </span>
             )}
@@ -122,8 +122,8 @@ export const DreamDetailModal: React.FC<DreamDetailModalProps> = ({
             </div>
 
             {typeof dream.dreamControl === 'number' && dream.dreamControl > 0 && (
-              <div className="flex items-center gap-1 text-indigo-300">
-                <Brain className="w-3.5 h-3.5 text-indigo-400" />
+              <div className="flex items-center gap-1 text-blue-300">
+                <Brain className="w-3.5 h-3.5 text-blue-400" />
                 <span className="text-slate-500">Control:</span>
                 <span className="font-semibold">{dream.dreamControl}/5</span>
               </div>
@@ -140,9 +140,9 @@ export const DreamDetailModal: React.FC<DreamDetailModalProps> = ({
 
         {/* False Awakening Box if recorded */}
         {dream.falseAwakening && dream.falseAwakeningDetails && (
-          <div className="p-4 rounded-xl bg-violet-950/30 border border-violet-800/40 text-xs text-violet-200 space-y-2">
-            <div className="flex items-center gap-1.5 font-semibold text-violet-300">
-              <AlertTriangle className="w-4 h-4 text-violet-400 shrink-0" />
+          <div className="p-4 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs text-blue-200 space-y-2">
+            <div className="flex items-center gap-1.5 font-semibold text-blue-300">
+              <AlertTriangle className="w-4 h-4 text-blue-400 shrink-0" />
               <span>False Awakening Incident</span>
             </div>
             {dream.falseAwakeningDetails.environmentDescription && (
@@ -183,9 +183,9 @@ export const DreamDetailModal: React.FC<DreamDetailModalProps> = ({
 
         {/* Personal Interpretation Notes if recorded */}
         {dream.interpretationNotes && (
-          <div className="p-4 rounded-xl bg-indigo-950/20 border border-indigo-800/30 text-xs text-indigo-200">
-            <div className="flex items-center gap-1.5 font-semibold text-indigo-300 mb-1">
-              <BookOpen className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+          <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-800/40 text-xs text-blue-200">
+            <div className="flex items-center gap-1.5 font-semibold text-blue-300 mb-1">
+              <BookOpen className="w-3.5 h-3.5 text-blue-400 shrink-0" />
               <span>Personal Interpretation & Reflections</span>
             </div>
             <p className="leading-relaxed text-slate-300 whitespace-pre-wrap">
@@ -198,7 +198,7 @@ export const DreamDetailModal: React.FC<DreamDetailModalProps> = ({
         {dream.realityChecksUseful && dream.realityChecksUseful.length > 0 && (
           <div className="text-xs">
             <span className="text-slate-400 block mb-1.5 font-medium flex items-center gap-1">
-              <Shield className="w-3.5 h-3.5 text-indigo-400" />
+              <Shield className="w-3.5 h-3.5 text-blue-400" />
               <span>Actionable Reality Checks:</span>
             </span>
             <div className="flex flex-wrap gap-1.5">
