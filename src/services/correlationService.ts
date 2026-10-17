@@ -37,6 +37,10 @@ export const correlationService = {
    * 2. Keyword or alias matching in dream title, narrative, tags, or notes
    */
   dreamMatchesSign(dream: DreamEntry, sign: DreamSign): boolean {
+    if (sign.excludedDreamIds && sign.excludedDreamIds.includes(dream.id)) {
+      return false;
+    }
+
     if (sign.linkedDreamIds && sign.linkedDreamIds.includes(dream.id)) {
       return true;
     }

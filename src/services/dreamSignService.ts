@@ -101,6 +101,56 @@ export function matchesKeyword(normalizedText: string, keyword: string): boolean
   return regex.test(normalizedText);
 }
 
+// Local storage key for deleted / permanently ignored dream sign names
+const IGNORED_SIGNS_STORAGE_KEY = 'oneiric_ignored_signs';
+
+export function getIgnoredSignNames(): string[] {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return [];
+    const raw = localStorage.getItem(IGNORED_SIGNS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function ignoreSignName(name: string): void {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    const trimmed = name.toLowerCase().trim();
+    if (!trimmed) return;
+    const names = new Set(getIgnoredSignNames().map((n) => n.toLowerCase().trim()));
+    names.add(trimmed);
+    localStorage.setItem(IGNORED_SIGNS_STORAGE_KEY, JSON.stringify(Array.from(names)));
+  } catch (e) {
+    console.error('Failed to save ignored sign name', e);
+  }
+}
+
+export function unignoreSignName(name: string): void {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    const trimmed = name.toLowerCase().trim();
+    if (!trimmed) return;
+    const names = new Set(getIgnoredSignNames().map((n) => n.toLowerCase().trim()));
+    names.delete(trimmed);
+    localStorage.setItem(IGNORED_SIGNS_STORAGE_KEY, JSON.stringify(Array.from(names)));
+  } catch (e) {
+    console.error('Failed to unignore sign name', e);
+  }
+}
+
+export function clearIgnoredSignNames(): void {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    localStorage.removeItem(IGNORED_SIGNS_STORAGE_KEY);
+  } catch (e) {
+    console.error('Failed to clear ignored sign names', e);
+  }
+}
+
+let activeScanPromise: Promise<{ updatedSignsCount: number; newSuggestionsCount: number }> | null = null;
+
 export const dreamSignService = {
   async getAllSigns(): Promise<DreamSign[]> {
     return await db.dreamSigns.orderBy('distinctDreamCount').reverse().toArray();
@@ -114,6 +164,10 @@ export const dreamSignService = {
     return await db.dreamSigns.where('status').equals('confirmed').toArray();
   },
 
+  async getDismissedSigns(): Promise<DreamSign[]> {
+    return await db.dreamSigns.where('status').equals('dismissed').toArray();
+  },
+
   async getSignById(id: string): Promise<DreamSign | undefined> {
     return await db.dreamSigns.get(id);
   },
@@ -123,6 +177,28 @@ export const dreamSignService = {
     const cleanKeywords = Array.from(
       new Set(draft.keywords.map((k) => k.trim().toLowerCase()).filter(Boolean))
     );
+
+    // If it's a suggested candidate from auto-scan, avoid duplicate creation or resurrection if ignored
+    if (draft.status === 'suggested') {
+      const ignored = new Set(getIgnoredSignNames().map((n) => n.toLowerCase()));
+      if (ignored.has(draft.name.toLowerCase())) {
+        return {
+          id: 'ignored',
+          name: draft.name,
+          category: draft.category,
+          keywords: cleanKeywords,
+          status: 'dismissed',
+          linkedDreamIds: [],
+          distinctDreamCount: 0,
+          createdAt: now,
+          updatedAt: now,
+        };
+      }
+      const existing = await db.dreamSigns.where('name').equalsIgnoreCase(draft.name).first();
+      if (existing) {
+        return existing;
+      }
+    }
 
     const sign: DreamSign = {
       ...draft,
@@ -157,8 +233,161 @@ export const dreamSignService = {
     });
   },
 
-  async deleteSign(id: string): Promise<void> {
-    await db.dreamSigns.delete(id);
+  /**
+   * Permanently deletes a sign. When preventRecreation is true (default), records its name
+   * in the ignored list so automated pattern scans will not resurrect it as a suggestion.
+   * Also safely removes any matching duplicates by name.
+   */
+  async deleteSign(id: string, preventRecreation = true): Promise<void> {
+    const sign = await db.dreamSigns.get(id);
+    if (sign && preventRecreation) {
+      ignoreSignName(sign.name);
+    }
+    if (sign) {
+      const allMatching = await db.dreamSigns
+        .where('name')
+        .equalsIgnoreCase(sign.name)
+        .toArray();
+      for (const m of allMatching) {
+        await db.dreamSigns.delete(m.id);
+      }
+    } else {
+      await db.dreamSigns.delete(id);
+    }
+  },
+
+  /**
+   * Bulk deletes multiple signs with failure tolerance and reporting.
+   */
+  async deleteMultipleSigns(
+    ids: string[],
+    preventRecreation = true
+  ): Promise<{ succeeded: string[]; failed: string[] }> {
+    const succeeded: string[] = [];
+    const failed: string[] = [];
+
+    for (const id of ids) {
+      try {
+        await this.deleteSign(id, preventRecreation);
+        succeeded.push(id);
+      } catch (err) {
+        console.error(`Failed to delete sign ${id}`, err);
+        failed.push(id);
+      }
+    }
+
+    return { succeeded, failed };
+  },
+
+  /**
+   * Dismisses a sign (hides it from active views and correlations, but preserves it in the library).
+   */
+  async dismissSign(id: string): Promise<void> {
+    await this.setSignStatus(id, 'dismissed');
+  },
+
+  /**
+   * Bulk dismisses multiple signs with failure tolerance and reporting.
+   */
+  async dismissMultipleSigns(ids: string[]): Promise<{ succeeded: string[]; failed: string[] }> {
+    const succeeded: string[] = [];
+    const failed: string[] = [];
+
+    for (const id of ids) {
+      try {
+        await this.setSignStatus(id, 'dismissed');
+        succeeded.push(id);
+      } catch (err) {
+        console.error(`Failed to dismiss sign ${id}`, err);
+        failed.push(id);
+      }
+    }
+
+    return { succeeded, failed };
+  },
+
+  /**
+   * Restores a dismissed or previously ignored sign back into confirmed/suggested status.
+   */
+  async restoreSign(id: string, nextStatus: DreamSignStatus = 'confirmed'): Promise<void> {
+    const sign = await db.dreamSigns.get(id);
+    if (sign) {
+      unignoreSignName(sign.name);
+    }
+    await this.setSignStatus(id, nextStatus);
+  },
+
+  /**
+   * Bulk restores multiple signs.
+   */
+  async restoreMultipleSigns(
+    ids: string[],
+    nextStatus: DreamSignStatus = 'confirmed'
+  ): Promise<{ succeeded: string[]; failed: string[] }> {
+    const succeeded: string[] = [];
+    const failed: string[] = [];
+
+    for (const id of ids) {
+      try {
+        await this.restoreSign(id, nextStatus);
+        succeeded.push(id);
+      } catch (err) {
+        console.error(`Failed to restore sign ${id}`, err);
+        failed.push(id);
+      }
+    }
+
+    return { succeeded, failed };
+  },
+
+  /**
+   * Scope B: Unlinks a sign from a specific dream entry without altering the dream narrative or tags.
+   * Adds the dreamId to excludedDreamIds so future automatic scans will never re-link it.
+   */
+  async unlinkSignFromDream(signId: string, dreamId: string): Promise<DreamSign> {
+    const sign = await db.dreamSigns.get(signId);
+    if (!sign) {
+      throw new Error(`Dream sign "${signId}" not found.`);
+    }
+
+    const currentExcluded = new Set(sign.excludedDreamIds || []);
+    currentExcluded.add(dreamId);
+
+    const currentLinked = (sign.linkedDreamIds || []).filter((id) => id !== dreamId);
+
+    await db.dreamSigns.update(signId, {
+      excludedDreamIds: Array.from(currentExcluded),
+      linkedDreamIds: currentLinked,
+      distinctDreamCount: currentLinked.length,
+      updatedAt: Date.now(),
+    });
+
+    const updated = await db.dreamSigns.get(signId);
+    return updated!;
+  },
+
+  /**
+   * Re-links a dream to a sign, removing it from excludedDreamIds if present.
+   */
+  async linkSignToDream(signId: string, dreamId: string): Promise<DreamSign> {
+    const sign = await db.dreamSigns.get(signId);
+    if (!sign) {
+      throw new Error(`Dream sign "${signId}" not found.`);
+    }
+
+    const currentExcluded = (sign.excludedDreamIds || []).filter((id) => id !== dreamId);
+    const currentLinked = new Set(sign.linkedDreamIds || []);
+    currentLinked.add(dreamId);
+
+    await db.dreamSigns.update(signId, {
+      excludedDreamIds: currentExcluded,
+      linkedDreamIds: Array.from(currentLinked),
+      distinctDreamCount: currentLinked.size,
+      updatedAt: Date.now(),
+    });
+
+    const updated = await db.dreamSigns.get(signId);
+    return updated!;
   },
 
   async toggleRealityCheckReminder(id: string): Promise<boolean> {
@@ -235,17 +464,24 @@ export const dreamSignService = {
   /**
    * Scans all stored dreams against known dream signs and dictionary rules.
    * Recalculates occurrences and discovers candidate signs appearing in >= 2 distinct dreams.
+   * Uses an in-flight promise lock to prevent concurrent redundant scans and race conditions.
    */
   async scanAndDetectSigns(): Promise<{
     updatedSignsCount: number;
     newSuggestionsCount: number;
   }> {
-    const dreams = await db.dreams.toArray();
-    const existingSigns = await db.dreamSigns.toArray();
+    if (activeScanPromise) {
+      return activeScanPromise;
+    }
 
-    // Map dream ID -> combined normalized searchable text
-    const dreamTextMap = new Map<string, { date: string; text: string }>();
-    for (const dream of dreams) {
+    activeScanPromise = (async () => {
+      try {
+        const dreams = await db.dreams.toArray();
+        const existingSigns = await db.dreamSigns.toArray();
+
+        // Map dream ID -> combined normalized searchable text
+        const dreamTextMap = new Map<string, { date: string; text: string }>();
+        for (const dream of dreams) {
       const fullText = [
         dream.title,
         dream.narrative,
@@ -267,6 +503,11 @@ export const dreamSignService = {
       const allSearchTerms = [sign.name.toLowerCase(), ...sign.keywords];
 
       for (const [dreamId, dreamData] of dreamTextMap.entries()) {
+        // Skip dream if explicitly unlinked/excluded by user from this sign
+        if (sign.excludedDreamIds && sign.excludedDreamIds.includes(dreamId)) {
+          continue;
+        }
+
         const matchesAny = allSearchTerms.some((term) => matchesKeyword(dreamData.text, term));
         if (matchesAny) {
           matchedDreamIds.add(dreamId);
@@ -291,10 +532,12 @@ export const dreamSignService = {
 
     // 2. Discover new recurring candidate signs from DEFAULT_PATTERN_RULES
     const existingSignNames = new Set(existingSigns.map((s) => s.name.toLowerCase()));
+    const ignoredNames = new Set(getIgnoredSignNames().map((n) => n.toLowerCase()));
     let newSuggestionsCount = 0;
 
     for (const rule of DEFAULT_PATTERN_RULES) {
-      if (existingSignNames.has(rule.name.toLowerCase())) {
+      const lowerRuleName = rule.name.toLowerCase();
+      if (existingSignNames.has(lowerRuleName) || ignoredNames.has(lowerRuleName)) {
         continue;
       }
 
@@ -329,6 +572,12 @@ export const dreamSignService = {
     }
 
     return { updatedSignsCount, newSuggestionsCount };
+  } finally {
+    activeScanPromise = null;
+  }
+})();
+
+return activeScanPromise;
   },
 
   /**

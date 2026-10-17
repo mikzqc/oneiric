@@ -18,6 +18,7 @@ export interface DreamSign {
   userNotes?: string;
   isRealityCheckReminder?: boolean;
   linkedDreamIds: string[];
+  excludedDreamIds?: string[]; // Dreams explicitly unlinked by the user from this sign
   distinctDreamCount: number; // Must be distinct dream records!
   lastOccurred?: string; // YYYY-MM-DD
   isSample?: boolean;
