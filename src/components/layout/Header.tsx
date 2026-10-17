@@ -1,7 +1,9 @@
-import React from 'react';
-import { Menu, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Menu, Plus, Cloud, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../common/Button';
 import { formatFullDate, getTodayDateString } from '../../utils/dateUtils';
+import { syncService } from '../../services/syncService';
 
 interface HeaderProps {
   onOpenMobileMenu: () => void;
@@ -16,7 +18,37 @@ export const Header: React.FC<HeaderProps> = ({
   title,
   subtitle,
 }) => {
+  const navigate = useNavigate();
   const todayFormatted = formatFullDate(getTodayDateString());
+  const [isConfigured, setIsConfigured] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [justSynced, setJustSynced] = useState(false);
+
+  useEffect(() => {
+    const updateSync = () => {
+      setIsConfigured(syncService.isConfigured());
+    };
+    updateSync();
+    window.addEventListener('oneiric:sync-status-changed', updateSync);
+    return () => window.removeEventListener('oneiric:sync-status-changed', updateSync);
+  }, []);
+
+  const handleQuickSync = async () => {
+    if (!isConfigured) {
+      navigate('/settings');
+      return;
+    }
+    try {
+      setIsSyncing(true);
+      await syncService.syncNow();
+      setJustSynced(true);
+      setTimeout(() => setJustSynced(false), 2500);
+    } catch (err) {
+      console.warn('Quick sync error:', err);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   return (
     <header className="h-16 px-4 sm:px-8 border-b border-slate-800/80 bg-[#0b132b]/95 backdrop-blur-md flex items-center justify-between shrink-0 sticky top-0 z-30">
@@ -39,7 +71,33 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Right Actions */}
-      <div className="flex items-center gap-3 sm:gap-4">
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Sync Status Button */}
+        <button
+          type="button"
+          onClick={handleQuickSync}
+          title={isConfigured ? 'Encrypted Sync Active (Click to sync now)' : 'Configure Multi-Device Sync in Settings'}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+            isConfigured
+              ? 'bg-slate-900/80 border-slate-800 text-slate-300 hover:border-blue-500/50 hover:text-blue-300'
+              : 'bg-slate-900/50 border-slate-800/60 text-slate-400 hover:text-slate-300 hover:border-slate-700'
+          }`}
+        >
+          {isSyncing ? (
+            <RefreshCw className="w-3.5 h-3.5 text-blue-400 animate-spin" />
+          ) : justSynced ? (
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+          ) : (
+            <Cloud className={`w-3.5 h-3.5 ${isConfigured ? 'text-blue-400' : 'text-slate-400'}`} />
+          )}
+          <span className="hidden sm:inline">
+            {isSyncing ? 'Syncing...' : justSynced ? 'Synced' : isConfigured ? 'Sync' : 'Sync: Off'}
+          </span>
+          {isConfigured && !isSyncing && !justSynced && (
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+          )}
+        </button>
+
         {/* Date Pill */}
         <div className="hidden lg:flex items-center px-3 py-1.5 rounded-lg bg-slate-900/80 border border-slate-800/80 text-xs text-slate-400 font-medium">
           <span>{todayFormatted}</span>

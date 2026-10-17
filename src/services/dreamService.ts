@@ -2,6 +2,7 @@ import { db } from '../db/database';
 import { DreamDraft, DreamEntry } from '../types/dream';
 import { calculateJournalingStreak, getLastNDays, getTodayDateString } from '../utils/dateUtils';
 import { dreamSignService } from './dreamSignService';
+import { syncService } from './syncService';
 
 export interface TimelineNightGroup {
   date: string;
@@ -52,6 +53,9 @@ export const dreamService = {
     // Trigger dream signs update in background
     dreamSignService.scanAndDetectSigns().catch(() => {});
 
+    // Trigger debounced cloud sync in background if configured
+    syncService.triggerAutoSync();
+
     return entry;
   },
 
@@ -84,12 +88,18 @@ export const dreamService = {
 
     // Trigger dream signs update in background
     dreamSignService.scanAndDetectSigns().catch(() => {});
+
+    // Trigger debounced cloud sync in background if configured
+    syncService.triggerAutoSync();
   },
 
   async deleteDream(id: string): Promise<void> {
     await db.dreams.delete(id);
     // Trigger dream signs update in background
     dreamSignService.scanAndDetectSigns().catch(() => {});
+
+    // Trigger debounced cloud sync in background if configured
+    syncService.triggerAutoSync();
   },
 
   async getLucidDreams(): Promise<DreamEntry[]> {

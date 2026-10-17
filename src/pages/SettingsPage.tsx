@@ -15,6 +15,7 @@ import {
   AlertTriangle,
   FileText,
 } from 'lucide-react';
+import { SyncSettingsCard } from '../components/sync/SyncSettingsCard';
 
 export const SettingsPage: React.FC = () => {
   const [hasSample, setHasSample] = useState(false);
@@ -182,6 +183,9 @@ export const SettingsPage: React.FC = () => {
         </div>
       )}
 
+      {/* Multi-Device Cloud Sync Card */}
+      <SyncSettingsCard onFeedback={showFeedback} />
+
       {/* Section 1: Backup & Restore */}
       <section className="p-6 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 shadow-xl space-y-5">
         <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
@@ -297,7 +301,7 @@ export const SettingsPage: React.FC = () => {
               <strong>Where is my data stored?</strong> Everything is persisted in your browser's private IndexedDB storage container (named <code className="text-blue-300">OneiricDB</code>).
             </li>
             <li>
-              <strong>Are dreams sent anywhere?</strong> No. No dream text, notes, or analytical metadata are ever transmitted to any external server, cloud sync, or third-party AI provider.
+              <strong>Are dreams sent anywhere in plaintext?</strong> No. Your dreams remain strictly on your device. If you use Multi-Device Sync, your entries are encrypted locally with your secret passphrase via AES-256-GCM before transmission. The relay server only ever receives opaque ciphertext. Zero analytics, telemetry, or external AI APIs are ever used.
             </li>
             <li>
               <strong>Can I use Oneiric offline?</strong> Yes. Once loaded in your browser, Oneiric is fully functional without an internet connection.
