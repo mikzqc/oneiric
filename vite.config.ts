@@ -11,6 +11,12 @@ export default defineConfig({
   server: {
     port: 5180,
     host: true,
+    proxy: {
+      '/api': {
+        target: 'https://oneiric-one.vercel.app',
+        changeOrigin: true,
+      },
+    },
   },
   test: {
     globals: true,

@@ -9,9 +9,18 @@ import {
 import { BackupPayload } from '../types/backup';
 
 const CREDENTIALS_STORAGE_KEY = 'oneiric_sync_vault';
-const DEFAULT_RELAY_URL = 'https://extendsclass.com/api/json-storage/bin';
 
 let autoSyncTimeout: ReturnType<typeof setTimeout> | null = null;
+
+function getRelayUrl(customRelayUrl?: string, vaultId?: string): string {
+  if (customRelayUrl && !customRelayUrl.includes('extendsclass.com')) {
+    return vaultId ? `${customRelayUrl}/${vaultId}` : customRelayUrl;
+  }
+  const base = typeof window !== 'undefined' && window.location?.origin
+    ? `${window.location.origin}/api/vault`
+    : '/api/vault';
+  return vaultId ? `${base}?id=${encodeURIComponent(vaultId)}` : base;
+}
 
 export const syncService = {
   /**
@@ -86,7 +95,7 @@ export const syncService = {
     relayUrl?: string;
   }): Promise<{ vaultId: string; passphrase: string; unifiedKey: string }> {
     const passphrase = options?.passphrase?.trim() || cryptoService.generatePassphrase();
-    const relayUrl = options?.relayUrl?.trim() || DEFAULT_RELAY_URL;
+    const relayUrl = options?.relayUrl?.trim();
     const deviceName = options?.deviceName || 'Primary Device';
 
     // 1. Export local journal data
@@ -105,14 +114,31 @@ export const syncService = {
       sourceDevice: deviceName,
     };
 
-    const res = await fetch(relayUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(envelope),
-    });
+    const targetUrl = getRelayUrl(relayUrl);
+    let res: Response;
+    try {
+      res = await fetch(targetUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(envelope),
+      });
+    } catch (networkErr: unknown) {
+      throw new Error(
+        `Could not connect to the sync relay: ${
+          networkErr instanceof Error ? networkErr.message : 'Network error'
+        }. Please check your internet connection.`
+      );
+    }
 
     if (!res.ok) {
-      throw new Error(`Failed to initialize cloud vault on relay (HTTP ${res.status}).`);
+      let errText = `HTTP ${res.status}`;
+      try {
+        const errJson = (await res.json()) as { error?: string };
+        if (errJson?.error) errText = errJson.error;
+      } catch {
+        // ignore
+      }
+      throw new Error(`Failed to initialize cloud vault (${errText}).`);
     }
 
     const json = (await res.json()) as { id?: string };
@@ -165,11 +191,20 @@ export const syncService = {
       throw new Error('Please enter your secret Encryption Passphrase.');
     }
 
-    const relayUrl = DEFAULT_RELAY_URL;
-    const binUrl = `${relayUrl}/${vaultId}`;
+    const getUrl = getRelayUrl(undefined, vaultId);
 
     // 1. Pull encrypted envelope from cloud relay
-    const res = await fetch(binUrl, { method: 'GET' });
+    let res: Response;
+    try {
+      res = await fetch(getUrl, { method: 'GET' });
+    } catch (networkErr: unknown) {
+      throw new Error(
+        `Could not reach sync vault: ${
+          networkErr instanceof Error ? networkErr.message : 'Network error'
+        }. Please check your connection.`
+      );
+    }
+
     if (!res.ok) {
       if (res.status === 404) {
         throw new Error('Sync vault not found. Please verify the Vault ID.');
@@ -208,11 +243,21 @@ export const syncService = {
       sourceDevice: deviceName,
     };
 
-    const putRes = await fetch(binUrl, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedEnvelope),
-    });
+    const putUrl = getRelayUrl(undefined, vaultId);
+    let putRes: Response;
+    try {
+      putRes = await fetch(putUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedEnvelope),
+      });
+    } catch (networkErr: unknown) {
+      throw new Error(
+        `Failed to update cloud vault: ${
+          networkErr instanceof Error ? networkErr.message : 'Network error'
+        }.`
+      );
+    }
 
     if (!putRes.ok) {
       throw new Error(`Failed to update cloud vault (HTTP ${putRes.status}).`);
@@ -224,7 +269,6 @@ export const syncService = {
       passphrase,
       createdAt: nowStr,
       lastSyncedAt: nowStr,
-      relayUrl,
       autoSync: true,
       deviceName,
     };
@@ -251,11 +295,20 @@ export const syncService = {
       throw new Error('No sync vault configured on this device.');
     }
 
-    const relayUrl = creds.relayUrl || DEFAULT_RELAY_URL;
-    const binUrl = `${relayUrl}/${creds.vaultId}`;
+    const getUrl = getRelayUrl(creds.relayUrl, creds.vaultId);
 
     // 1. Pull remote envelope
-    const getRes = await fetch(binUrl, { method: 'GET' });
+    let getRes: Response;
+    try {
+      getRes = await fetch(getUrl, { method: 'GET' });
+    } catch (networkErr: unknown) {
+      throw new Error(
+        `Failed to connect to cloud relay: ${
+          networkErr instanceof Error ? networkErr.message : 'Network error'
+        }.`
+      );
+    }
+
     if (!getRes.ok) {
       throw new Error(`Failed to connect to cloud relay (HTTP ${getRes.status}).`);
     }
@@ -294,11 +347,21 @@ export const syncService = {
     };
 
     // 5. Push back to relay
-    const putRes = await fetch(binUrl, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newEnvelope),
-    });
+    const putUrl = getRelayUrl(creds.relayUrl, creds.vaultId);
+    let putRes: Response;
+    try {
+      putRes = await fetch(putUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newEnvelope),
+      });
+    } catch (networkErr: unknown) {
+      throw new Error(
+        `Failed to update cloud relay: ${
+          networkErr instanceof Error ? networkErr.message : 'Network error'
+        }.`
+      );
+    }
 
     if (!putRes.ok) {
       throw new Error(`Failed to update cloud relay (HTTP ${putRes.status}).`);

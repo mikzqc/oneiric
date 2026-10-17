@@ -100,7 +100,9 @@ describe('syncService - Multi-Device Cloud Sync', () => {
         };
       }
       if (method === 'GET') {
-        const id = url.split('/').pop() || '';
+        const id = url.includes('id=')
+          ? new URL(url, 'http://localhost').searchParams.get('id') || ''
+          : url.split('/').pop() || '';
         if (!cloudStore[id]) {
           return { ok: false, status: 404, json: async () => ({}) };
         }
@@ -111,7 +113,9 @@ describe('syncService - Multi-Device Cloud Sync', () => {
         };
       }
       if (method === 'PUT') {
-        const id = url.split('/').pop() || '';
+        const id = url.includes('id=')
+          ? new URL(url, 'http://localhost').searchParams.get('id') || ''
+          : url.split('/').pop() || '';
         const body = JSON.parse(options?.body as string);
         cloudStore[id] = body;
         return {
