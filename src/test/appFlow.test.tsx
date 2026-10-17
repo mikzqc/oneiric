@@ -50,6 +50,7 @@ describe('Oneiric Full Application Navigation & Flows', () => {
     expect(screen.getByRole('link', { name: /Dream Journal/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Timeline/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Calendar/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Correlations/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Dream Signs/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Lucid Dreams/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /False Awakenings/i })).toBeInTheDocument();

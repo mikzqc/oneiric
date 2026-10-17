@@ -47,6 +47,7 @@ export const AppLayout: React.FC = () => {
     const path = location.pathname;
     if (path === '/') return { title: 'Dashboard', subtitle: 'Nocturnal overview and recall metrics' };
     if (path.startsWith('/analytics')) return { title: 'Dream Intelligence & Analytics', subtitle: 'Longitudinal recall metrics, emotional distributions, and heatmaps' };
+    if (path.startsWith('/correlations')) return { title: 'Cross-Dream Correlation Engine', subtitle: 'Empirical associations across recurring signs, emotions, scene complexity, and induction techniques' };
     if (path.startsWith('/journal/new')) return { title: 'Record Dream', subtitle: 'Capture your nocturnal memory' };
     if (path.startsWith('/journal/edit')) return { title: 'Edit Dream', subtitle: 'Refine journal entry' };
     if (path.startsWith('/journal')) return { title: 'Dream Journal', subtitle: 'Search and inspect recorded dreams' };

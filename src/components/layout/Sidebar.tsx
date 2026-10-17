@@ -10,6 +10,7 @@ import {
   Eye,
   AlertTriangle,
   Compass,
+  Network,
   Settings,
   ShieldCheck,
   Moon,
@@ -34,7 +35,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
     {
       title: 'Intelligence & Lucidity',
       items: [
-        { to: '/signs', label: 'Dream Signs', icon: Sparkles, highlight: true },
+        { to: '/correlations', label: 'Correlations', icon: Network, highlight: true },
+        { to: '/signs', label: 'Dream Signs', icon: Sparkles },
         { to: '/lucid', label: 'Lucid Dreams', icon: Eye },
         { to: '/false-awakenings', label: 'False Awakenings', icon: AlertTriangle },
         { to: '/techniques', label: 'Techniques Guide', icon: Compass },

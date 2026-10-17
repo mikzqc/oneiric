@@ -12,12 +12,18 @@ import { CalendarPage } from './pages/CalendarPage';
 import { LucidDreamsPage } from './pages/LucidDreamsPage';
 import { TechniquesPage } from './pages/TechniquesPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { CorrelationPage } from './pages/CorrelationPage';
 import { DreamEntry } from './types/dream';
 
 interface LayoutContextType {
   onOpenNewDream: (date?: string) => void;
   onEditDream: (dream: DreamEntry) => void;
 }
+
+const CorrelationRoute: React.FC = () => {
+  const { onEditDream } = useOutletContext<LayoutContextType>();
+  return <CorrelationPage onOpenDream={onEditDream} />;
+};
 
 const DashboardRoute: React.FC = () => {
   const { onOpenNewDream, onEditDream } = useOutletContext<LayoutContextType>();
@@ -61,6 +67,7 @@ export const App: React.FC = () => {
         <Route path="/" element={<AppLayout />}>
           <Route index element={<DashboardRoute />} />
           <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="correlations" element={<CorrelationRoute />} />
           <Route path="journal" element={<JournalRoute />} />
           <Route path="journal/new" element={<DreamEditorPage />} />
           <Route path="journal/edit/:id" element={<DreamEditorPage />} />
