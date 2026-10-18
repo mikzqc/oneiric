@@ -179,4 +179,97 @@ describe('syncService - Multi-Device Cloud Sync', () => {
     expect(syncNowRes.newDreamsCount).toBe(1);
     expect(await db.dreams.count()).toBe(2);
   });
+
+  it('reliably handles consecutive multiple updates without stale cache interference', async () => {
+    let cloudVault: unknown = null;
+
+    globalThis.fetch = vi.fn().mockImplementation(async (url: string, options?: RequestInit) => {
+      const method = options?.method || 'GET';
+      if (method === 'POST') {
+        cloudVault = JSON.parse(options?.body as string);
+        return {
+          ok: true,
+          status: 201,
+          json: async () => ({ id: 'vault-consecutive-test' }),
+        };
+      }
+      if (method === 'GET') {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => cloudVault,
+        };
+      }
+      if (method === 'PUT') {
+        cloudVault = JSON.parse(options?.body as string);
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ status: 0 }),
+        };
+      }
+      return { ok: false, status: 400 };
+    }) as unknown as typeof fetch;
+
+    // Mobile creates vault with Dream 1
+    const d1: DreamEntry = {
+      id: 'dream-1',
+      title: 'First Dream',
+      narrative: 'First narrative',
+      date: '2026-10-18',
+      lucidity: 'non-lucid',
+      createdAt: 1000,
+      updatedAt: 1000,
+    };
+    await db.dreams.add(d1);
+
+    const { vaultId, passphrase, unifiedKey } = await syncService.createVault();
+    expect(vaultId).toBe('vault-consecutive-test');
+
+    // PC connects and receives Dream 1
+    await db.dreams.clear();
+    syncService.clearCredentials();
+    const connectRes = await syncService.connectVault(unifiedKey);
+    expect(connectRes.pulledCount).toBe(1);
+    expect(await db.dreams.count()).toBe(1);
+
+    // Mobile adds Dream 2 and syncs
+    await db.dreams.clear();
+    syncService.saveCredentials({
+      vaultId,
+      passphrase,
+      createdAt: '2026-10-18T10:00:00Z',
+      autoSync: true,
+    });
+    await db.dreams.add(d1);
+    const d2: DreamEntry = {
+      id: 'dream-2',
+      title: 'Second Dream Added on Mobile',
+      narrative: 'Second narrative',
+      date: '2026-10-18',
+      lucidity: 'lucid',
+      createdAt: 2000,
+      updatedAt: 2000,
+    };
+    await db.dreams.add(d2);
+    const mobileSyncRes = await syncService.syncNow();
+    expect(mobileSyncRes.pushedCount).toBe(2);
+
+    // PC (which only has Dream 1 currently) syncs again
+    await db.dreams.clear();
+    await db.dreams.add(d1);
+    syncService.saveCredentials({
+      vaultId,
+      passphrase,
+      createdAt: '2026-10-18T10:00:00Z',
+      autoSync: true,
+    });
+    const pcSyncRes = await syncService.syncNow();
+    expect(pcSyncRes.pulledCount).toBe(2);
+    expect(pcSyncRes.newDreamsCount).toBe(1);
+    expect(await db.dreams.count()).toBe(2);
+
+    const allPCDreams = await db.dreams.toArray();
+    expect(allPCDreams.some((d) => d.id === 'dream-2')).toBe(true);
+  });
 });

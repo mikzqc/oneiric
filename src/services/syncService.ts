@@ -15,6 +15,16 @@ let activeSyncPromise: Promise<SyncResult> | null = null;
 
 export const CANONICAL_CLOUD_RELAY = 'https://oneiric-one.vercel.app/api/vault';
 
+export const NO_CACHE_HEADERS: HeadersInit = {
+  'Cache-Control': 'no-cache, no-store, must-revalidate',
+  Pragma: 'no-cache',
+};
+
+export function buildFreshUrl(url: string): string {
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}_t=${Date.now()}`;
+}
+
 export function getRelayUrl(customRelayUrl?: string, vaultId?: string): string {
   if (customRelayUrl && !customRelayUrl.includes('extendsclass.com')) {
     const clean = customRelayUrl.replace(/\/+$/, '');
@@ -122,8 +132,12 @@ export const syncService = {
     try {
       res = await fetch(targetUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...NO_CACHE_HEADERS,
+        },
         body: JSON.stringify(envelope),
+        cache: 'no-store',
       });
     } catch (networkErr: unknown) {
       throw new Error(
@@ -194,12 +208,16 @@ export const syncService = {
       throw new Error('Please enter your secret Encryption Passphrase.');
     }
 
-    const getUrl = getRelayUrl(undefined, vaultId);
+    const getUrl = buildFreshUrl(getRelayUrl(undefined, vaultId));
 
     // 1. Pull encrypted envelope from cloud relay
     let res: Response;
     try {
-      res = await fetch(getUrl, { method: 'GET' });
+      res = await fetch(getUrl, {
+        method: 'GET',
+        headers: NO_CACHE_HEADERS,
+        cache: 'no-store',
+      });
     } catch (networkErr: unknown) {
       throw new Error(
         `Could not reach sync vault: ${
@@ -251,8 +269,12 @@ export const syncService = {
     try {
       putRes = await fetch(putUrl, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...NO_CACHE_HEADERS,
+        },
         body: JSON.stringify(updatedEnvelope),
+        cache: 'no-store',
       });
     } catch (networkErr: unknown) {
       throw new Error(
@@ -307,12 +329,16 @@ export const syncService = {
           throw new Error('No sync vault configured on this device.');
         }
 
-        const getUrl = getRelayUrl(creds.relayUrl, creds.vaultId);
+        const getUrl = buildFreshUrl(getRelayUrl(creds.relayUrl, creds.vaultId));
 
         // 1. Pull remote envelope
         let getRes: Response;
         try {
-          getRes = await fetch(getUrl, { method: 'GET' });
+          getRes = await fetch(getUrl, {
+            method: 'GET',
+            headers: NO_CACHE_HEADERS,
+            cache: 'no-store',
+          });
         } catch (networkErr: unknown) {
           throw new Error(
             `Failed to connect to cloud relay: ${
@@ -345,11 +371,15 @@ export const syncService = {
           }
 
           const validation = backupService.validateImportData(JSON.stringify(decrypted));
-          if (validation.valid && validation.data) {
-            const importRes = await backupService.importData(validation.data, 'merge');
-            pulledCount = importRes.dreamCount;
-            newDreamsCount = importRes.newDreamsCount;
+          if (!validation.valid || !validation.data) {
+            throw new Error(`Remote vault data failed validation: ${validation.error || 'Invalid structure'}`);
           }
+
+          const importRes = await backupService.importData(validation.data, 'merge');
+          pulledCount = importRes.dreamCount;
+          newDreamsCount = importRes.newDreamsCount;
+        } else {
+          throw new Error('Cloud vault returned an empty or malformed encrypted payload.');
         }
 
         // 3. Export complete union of local dreams
@@ -374,8 +404,12 @@ export const syncService = {
         try {
           putRes = await fetch(putUrl, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...NO_CACHE_HEADERS,
+            },
             body: JSON.stringify(newEnvelope),
+            cache: 'no-store',
           });
         } catch (networkErr: unknown) {
           throw new Error(

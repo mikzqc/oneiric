@@ -160,28 +160,77 @@ export const backupService = {
         }
       });
     } else {
-      // Merge mode: identify which dreams are genuinely new before inserting
+      // Merge mode: Last-Write-Wins (LWW) conflict resolution
+      const dreamsToPut: DreamEntry[] = [];
       if (payload.dreams.length > 0) {
-        const existingKeys = new Set(await db.dreams.toCollection().primaryKeys());
+        const existingDreams = await db.dreams.toArray();
+        const existingMap = new Map(existingDreams.map((d) => [d.id, d]));
+
         for (const dream of payload.dreams) {
-          if (!existingKeys.has(dream.id)) {
+          const existing = existingMap.get(dream.id);
+          if (!existing) {
             newDreamsCount++;
+            dreamsToPut.push(dream);
+          } else {
+            const incomingUpdated = Number(dream.updatedAt || dream.createdAt || 0);
+            const existingUpdated = Number(existing.updatedAt || existing.createdAt || 0);
+            if (incomingUpdated >= existingUpdated) {
+              dreamsToPut.push(dream);
+            }
+          }
+        }
+      }
+
+      const techniquesToPut: TechniqueLog[] = [];
+      if (payload.techniqueLogs && payload.techniqueLogs.length > 0) {
+        const existingLogs = await db.techniqueLogs.toArray();
+        const existingMap = new Map(existingLogs.map((t) => [t.id, t]));
+
+        for (const log of payload.techniqueLogs) {
+          const existing = existingMap.get(log.id);
+          if (!existing) {
+            techniquesToPut.push(log);
+          } else {
+            const incomingUpdated = Number(log.updatedAt || log.createdAt || 0);
+            const existingUpdated = Number(existing.updatedAt || existing.createdAt || 0);
+            if (incomingUpdated >= existingUpdated) {
+              techniquesToPut.push(log);
+            }
+          }
+        }
+      }
+
+      const signsToPut: DreamSign[] = [];
+      if (signs.length > 0) {
+        const existingSigns = await db.dreamSigns.toArray();
+        const existingMap = new Map(existingSigns.map((s) => [s.id, s]));
+
+        for (const sign of signs) {
+          const existing = existingMap.get(sign.id);
+          if (!existing) {
+            signsToPut.push(sign);
+          } else {
+            const incomingUpdated = Number(sign.updatedAt || sign.createdAt || 0);
+            const existingUpdated = Number(existing.updatedAt || existing.createdAt || 0);
+            if (incomingUpdated >= existingUpdated) {
+              signsToPut.push(sign);
+            }
           }
         }
       }
 
       await db.transaction('rw', [db.dreams, db.techniqueLogs, db.customTags, db.dreamSigns], async () => {
-        if (payload.dreams.length > 0) {
-          await db.dreams.bulkPut(payload.dreams);
+        if (dreamsToPut.length > 0) {
+          await db.dreams.bulkPut(dreamsToPut);
         }
-        if (payload.techniqueLogs && payload.techniqueLogs.length > 0) {
-          await db.techniqueLogs.bulkPut(payload.techniqueLogs);
+        if (techniquesToPut.length > 0) {
+          await db.techniqueLogs.bulkPut(techniquesToPut);
         }
         if (payload.customTags && payload.customTags.length > 0) {
           await db.customTags.bulkPut(payload.customTags);
         }
-        if (signs.length > 0) {
-          await db.dreamSigns.bulkPut(signs);
+        if (signsToPut.length > 0) {
+          await db.dreamSigns.bulkPut(signsToPut);
         }
       });
     }

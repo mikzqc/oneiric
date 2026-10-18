@@ -2,7 +2,13 @@ export default async function handler(req, res) {
   // Set permissive CORS headers for cross-device requests
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Pragma, Cache-Control');
+
+  // Prevent ANY caching at Vercel CDN, Edge proxy, or client browser level
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
 
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
@@ -15,8 +21,13 @@ export default async function handler(req, res) {
       const payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
       const upstreamRes = await fetch(BASE_STORAGE_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store',
+          'Pragma': 'no-cache',
+        },
         body: JSON.stringify(payload),
+        cache: 'no-store',
       });
 
       if (!upstreamRes.ok) {
@@ -35,7 +46,15 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Missing vault id query parameter' });
       }
 
-      const upstreamRes = await fetch(`${BASE_STORAGE_URL}/${id}`);
+      const upstreamRes = await fetch(`${BASE_STORAGE_URL}/${encodeURIComponent(id)}?_t=${Date.now()}`, {
+        method: 'GET',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        },
+        cache: 'no-store',
+      });
+
       if (!upstreamRes.ok) {
         return res
           .status(upstreamRes.status)
@@ -53,10 +72,15 @@ export default async function handler(req, res) {
       }
 
       const payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-      const upstreamRes = await fetch(`${BASE_STORAGE_URL}/${id}`, {
+      const upstreamRes = await fetch(`${BASE_STORAGE_URL}/${encodeURIComponent(id)}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        },
         body: JSON.stringify(payload),
+        cache: 'no-store',
       });
 
       if (!upstreamRes.ok) {

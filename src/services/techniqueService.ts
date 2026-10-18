@@ -1,5 +1,6 @@
 import { db } from '../db/database';
 import { TechniqueDraft, TechniqueLog } from '../types/technique';
+import { syncService } from './syncService';
 
 export interface TechniqueComparisonStat {
   technique: string;
@@ -27,11 +28,13 @@ export const techniqueService = {
     };
 
     await db.techniqueLogs.add(entry);
+    syncService.triggerAutoSync({ immediate: true });
     return entry;
   },
 
   async deleteLog(id: string): Promise<void> {
     await db.techniqueLogs.delete(id);
+    syncService.triggerAutoSync({ immediate: true });
   },
 
   async getTechniqueStats() {
