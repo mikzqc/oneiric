@@ -134,10 +134,12 @@ export const backupService = {
   async importData(
     payload: BackupPayload,
     mode: 'merge' | 'replace'
-  ): Promise<{ dreamCount: number; techniqueCount: number; signCount: number }> {
+  ): Promise<{ dreamCount: number; newDreamsCount: number; techniqueCount: number; signCount: number }> {
     const signs = payload.dreamSigns || [];
+    let newDreamsCount = 0;
 
     if (mode === 'replace') {
+      newDreamsCount = payload.dreams.length;
       await db.transaction('rw', [db.dreams, db.techniqueLogs, db.customTags, db.dreamSigns], async () => {
         await db.dreams.clear();
         await db.techniqueLogs.clear();
@@ -158,7 +160,16 @@ export const backupService = {
         }
       });
     } else {
-      // Merge mode
+      // Merge mode: identify which dreams are genuinely new before inserting
+      if (payload.dreams.length > 0) {
+        const existingKeys = new Set(await db.dreams.toCollection().primaryKeys());
+        for (const dream of payload.dreams) {
+          if (!existingKeys.has(dream.id)) {
+            newDreamsCount++;
+          }
+        }
+      }
+
       await db.transaction('rw', [db.dreams, db.techniqueLogs, db.customTags, db.dreamSigns], async () => {
         if (payload.dreams.length > 0) {
           await db.dreams.bulkPut(payload.dreams);
@@ -175,8 +186,18 @@ export const backupService = {
       });
     }
 
+    try {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('oneiric:dream-saved'));
+        window.dispatchEvent(new CustomEvent('oneiric:sample-data-changed'));
+      }
+    } catch {
+      // Ignore in non-browser/test environments
+    }
+
     return {
       dreamCount: payload.dreams.length,
+      newDreamsCount,
       techniqueCount: payload.techniqueLogs?.length || 0,
       signCount: signs.length,
     };

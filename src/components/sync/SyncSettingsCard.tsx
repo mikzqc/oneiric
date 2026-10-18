@@ -11,7 +11,6 @@ import {
   Share2,
   Unlink,
   ShieldCheck,
-  Sparkles,
 } from 'lucide-react';
 import { syncService } from '../../services/syncService';
 import { cryptoService } from '../../services/cryptoService';
@@ -135,10 +134,17 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
       setIsSyncing(true);
       const res = await syncService.syncNow();
       loadCredentials();
-      onFeedback(
-        'success',
-        `Vault synced cleanly: ${res.pulledCount} pulled, ${res.pushedCount} pushed.`
-      );
+      if (res.newDreamsCount > 0) {
+        onFeedback(
+          'success',
+          `Vault synced cleanly: +${res.newDreamsCount} new dream(s) downloaded and merged! (${res.pushedCount} total dreams active).`
+        );
+      } else {
+        onFeedback(
+          'success',
+          `Vault synced cleanly: No new remote dreams found. All ${res.pushedCount} local dreams are up to date with cloud vault.`
+        );
+      }
     } catch (err: unknown) {
       onFeedback('error', err instanceof Error ? err.message : 'Sync failed.');
     } finally {
@@ -199,17 +205,17 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
     : '';
 
   return (
-    <section className="p-6 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 shadow-xl space-y-5">
+    <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800/80 gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-blue-950/80 border border-blue-700/40 flex items-center justify-center text-blue-400 shrink-0">
-            <Cloud className="w-5 h-5 text-blue-400" />
+          <div className="w-8 h-8 rounded-lg bg-blue-950/80 border border-blue-700/40 flex items-center justify-center text-blue-400 shrink-0">
+            <Cloud className="w-4 h-4 text-blue-400" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-slate-100">Multi-Device Cloud Sync</h2>
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-950/90 text-blue-300 border border-blue-800/60 uppercase tracking-wider">
+              <h2 className="text-base font-bold text-slate-100">Multi-Device Sync</h2>
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-950/90 text-blue-300 border border-blue-800/60 uppercase tracking-wider">
                 <Lock className="w-3 h-3 text-blue-400" />
                 E2E Encrypted
               </span>
@@ -223,13 +229,13 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
         {/* Status Pill */}
         <div>
           {credentials ? (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/70 border border-emerald-700/50 text-xs font-medium text-emerald-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-950/70 border border-emerald-700/50 text-xs font-medium text-emerald-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               <span>Connected & Active</span>
             </div>
           ) : (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-xs text-slate-400">
-              <span className="w-2 h-2 rounded-full bg-slate-500" />
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-900 border border-slate-800 text-xs text-slate-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
               <span>Not Connected</span>
             </div>
           )}
@@ -237,7 +243,7 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
       </div>
 
       {/* Security Banner */}
-      <div className="p-3.5 rounded-xl bg-blue-950/30 border border-blue-800/40 text-xs text-blue-200 flex items-start gap-2.5">
+      <div className="p-3 rounded-lg bg-blue-950/30 border border-blue-800/40 text-xs text-blue-200 flex items-start gap-2.5">
         <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
         <p className="leading-relaxed">
           <strong>Zero-Knowledge Privacy:</strong> All dream entries and notes are encrypted locally in your browser using AES-256-GCM before transmission. The sync relay only ever receives unreadable ciphertext. Your secret passphrase never leaves your devices.
@@ -312,9 +318,20 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                 </Button>
               </div>
 
-              <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/60">
-                <span>Vault ID: <strong className="text-slate-300 font-mono">{credentials.vaultId}</strong></span>
-                <span>Last Synced: <strong className="text-slate-300">{credentials.lastSyncedAt ? new Date(credentials.lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Never'}</strong></span>
+              <div className="flex flex-col gap-1 text-[11px] text-slate-400 pt-2 border-t border-slate-800/60">
+                <div className="flex items-center justify-between">
+                  <span>Vault ID: <strong className="text-slate-300 font-mono">{credentials.vaultId}</strong></span>
+                  <span>Last Local Sync: <strong className="text-slate-300">{credentials.lastSyncedAt ? new Date(credentials.lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Never'}</strong></span>
+                </div>
+                {credentials.lastRemoteDevice && (
+                  <div className="flex items-center justify-between text-slate-400">
+                    <span>Last Cloud Update:</span>
+                    <strong className="text-blue-300 font-medium">
+                      {credentials.lastRemoteDevice}
+                      {credentials.lastRemoteUpdate ? ` (${new Date(credentials.lastRemoteUpdate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` : ''}
+                    </strong>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -345,7 +362,7 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
               </Button>
 
               <Button
-                variant="celestial"
+                variant="primary"
                 size="sm"
                 onClick={handleSyncNow}
                 disabled={isSyncing}
@@ -360,11 +377,11 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
         /* State B: No Vault Configured Yet */
         <div className="space-y-4">
           {/* Tab selector */}
-          <div className="flex rounded-xl bg-slate-900/80 p-1 border border-slate-800 max-w-md">
+          <div className="flex rounded-lg bg-slate-900/80 p-1 border border-slate-800 max-w-md">
             <button
               type="button"
               onClick={() => setActiveTab('create')}
-              className={`grow py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`grow py-1.5 px-3 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'create'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
@@ -375,7 +392,7 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
             <button
               type="button"
               onClick={() => setActiveTab('connect')}
-              className={`grow py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`grow py-1.5 px-3 rounded-md text-xs font-semibold transition-all cursor-pointer ${
                 activeTab === 'connect'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
@@ -403,7 +420,7 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                     value={createDeviceName}
                     onChange={(e) => setCreateDeviceName(e.target.value)}
                     placeholder="e.g. My Laptop"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
@@ -415,7 +432,7 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                       onClick={handleGeneratePassphrase}
                       className="text-[11px] text-blue-400 hover:text-blue-300 cursor-pointer flex items-center gap-1"
                     >
-                      <Sparkles className="w-3 h-3" />
+                      <RefreshCw className="w-3 h-3" />
                       <span>Auto-Generate</span>
                     </button>
                   </div>
@@ -424,7 +441,7 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                     value={createPassphrase}
                     onChange={(e) => setCreatePassphrase(e.target.value)}
                     placeholder="astral-lucid-starlight-nebula-aurora-velvet"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-slate-200 focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-slate-200 focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -432,7 +449,7 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
               <div className="flex justify-end pt-2">
                 <Button
                   type="submit"
-                  variant="celestial"
+                  variant="primary"
                   disabled={isCreating}
                   icon={<Cloud className="w-4 h-4" />}
                 >
@@ -467,7 +484,7 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                     value={connectSyncKey}
                     onChange={(e) => setConnectSyncKey(e.target.value)}
                     placeholder={showSeparateInputs ? 'e.g. ddcbcaa' : 'ONR-SYNC-ddcbcaa::celestial-lucid-...'}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-slate-200 focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-slate-200 focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
@@ -479,7 +496,7 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                       value={connectPassphrase}
                       onChange={(e) => setConnectPassphrase(e.target.value)}
                       placeholder="Enter the 6-word passphrase from your primary device"
-                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-slate-200 focus:outline-none focus:border-blue-500"
+                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-slate-200 focus:outline-none focus:border-blue-500"
                     />
                   </div>
                 )}
@@ -491,7 +508,7 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                     value={connectDeviceName}
                     onChange={(e) => setConnectDeviceName(e.target.value)}
                     placeholder="e.g. iPhone / Safari"
-                    className="w-full max-w-xs px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
+                    className="w-full max-w-xs px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -499,7 +516,7 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
               <div className="flex justify-end pt-2">
                 <Button
                   type="submit"
-                  variant="celestial"
+                  variant="primary"
                   disabled={isConnecting}
                   icon={<RefreshCw className={`w-4 h-4 ${isConnecting ? 'animate-spin' : ''}`} />}
                 >

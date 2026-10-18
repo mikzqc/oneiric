@@ -47,16 +47,16 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     <Modal isOpen={isOpen} onClose={handleClose} maxWidth="md">
       <div className="flex items-start gap-4">
         <div
-          className={`p-3 rounded-xl shrink-0 ${
+          className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
             isDestructive
-              ? 'bg-red-950/60 text-red-400 border border-red-800/50'
-              : 'bg-blue-950/60 text-blue-400 border border-blue-800/50'
+              ? 'bg-red-950/50 text-red-400 border border-red-800/60'
+              : 'bg-blue-950/50 text-blue-400 border border-blue-800/60'
           }`}
         >
-          {isDestructive ? <AlertTriangle className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}
+          {isDestructive ? <AlertTriangle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
         </div>
         <div className="grow">
-          <h3 className="text-base font-semibold text-slate-100">{title}</h3>
+          <h3 className="text-sm font-semibold text-slate-100">{title}</h3>
           <p className="text-sm text-slate-300 mt-1.5 leading-relaxed">{message}</p>
 
           {requiredTypedText && (

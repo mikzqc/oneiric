@@ -9,7 +9,7 @@ import { DreamDetailModal } from '../components/journal/DreamDetailModal';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { getTodayDateString, formatDate } from '../utils/dateUtils';
 import { Button } from '../components/common/Button';
-import { CalendarDays, Plus, Sparkles, Moon } from 'lucide-react';
+import { CalendarDays, Plus, Eye, Moon } from 'lucide-react';
 
 interface CalendarPageProps {
   onOpenNewDream: (prefillDate?: string) => void;
@@ -46,6 +46,15 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
 
   useEffect(() => {
     loadData();
+    const handleUpdate = () => {
+      loadData();
+    };
+    window.addEventListener('oneiric:dream-saved', handleUpdate);
+    window.addEventListener('oneiric:sample-data-changed', handleUpdate);
+    return () => {
+      window.removeEventListener('oneiric:dream-saved', handleUpdate);
+      window.removeEventListener('oneiric:sample-data-changed', handleUpdate);
+    };
   }, []);
 
   const handleDeleteConfirm = async () => {
@@ -70,21 +79,21 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
       {/* Page Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100 tracking-tight flex items-center gap-2">
-            <CalendarDays className="w-6 h-6 text-blue-400" />
-            <span>Lunar & Solar Calendar</span>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight flex items-center gap-2">
+            <CalendarDays className="w-5 h-5 text-blue-400" />
+            <span>Dream Calendar</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400">
-            View nocturnal patterns and lucid frequencies mapped across the celestial cycle
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            View nocturnal patterns and recall frequencies mapped across the monthly cycle.
           </p>
         </div>
 
         <Button
-          variant="celestial"
+          variant="primary"
           icon={<Plus className="w-4 h-4" />}
           onClick={() => onOpenNewDream(selectedDate)}
         >
-          Add Dream for Selected Date
+          Add Dream for Date
         </Button>
       </div>
 
@@ -106,11 +115,11 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
           </div>
 
           {/* Selected Date Entries Panel (5 cols on desktop) */}
-          <div className="lg:col-span-5 p-5 sm:p-6 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 shadow-xl flex flex-col justify-between">
+          <div className="lg:col-span-5 p-4 sm:p-5 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
             <div>
-              <div className="flex items-center justify-between pb-4 border-b border-slate-800/80 mb-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
                 <div>
-                  <h2 className="text-base font-bold text-slate-100">
+                  <h2 className="text-sm sm:text-base font-semibold text-slate-100">
                     {formatDate(selectedDate)}
                   </h2>
                   <p className="text-xs text-slate-400">
@@ -121,8 +130,8 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
                 </div>
 
                 {hasLucidOnDate && (
-                  <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-700/50 lucid-glow">
-                    <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                  <span className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md bg-blue-950 text-cyan-300 border border-cyan-800/60">
+                    <Eye className="w-3.5 h-3.5 text-cyan-400" />
                     <span>Lucid Night</span>
                   </span>
                 )}
@@ -130,12 +139,12 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
 
               {/* Selected date recall check-in */}
               {selectedDateRecallLog && (
-                <div className="mb-4 p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-start gap-3">
-                  <Moon className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
-                  <div className="space-y-1 text-xs min-w-0">
+                <div className="mb-3 p-3 rounded-lg bg-slate-900/80 border border-slate-800 flex items-start gap-2.5">
+                  <Moon className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                  <div className="space-y-0.5 text-xs min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-slate-200">Recall Check-in</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                      <span className="font-medium text-slate-200">Recall Check-in</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-slate-800 text-slate-400 border border-slate-700">
                         {selectedDateRecallLog.outcome === 'no_recall' ? 'No Recall' : selectedDateRecallLog.technique}
                       </span>
                     </div>

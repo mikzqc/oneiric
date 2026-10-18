@@ -19,10 +19,9 @@ describe('Oneiric Full Application Navigation & Flows', () => {
     render(<App />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Welcome to the Celestial Threshold/i)).toBeInTheDocument();
+      expect(screen.getByText(/No dreams recorded yet/i)).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/Your Dream Archive is a Blank Sky/i)).toBeInTheDocument();
     expect(screen.getByText(/Total Recorded/i)).toBeInTheDocument();
   });
 

@@ -187,7 +187,7 @@ export const SettingsPage: React.FC = () => {
       <SyncSettingsCard onFeedback={showFeedback} />
 
       {/* Section 1: Backup & Restore */}
-      <section className="p-6 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 shadow-xl space-y-5">
+      <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-5">
         <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
           <Database className="w-5 h-5 text-blue-400" />
           <div>
@@ -247,7 +247,7 @@ export const SettingsPage: React.FC = () => {
       </section>
 
       {/* Section 2: Sample Data Controls */}
-      <section className="p-6 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 shadow-xl space-y-4">
+      <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
         <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
           <Sparkles className="w-5 h-5 text-amber-400" />
           <div>
@@ -283,7 +283,7 @@ export const SettingsPage: React.FC = () => {
       </section>
 
       {/* Section 3: Privacy & Local Storage Architecture */}
-      <section className="p-6 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 shadow-xl space-y-4">
+      <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
         <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
           <ShieldCheck className="w-5 h-5 text-emerald-400" />
           <div>
@@ -311,7 +311,7 @@ export const SettingsPage: React.FC = () => {
       </section>
 
       {/* Section 4: Danger Zone (Factory Reset) */}
-      <section className="p-6 rounded-2xl bg-red-950/20 border border-red-900/40 shadow-xl space-y-4">
+      <section className="p-6 rounded-xl bg-red-950/20 border border-red-900/40 space-y-4">
         <div className="flex items-center gap-2.5 pb-4 border-b border-red-900/40">
           <Trash2 className="w-5 h-5 text-red-400" />
           <div>
@@ -345,7 +345,7 @@ export const SettingsPage: React.FC = () => {
         >
           {importCandidate.valid && importCandidate.stats ? (
             <div className="space-y-4">
-              <div className="p-3.5 rounded-xl bg-blue-950/40 border border-blue-700/50 text-xs text-blue-200 space-y-1">
+              <div className="p-3.5 rounded-lg bg-blue-950/40 border border-blue-700/50 text-xs text-blue-200 space-y-1">
                 <div className="flex items-center gap-1.5 font-semibold text-blue-300">
                   <FileText className="w-4 h-4 text-blue-400" />
                   <span>Backup Verified Successfully</span>
@@ -359,7 +359,7 @@ export const SettingsPage: React.FC = () => {
                   Import Mode:
                 </label>
                 <div className="space-y-2 text-xs">
-                  <label className="flex items-start gap-2 p-3 rounded-xl bg-slate-900 border border-slate-700 cursor-pointer">
+                  <label className="flex items-start gap-2 p-3 rounded-lg bg-slate-900 border border-slate-700 cursor-pointer">
                     <input
                       type="radio"
                       name="importMode"
@@ -376,7 +376,7 @@ export const SettingsPage: React.FC = () => {
                     </div>
                   </label>
 
-                  <label className="flex items-start gap-2 p-3 rounded-xl bg-slate-900 border border-red-900/60 cursor-pointer">
+                  <label className="flex items-start gap-2 p-3 rounded-lg bg-slate-900 border border-red-900/60 cursor-pointer">
                     <input
                       type="radio"
                       name="importMode"

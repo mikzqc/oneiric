@@ -22,7 +22,6 @@ import {
   Compass,
   ArrowRight,
   Plus,
-  Moon,
   Trash2,
 } from 'lucide-react';
 
@@ -89,6 +88,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   useEffect(() => {
     loadDashboardData();
+    const handleUpdate = () => {
+      loadDashboardData();
+    };
+    window.addEventListener('oneiric:dream-saved', handleUpdate);
+    window.addEventListener('oneiric:sample-data-changed', handleUpdate);
+    return () => {
+      window.removeEventListener('oneiric:dream-saved', handleUpdate);
+      window.removeEventListener('oneiric:sample-data-changed', handleUpdate);
+    };
   }, []);
 
   const handleSaveNoRecall = async (e?: React.FormEvent) => {
@@ -149,42 +157,35 @@ export const Dashboard: React.FC<DashboardProps> = ({
   }
 
   return (
-    <div className="space-y-8 animate-fadeIn">
-      {/* Top Banner / Hero Welcome */}
-      <div className="p-6 sm:p-8 rounded-3xl bg-[#0e1730] border border-slate-800/80 shadow-2xl relative overflow-hidden celestial-glow">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-950/70 border border-blue-700/50 text-xs text-blue-300 font-medium mb-3">
-              <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-              <span>Conscious Dream Archive</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-tight leading-tight">
-              Welcome to the Celestial Threshold
-            </h1>
-            <p className="text-sm text-slate-300 mt-2 leading-relaxed">
-              Track your nocturnal journeys, cultivate dream recall consistency, and unlock regular lucidity through grounded practice.
-            </p>
-          </div>
+    <div className="space-y-6">
+      {/* Dashboard Header */}
+      <div className="p-5 sm:p-6 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight">
+            Dashboard
+          </h1>
+          <p className="text-sm text-slate-400 mt-1">
+            Track nocturnal recall, inspect dream signs, and monitor practice consistency.
+          </p>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <Button
-              variant="celestial"
-              size="lg"
-              icon={<Plus className="w-5 h-5" />}
-              onClick={onOpenNewDream}
-            >
-              Record a Dream
-            </Button>
-            <Button
-              variant="secondary"
-              size="lg"
-              icon={<Compass className="w-4 h-4 text-blue-400" />}
-              onClick={() => navigate('/techniques')}
-            >
-              Explore Techniques
-            </Button>
-          </div>
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <Button
+            variant="primary"
+            size="md"
+            icon={<Plus className="w-4 h-4" />}
+            onClick={onOpenNewDream}
+          >
+            Record Dream
+          </Button>
+          <Button
+            variant="secondary"
+            size="md"
+            icon={<Compass className="w-4 h-4 text-slate-400" />}
+            onClick={() => navigate('/techniques')}
+          >
+            Techniques
+          </Button>
         </div>
       </div>
 
@@ -239,19 +240,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {stats.hasEntries ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* 7-Day Recall Frequency Chart (2 cols) */}
-          <div className="lg:col-span-2 p-6 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 shadow-xl flex flex-col justify-between">
+          <div className="lg:col-span-2 p-5 sm:p-6 rounded-xl bg-slate-900/50 border border-slate-800 flex flex-col justify-between">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-base font-bold text-slate-100">7-Day Dream Recall Activity</h2>
-                <p className="text-xs text-slate-400">Total dreams and lucid awakenings per night</p>
+                <h2 className="text-sm font-semibold text-slate-100">7-Day Recall Activity</h2>
+                <p className="text-xs text-slate-400">Total entries and lucid dreams per night</p>
               </div>
               <div className="flex items-center gap-4 text-xs">
                 <div className="flex items-center gap-1.5 text-slate-300">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                  <span className="w-2.5 h-2.5 rounded-sm bg-blue-500" />
                   <span>Total</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-cyan-300">
-                  <span className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
+                  <span className="w-2.5 h-2.5 rounded-sm bg-cyan-400" />
                   <span>Lucid</span>
                 </div>
               </div>
@@ -261,46 +262,45 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* No-Dream Days & Recall (1 col) */}
-          <div className="p-6 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 shadow-xl flex flex-col justify-between">
+          <div className="p-5 sm:p-6 rounded-xl bg-slate-900/50 border border-slate-800 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
-                  <Moon className="w-4 h-4 text-blue-400" />
-                  <span>No-Dream Days & Recall</span>
+                <h2 className="text-sm font-semibold text-slate-100">
+                  Unremembered Days
                 </h2>
                 <div className="flex items-center gap-2">
                   {allTechniques.length > 0 && (
                     <button
                       type="button"
                       onClick={() => setIsAllRecallModalOpen(true)}
-                      className="text-xs text-blue-400 hover:text-blue-200 cursor-pointer font-medium"
+                      className="text-xs text-blue-400 hover:text-blue-300 cursor-pointer font-medium"
                     >
                       View all ({allTechniques.length})
                     </button>
                   )}
-                  <button
-                    type="button"
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    icon={<Plus className="w-3 h-3" />}
                     onClick={() => {
                       setNoRecallDate(getTodayDateString());
                       setNoRecallNotes('No dreams remembered');
                       setIsNoRecallModalOpen(true);
                     }}
-                    className="inline-flex items-center gap-1 text-xs text-blue-300 hover:text-blue-100 cursor-pointer font-medium bg-blue-600/20 hover:bg-blue-600/30 px-2.5 py-1 rounded-lg border border-blue-500/30 transition-all"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Log Day</span>
-                  </button>
+                    Log Day
+                  </Button>
                 </div>
               </div>
 
               {recentTechniques.length === 0 ? (
-                <div className="p-6 text-center rounded-xl bg-slate-900/40 border border-slate-800/60 text-xs text-slate-400">
+                <div className="p-5 text-center rounded-lg bg-slate-900/40 border border-slate-800 text-xs text-slate-400">
                   <p>No unremembered nights logged yet.</p>
                   <p className="text-[11px] text-slate-500 mt-1">
-                    Did you wake up without recalling a dream? Log it to keep your stats honest.
+                    Log days without recall to maintain accurate statistics.
                   </p>
                   <Button
-                    size="sm"
+                    size="xs"
                     variant="outline"
                     className="mt-3"
                     onClick={() => {
@@ -309,26 +309,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       setIsNoRecallModalOpen(true);
                     }}
                   >
-                    + Log Day Without Dream
+                    Log Unremembered Day
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   {recentTechniques.map((tech) => (
                     <div
                       key={tech.id}
-                      className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between gap-3 group hover:border-slate-700 transition-colors"
+                      className="p-2.5 rounded-lg bg-slate-900/60 border border-slate-800/80 flex items-center justify-between gap-3 group hover:border-slate-700 transition-colors"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-semibold text-slate-200">
                             {formatDate(tech.date)}
                           </span>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-slate-800 text-slate-400 border border-slate-700/60">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-slate-800 text-slate-400 border border-slate-700/60">
                             {tech.outcome === 'no_recall' ? 'No Recall' : tech.technique}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-400 mt-1 truncate">
+                        <p className="text-[11px] text-slate-400 mt-0.5 truncate">
                           {tech.notes || (tech.outcome === 'no_recall' ? 'No dreams remembered' : tech.technique)}
                         </p>
                       </div>
@@ -338,7 +338,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         title="Delete check-in"
                         disabled={deletingLogId === tech.id}
                         onClick={() => handleDeleteRecallLog(tech.id)}
-                        className="opacity-40 group-hover:opacity-100 hover:text-rose-400 text-slate-400 p-1.5 rounded-lg hover:bg-rose-500/10 transition-all cursor-pointer shrink-0"
+                        className="opacity-40 group-hover:opacity-100 hover:text-rose-400 text-slate-400 p-1 rounded hover:bg-rose-500/10 transition-colors cursor-pointer shrink-0"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -348,14 +348,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
               )}
             </div>
 
-            <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
+            <div className="pt-3 mt-3 border-t border-slate-800 flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => navigate('/timeline')}
-                className="text-xs font-medium text-slate-400 hover:text-slate-200 transition-all flex items-center gap-1 cursor-pointer"
+                className="text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
               >
                 <span>View Timeline</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-3 h-3" />
               </button>
               {allTechniques.length > 0 && (
                 <button
@@ -372,11 +372,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
       ) : (
         /* Empty State for New Users */
         <EmptyState
-          title="Your Dream Archive is a Blank Sky"
-          description="Recording dreams immediately upon waking dramatically boosts recall vividness and prefrontal cortex awareness during REM sleep. Log your first dream to begin mapping your personal dream signs."
-          actionText="Record Your First Dream"
+          title="No dreams recorded yet"
+          description="Recording dreams promptly upon waking strengthens recall frequency and detail. Log your first dream to begin tracking patterns and signs."
+          actionText="Record First Dream"
           onAction={onOpenNewDream}
-          secondaryActionText="Preview Sample Data (Temporary)"
+          secondaryActionText="Load Sample Data"
           onSecondaryAction={handleLoadSampleData}
         />
       )}
@@ -539,7 +539,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </p>
             <Button
               size="sm"
-              variant="celestial"
+              variant="primary"
               icon={<Plus className="w-3.5 h-3.5" />}
               onClick={() => {
                 setNoRecallDate(getTodayDateString());
@@ -547,27 +547,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 setIsNoRecallModalOpen(true);
               }}
             >
-              + Log Day
+              Log Day
             </Button>
           </div>
 
           <div className="max-h-[60vh] overflow-y-auto space-y-2 pr-1">
             {allTechniques.length === 0 ? (
-              <div className="p-8 text-center text-xs text-slate-400 bg-slate-900/40 rounded-xl border border-slate-800">
+              <div className="p-8 text-center text-xs text-slate-400 bg-slate-900/40 rounded-lg border border-slate-800">
                 No unremembered nights logged yet.
               </div>
             ) : (
               allTechniques.map((tech) => (
                 <div
                   key={tech.id}
-                  className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-3 group hover:border-slate-700 transition-all"
+                  className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 flex items-center justify-between gap-3 group hover:border-slate-700 transition-colors"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-slate-200">
                         {formatDate(tech.date)}
                       </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-slate-800 text-slate-400 border border-slate-700/60">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-slate-800 text-slate-400 border border-slate-700/60">
                         {tech.outcome === 'no_recall' ? 'No Recall' : tech.technique}
                       </span>
                     </div>
@@ -581,9 +581,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     title="Delete check-in"
                     disabled={deletingLogId === tech.id}
                     onClick={() => handleDeleteRecallLog(tech.id)}
-                    className="opacity-40 group-hover:opacity-100 hover:text-rose-400 text-slate-400 p-2 rounded-lg hover:bg-rose-500/10 transition-all cursor-pointer shrink-0"
+                    className="opacity-40 group-hover:opacity-100 hover:text-rose-400 text-slate-400 p-1.5 rounded hover:bg-rose-500/10 transition-colors cursor-pointer shrink-0"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               ))

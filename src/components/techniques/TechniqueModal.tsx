@@ -9,7 +9,7 @@ import {
 } from '../../types/technique';
 import { techniqueService } from '../../services/techniqueService';
 import { getTodayDateString } from '../../utils/dateUtils';
-import { Sparkles, Calendar, BookOpen, AlertCircle, Clock, Star, Layers } from 'lucide-react';
+import { Calendar, BookOpen, AlertCircle, Clock, Star, Layers } from 'lucide-react';
 
 interface TechniqueModalProps {
   isOpen: boolean;
@@ -250,7 +250,7 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
             <button
               type="button"
               onClick={() => setOutcome('no_recall')}
-              className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+              className={`p-3 rounded-lg border text-center transition-all cursor-pointer ${
                 outcome === 'no_recall'
                   ? 'bg-slate-800 border-slate-500 text-slate-100 font-semibold shadow-sm'
                   : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
@@ -262,7 +262,7 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
             <button
               type="button"
               onClick={() => setOutcome('dream_recalled')}
-              className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+              className={`p-3 rounded-lg border text-center transition-all cursor-pointer ${
                 outcome === 'dream_recalled'
                   ? 'bg-blue-950/70 border-blue-500 text-blue-200 font-semibold shadow-sm'
                   : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
@@ -274,16 +274,13 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
             <button
               type="button"
               onClick={() => setOutcome('lucid_dream')}
-              className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+              className={`p-3 rounded-lg border text-center transition-all cursor-pointer ${
                 outcome === 'lucid_dream'
-                  ? 'bg-cyan-950/80 border-cyan-500 text-cyan-200 font-semibold shadow-sm shadow-cyan-900/40 lucid-glow'
+                  ? 'bg-cyan-950/80 border-cyan-500 text-cyan-200 font-semibold shadow-sm'
                   : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
               }`}
             >
-              <div className="flex items-center justify-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                <span className="text-xs">Lucid Dream!</span>
-              </div>
+              <span className="text-xs">Lucid Dream</span>
             </button>
           </div>
         </div>
@@ -300,7 +297,7 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
             onChange={(e) => setNotes(e.target.value)}
             placeholder="e.g. Woke at 4:30 AM, read for 20 min, cycled senses 3 times before falling asleep..."
             rows={2}
-            className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-100 placeholder-slate-500 text-xs leading-relaxed focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 rounded-lg bg-slate-900/90 border border-slate-700 text-slate-100 placeholder-slate-500 text-xs leading-relaxed focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -309,7 +306,7 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
           <Button type="button" variant="secondary" onClick={onClose} disabled={isSaving}>
             Cancel
           </Button>
-          <Button type="submit" variant="celestial" isLoading={isSaving}>
+          <Button type="submit" variant="primary" isLoading={isSaving}>
             Record Attempt
           </Button>
         </div>

@@ -30,6 +30,26 @@ export function generateSampleData(): {
       dreamControl: 4,
       lucidityConfidence: 5,
       scenesCount: 2,
+      scenes: [
+        {
+          id: 's1-scene-1',
+          sceneNumber: 1,
+          title: 'The Obsidian Spire Terrace',
+          narrative:
+            'I found myself standing on an open marble terrace atop a colossal obsidian spire protruding through a purple twilight cloud deck. Celestial brass instruments turned silently above me, mapping constellations that pulsed in harmonic resonance.',
+          lucid: false,
+          falseAwakening: false,
+        },
+        {
+          id: 's1-scene-2',
+          sceneNumber: 2,
+          title: 'Astral Light Flight',
+          narrative:
+            'I looked down at my hands and noticed glowing silver traceries beneath my skin. Confirming lucidity, I grounded my feet, spun to stabilize, and floated into the river of liquid light.',
+          lucid: true,
+          falseAwakening: false,
+        },
+      ],
       falseAwakening: false,
       realityChecksUseful: ['Looking at hands', 'Grounding & spinning'],
       interpretationNotes: 'Constellation motifs symbolize striving for cognitive clarity and navigation in waking life.',
@@ -101,6 +121,26 @@ export function generateSampleData(): {
       dreamControl: 2,
       lucidityConfidence: 4,
       scenesCount: 2,
+      scenes: [
+        {
+          id: 's4-scene-1',
+          sceneNumber: 1,
+          title: 'Morning Routine Bedroom',
+          narrative:
+            'I awoke in my bedroom to the sound of my alarm. The morning sunlight was streaming across my wooden floorboards. I sat up on the edge of the bed and reached for my glasses.',
+          lucid: false,
+          falseAwakening: true,
+        },
+        {
+          id: 's4-scene-2',
+          sceneNumber: 2,
+          title: 'The Backward Clock Anomaly',
+          narrative:
+            'Looking at the digital clock on my nightstand, the LED numbers were spinning backward: 88:99, then 72:14. I pinched my nose and breathed in effortlessly, discovering I was still dreaming before fading into true awakening.',
+          lucid: true,
+          falseAwakening: true,
+        },
+      ],
       falseAwakening: true,
       falseAwakeningDetails: {
         believedAwake: true,

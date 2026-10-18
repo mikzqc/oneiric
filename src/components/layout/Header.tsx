@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, Plus, Cloud, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Menu, Plus, Cloud, RefreshCw, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../common/Button';
 import { formatFullDate, getTodayDateString } from '../../utils/dateUtils';
@@ -23,6 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [isConfigured, setIsConfigured] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [justSynced, setJustSynced] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     const updateSync = () => {
@@ -40,24 +41,41 @@ export const Header: React.FC<HeaderProps> = ({
     }
     try {
       setIsSyncing(true);
-      await syncService.syncNow();
+      setSyncFeedback(null);
+      const res = await syncService.syncNow();
       setJustSynced(true);
-      setTimeout(() => setJustSynced(false), 2500);
+      if (res.newDreamsCount > 0) {
+        setSyncFeedback({
+          type: 'success',
+          text: `+${res.newDreamsCount} new dream${res.newDreamsCount > 1 ? 's' : ''}`,
+        });
+      } else {
+        setSyncFeedback({
+          type: 'success',
+          text: 'Up to date',
+        });
+      }
+      setTimeout(() => {
+        setJustSynced(false);
+        setSyncFeedback(null);
+      }, 3500);
     } catch (err) {
-      console.warn('Quick sync error:', err);
+      const msg = err instanceof Error ? err.message : 'Sync failed';
+      setSyncFeedback({ type: 'error', text: msg });
+      setTimeout(() => setSyncFeedback(null), 5000);
     } finally {
       setIsSyncing(false);
     }
   };
 
   return (
-    <header className="h-16 px-4 sm:px-8 border-b border-slate-800/80 bg-[#0b132b]/95 backdrop-blur-md flex items-center justify-between shrink-0 sticky top-0 z-30">
+    <header className="h-14 px-4 sm:px-6 border-b border-slate-800 bg-[#0b132b] flex items-center justify-between shrink-0 sticky top-0 z-30">
       <div className="flex items-center gap-3">
         {/* Mobile menu trigger */}
         <button
           type="button"
           onClick={onOpenMobileMenu}
-          className="md:hidden p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+          className="md:hidden p-1.5 rounded-md text-slate-400 hover:text-slate-100 hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer"
           aria-label="Open mobile navigation menu"
         >
           <Menu className="w-5 h-5" />
@@ -65,53 +83,74 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Page Title */}
         <div>
-          {title && <h1 className="text-base sm:text-lg font-semibold text-slate-100">{title}</h1>}
-          {subtitle && <p className="hidden sm:block text-xs text-slate-400">{subtitle}</p>}
+          {title && <h1 className="text-sm sm:text-base font-semibold text-slate-100 leading-tight">{title}</h1>}
+          {subtitle && <p className="hidden sm:block text-[11px] text-slate-400 leading-tight">{subtitle}</p>}
         </div>
       </div>
 
       {/* Right Actions */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-2 sm:gap-2.5">
         {/* Sync Status Button */}
         <button
           type="button"
           onClick={handleQuickSync}
-          title={isConfigured ? 'Encrypted Sync Active (Click to sync now)' : 'Configure Multi-Device Sync in Settings'}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
-            isConfigured
-              ? 'bg-slate-900/80 border-slate-800 text-slate-300 hover:border-blue-500/50 hover:text-blue-300'
-              : 'bg-slate-900/50 border-slate-800/60 text-slate-400 hover:text-slate-300 hover:border-slate-700'
+          title={
+            syncFeedback
+              ? syncFeedback.text
+              : isConfigured
+              ? 'Encrypted Sync Active (Click to sync now)'
+              : 'Configure Multi-Device Sync in Settings'
+          }
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors cursor-pointer ${
+            syncFeedback?.type === 'error'
+              ? 'bg-red-950/60 border-red-700/80 text-red-300 hover:bg-red-900/60'
+              : syncFeedback?.type === 'success'
+              ? 'bg-emerald-950/60 border-emerald-700/80 text-emerald-300'
+              : isConfigured
+              ? 'bg-slate-900 border-slate-700/80 text-slate-300 hover:border-slate-600 hover:text-slate-100'
+              : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-300 hover:border-slate-700'
           }`}
         >
           {isSyncing ? (
             <RefreshCw className="w-3.5 h-3.5 text-blue-400 animate-spin" />
+          ) : syncFeedback?.type === 'error' ? (
+            <AlertCircle className="w-3.5 h-3.5 text-red-400" />
+          ) : syncFeedback?.type === 'success' ? (
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
           ) : justSynced ? (
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
           ) : (
-            <Cloud className={`w-3.5 h-3.5 ${isConfigured ? 'text-blue-400' : 'text-slate-400'}`} />
+            <Cloud className={`w-3.5 h-3.5 ${isConfigured ? 'text-blue-400' : 'text-slate-500'}`} />
           )}
           <span className="hidden sm:inline">
-            {isSyncing ? 'Syncing...' : justSynced ? 'Synced' : isConfigured ? 'Sync' : 'Sync: Off'}
+            {isSyncing
+              ? 'Syncing...'
+              : syncFeedback
+              ? syncFeedback.text
+              : justSynced
+              ? 'Synced'
+              : isConfigured
+              ? 'Sync'
+              : 'Sync: Off'}
           </span>
-          {isConfigured && !isSyncing && !justSynced && (
+          {isConfigured && !isSyncing && !syncFeedback && !justSynced && (
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
           )}
         </button>
 
-        {/* Date Pill */}
-        <div className="hidden lg:flex items-center px-3 py-1.5 rounded-lg bg-slate-900/80 border border-slate-800/80 text-xs text-slate-400 font-medium">
+        {/* Date Display */}
+        <div className="hidden lg:flex items-center px-2.5 py-1 rounded-md bg-slate-900/60 border border-slate-800 text-xs text-slate-400 font-medium">
           <span>{todayFormatted}</span>
         </div>
 
         {/* Record Dream CTA */}
         <Button
-          variant="celestial"
+          variant="primary"
           size="sm"
-          icon={<Plus className="w-4 h-4" />}
+          icon={<Plus className="w-3.5 h-3.5" />}
           onClick={onOpenNewDream}
         >
-          <span className="hidden xs:inline">Record a Dream</span>
-          <span className="xs:hidden">Record</span>
+          <span>Record Dream</span>
         </Button>
       </div>
     </header>

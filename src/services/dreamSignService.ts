@@ -355,10 +355,20 @@ export const dreamSignService = {
 
     const currentLinked = (sign.linkedDreamIds || []).filter((id) => id !== dreamId);
 
+    let nextLastOccurred: string | undefined = undefined;
+    if (currentLinked.length > 0) {
+      const remainingDreams = await db.dreams.where('id').anyOf(currentLinked).toArray();
+      if (remainingDreams.length > 0) {
+        remainingDreams.sort((a, b) => b.date.localeCompare(a.date));
+        nextLastOccurred = remainingDreams[0].date;
+      }
+    }
+
     await db.dreamSigns.update(signId, {
       excludedDreamIds: Array.from(currentExcluded),
       linkedDreamIds: currentLinked,
       distinctDreamCount: currentLinked.length,
+      lastOccurred: nextLastOccurred,
       updatedAt: Date.now(),
     });
 
@@ -524,7 +534,7 @@ export const dreamSignService = {
       await db.dreamSigns.update(sign.id, {
         linkedDreamIds: idsArray,
         distinctDreamCount: distinctCount,
-        lastOccurred: latestDate || sign.lastOccurred,
+        lastOccurred: distinctCount === 0 ? undefined : (latestDate || sign.lastOccurred),
         updatedAt: Date.now(),
       });
       updatedSignsCount++;

@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { dreamService } from '../services/dreamService';
 import { DreamEntry } from '../types/dream';
 import { DreamEditor } from '../components/journal/DreamEditor';
-import { Sparkles, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '../components/common/Button';
 
 export const DreamEditorPage: React.FC = () => {
@@ -70,18 +70,17 @@ export const DreamEditorPage: React.FC = () => {
           Back
         </Button>
 
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-          <span>{id ? 'Editing Recorded Dream' : 'New Dream Entry'}</span>
-        </div>
+        <span className="text-xs text-slate-400">
+          {id ? 'Editing Dream' : 'New Dream Entry'}
+        </span>
       </div>
 
-      <div className="p-6 sm:p-8 rounded-3xl bg-[#0f172a]/80 border border-slate-800/80 shadow-2xl celestial-glow">
+      <div className="p-6 sm:p-8 rounded-xl bg-slate-900/60 border border-slate-800">
         <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight mb-1">
-          {id ? 'Refine Dream Memory' : 'Inscribe Dream Experience'}
+          {id ? 'Edit Dream' : 'New Dream Entry'}
         </h1>
         <p className="text-xs sm:text-sm text-slate-400 mb-6">
-          Capture sensory texture, anomalies, lucidity sparks, and emotional nuances before they fade.
+          Record narrative details, vividness, lucidity cues, and tags.
         </p>
 
         <DreamEditor

@@ -8,6 +8,8 @@ export interface SyncVaultCredentials {
   relayUrl?: string;
   autoSync: boolean;
   deviceName?: string;
+  lastRemoteDevice?: string;
+  lastRemoteUpdate?: string;
 }
 
 export interface EncryptedSyncEnvelope {
@@ -29,11 +31,14 @@ export interface SyncState {
   isConfigured: boolean;
   vaultId: string | null;
   autoSync: boolean;
+  lastRemoteDevice?: string | null;
+  lastRemoteUpdate?: string | null;
 }
 
 export interface SyncResult {
   success: boolean;
   pulledCount: number;
+  newDreamsCount: number;
   pushedCount: number;
   timestamp: string;
   error?: string;

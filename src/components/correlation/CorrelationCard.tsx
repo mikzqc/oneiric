@@ -39,20 +39,20 @@ export const CorrelationCard: React.FC<CorrelationCardProps> = ({
   const getConfidenceBadge = (conf: ConfidenceRating) => {
     if (conf === 'high') {
       return (
-        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-emerald-950 text-emerald-300 border border-emerald-800/60">
+        <span className="text-[10px] px-2 py-0.5 rounded-md font-medium bg-emerald-950/80 text-emerald-300 border border-emerald-800/60">
           High Evidence (n ≥ 5)
         </span>
       );
     }
     if (conf === 'moderate') {
       return (
-        <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-blue-950 text-blue-300 border border-blue-800/60">
+        <span className="text-[10px] px-2 py-0.5 rounded-md font-medium bg-blue-950/80 text-blue-300 border border-blue-800/60">
           Moderate (n = {sampleSize})
         </span>
       );
     }
     return (
-      <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-slate-900 text-slate-400 border border-slate-800">
+      <span className="text-[10px] px-2 py-0.5 rounded-md font-medium bg-slate-900 text-slate-400 border border-slate-800">
         Low Sample (n &lt; 3)
       </span>
     );

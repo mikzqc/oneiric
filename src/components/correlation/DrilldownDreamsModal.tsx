@@ -59,7 +59,7 @@ export const DrilldownDreamsModal: React.FC<DrilldownDreamsModalProps> = ({
   const getLucidityBadge = (lucidity: string) => {
     if (lucidity === 'lucid') {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-950 text-blue-300 border border-blue-700/50">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-950/80 text-blue-300 border border-blue-700/50">
           <Eye className="w-3 h-3 text-blue-400" />
           Lucid
         </span>
@@ -67,13 +67,13 @@ export const DrilldownDreamsModal: React.FC<DrilldownDreamsModalProps> = ({
     }
     if (lucidity === 'uncertain') {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-950/60 text-amber-300 border border-amber-800/50">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-amber-950/60 text-amber-300 border border-amber-800/50">
           Uncertain
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-800/80 text-slate-400 border border-slate-700/50">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-slate-800/80 text-slate-400 border border-slate-700/50">
         Non-Lucid
       </span>
     );
@@ -89,7 +89,7 @@ export const DrilldownDreamsModal: React.FC<DrilldownDreamsModalProps> = ({
         </div>
 
         {/* Content list */}
-        <div className="overflow-y-auto space-y-3 pr-1">
+        <div className="overflow-y-auto space-y-2.5 pr-1">
           {isLoading ? (
             <div className="py-12 flex justify-center">
               <div className="w-6 h-6 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
@@ -102,7 +102,7 @@ export const DrilldownDreamsModal: React.FC<DrilldownDreamsModalProps> = ({
             dreams.map((dream) => (
               <div
                 key={dream.id}
-                className="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800/80 hover:border-slate-700 transition-all space-y-2 group"
+                className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-colors space-y-2 group"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>

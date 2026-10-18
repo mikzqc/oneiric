@@ -53,8 +53,14 @@ export const dreamService = {
     // Trigger dream signs update in background
     dreamSignService.scanAndDetectSigns().catch(() => {});
 
-    // Trigger debounced cloud sync in background if configured
-    syncService.triggerAutoSync();
+    // Trigger immediate cloud sync in background if configured
+    syncService.triggerAutoSync({ immediate: true });
+
+    try {
+      window.dispatchEvent(new CustomEvent('oneiric:dream-saved', { detail: entry }));
+    } catch {
+      // ignore
+    }
 
     return entry;
   },
@@ -89,8 +95,14 @@ export const dreamService = {
     // Trigger dream signs update in background
     dreamSignService.scanAndDetectSigns().catch(() => {});
 
-    // Trigger debounced cloud sync in background if configured
-    syncService.triggerAutoSync();
+    // Trigger immediate cloud sync in background if configured
+    syncService.triggerAutoSync({ immediate: true });
+
+    try {
+      window.dispatchEvent(new CustomEvent('oneiric:dream-saved', { detail: { id, ...updates } }));
+    } catch {
+      // ignore
+    }
   },
 
   async deleteDream(id: string): Promise<void> {
@@ -98,8 +110,14 @@ export const dreamService = {
     // Trigger dream signs update in background
     dreamSignService.scanAndDetectSigns().catch(() => {});
 
-    // Trigger debounced cloud sync in background if configured
-    syncService.triggerAutoSync();
+    // Trigger immediate cloud sync in background if configured
+    syncService.triggerAutoSync({ immediate: true });
+
+    try {
+      window.dispatchEvent(new CustomEvent('oneiric:dream-saved', { detail: { id, deleted: true } }));
+    } catch {
+      // ignore
+    }
   },
 
   async getLucidDreams(): Promise<DreamEntry[]> {

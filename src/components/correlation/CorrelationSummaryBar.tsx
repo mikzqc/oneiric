@@ -1,6 +1,6 @@
 import React from 'react';
 import { CorrelationReport } from '../../types/correlation';
-import { Sparkles, Eye, Network } from 'lucide-react';
+import { TrendingUp, Eye, Network } from 'lucide-react';
 
 interface CorrelationSummaryBarProps {
   report: CorrelationReport;
@@ -8,9 +8,9 @@ interface CorrelationSummaryBarProps {
 
 export const CorrelationSummaryBar: React.FC<CorrelationSummaryBarProps> = ({ report }) => {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       {/* Total Analyzed Dreams */}
-      <div className="p-4 rounded-2xl bg-[#0f172a]/80 border border-slate-800/80 shadow-lg space-y-1">
+      <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
         <div className="flex items-center justify-between text-xs text-slate-400">
           <span>Analyzed Dreams</span>
           <span className="font-mono text-[10px] text-blue-400">Sample N</span>
@@ -24,7 +24,7 @@ export const CorrelationSummaryBar: React.FC<CorrelationSummaryBarProps> = ({ re
       </div>
 
       {/* Baseline Lucidity */}
-      <div className="p-4 rounded-2xl bg-[#0f172a]/80 border border-slate-800/80 shadow-lg space-y-1">
+      <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
         <div className="flex items-center justify-between text-xs text-slate-400">
           <span>Baseline Lucidity</span>
           <Eye className="w-4 h-4 text-blue-400" />
@@ -38,7 +38,7 @@ export const CorrelationSummaryBar: React.FC<CorrelationSummaryBarProps> = ({ re
       </div>
 
       {/* Active Recurring Signs */}
-      <div className="p-4 rounded-2xl bg-[#0f172a]/80 border border-slate-800/80 shadow-lg space-y-1">
+      <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
         <div className="flex items-center justify-between text-xs text-slate-400">
           <span>Tracked Signs</span>
           <Network className="w-4 h-4 text-cyan-400" />
@@ -52,10 +52,10 @@ export const CorrelationSummaryBar: React.FC<CorrelationSummaryBarProps> = ({ re
       </div>
 
       {/* High-Impact Findings */}
-      <div className="p-4 rounded-2xl bg-[#0f172a]/80 border border-slate-800/80 shadow-lg space-y-1">
+      <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1">
         <div className="flex items-center justify-between text-xs text-slate-400">
           <span>Notable Patterns</span>
-          <Sparkles className="w-4 h-4 text-amber-400" />
+          <TrendingUp className="w-4 h-4 text-amber-400" />
         </div>
         <div className="text-2xl font-bold text-amber-300">
           {report.notableFindingsCount}

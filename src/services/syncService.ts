@@ -11,15 +11,16 @@ import { BackupPayload } from '../types/backup';
 const CREDENTIALS_STORAGE_KEY = 'oneiric_sync_vault';
 
 let autoSyncTimeout: ReturnType<typeof setTimeout> | null = null;
+let activeSyncPromise: Promise<SyncResult> | null = null;
 
-function getRelayUrl(customRelayUrl?: string, vaultId?: string): string {
+export const CANONICAL_CLOUD_RELAY = 'https://oneiric-one.vercel.app/api/vault';
+
+export function getRelayUrl(customRelayUrl?: string, vaultId?: string): string {
   if (customRelayUrl && !customRelayUrl.includes('extendsclass.com')) {
-    return vaultId ? `${customRelayUrl}/${vaultId}` : customRelayUrl;
+    const clean = customRelayUrl.replace(/\/+$/, '');
+    return vaultId ? `${clean}/${encodeURIComponent(vaultId)}` : clean;
   }
-  const base = typeof window !== 'undefined' && window.location?.origin
-    ? `${window.location.origin}/api/vault`
-    : '/api/vault';
-  return vaultId ? `${base}?id=${encodeURIComponent(vaultId)}` : base;
+  return vaultId ? `${CANONICAL_CLOUD_RELAY}?id=${encodeURIComponent(vaultId)}` : CANONICAL_CLOUD_RELAY;
 }
 
 export const syncService = {
@@ -77,12 +78,14 @@ export const syncService = {
   getSyncState(): SyncState {
     const creds = this.getCredentials();
     return {
-      status: 'idle',
+      status: activeSyncPromise ? 'syncing' : 'idle',
       lastSyncedAt: creds?.lastSyncedAt || null,
       error: null,
       isConfigured: Boolean(creds?.vaultId && creds?.passphrase),
       vaultId: creds?.vaultId || null,
       autoSync: creds?.autoSync ?? true,
+      lastRemoteDevice: creds?.lastRemoteDevice || null,
+      lastRemoteUpdate: creds?.lastRemoteUpdate || null,
     };
   },
 
@@ -271,12 +274,15 @@ export const syncService = {
       lastSyncedAt: nowStr,
       autoSync: true,
       deviceName,
+      lastRemoteDevice: envelope.sourceDevice,
+      lastRemoteUpdate: envelope.updatedAt,
     };
     this.saveCredentials(creds);
 
     return {
       success: true,
       pulledCount: importRes.dreamCount,
+      newDreamsCount: importRes.newDreamsCount,
       pushedCount: mergedData.dreams.length,
       timestamp: nowStr,
     };
@@ -290,94 +296,123 @@ export const syncService = {
    * 4. Pushes back to cloud relay
    */
   async syncNow(): Promise<SyncResult> {
-    const creds = this.getCredentials();
-    if (!creds || !creds.vaultId || !creds.passphrase) {
-      throw new Error('No sync vault configured on this device.');
+    if (activeSyncPromise) {
+      return activeSyncPromise;
     }
 
-    const getUrl = getRelayUrl(creds.relayUrl, creds.vaultId);
+    activeSyncPromise = (async () => {
+      try {
+        const creds = this.getCredentials();
+        if (!creds || !creds.vaultId || !creds.passphrase) {
+          throw new Error('No sync vault configured on this device.');
+        }
 
-    // 1. Pull remote envelope
-    let getRes: Response;
-    try {
-      getRes = await fetch(getUrl, { method: 'GET' });
-    } catch (networkErr: unknown) {
-      throw new Error(
-        `Failed to connect to cloud relay: ${
-          networkErr instanceof Error ? networkErr.message : 'Network error'
-        }.`
-      );
-    }
+        const getUrl = getRelayUrl(creds.relayUrl, creds.vaultId);
 
-    if (!getRes.ok) {
-      throw new Error(`Failed to connect to cloud relay (HTTP ${getRes.status}).`);
-    }
+        // 1. Pull remote envelope
+        let getRes: Response;
+        try {
+          getRes = await fetch(getUrl, { method: 'GET' });
+        } catch (networkErr: unknown) {
+          throw new Error(
+            `Failed to connect to cloud relay: ${
+              networkErr instanceof Error ? networkErr.message : 'Network error'
+            }.`
+          );
+        }
 
-    const remoteEnvelope = (await getRes.json()) as EncryptedSyncEnvelope;
-    let pulledCount = 0;
+        if (!getRes.ok) {
+          if (getRes.status === 404) {
+            throw new Error(`Sync vault not found (${creds.vaultId}). Please check your Vault ID.`);
+          }
+          throw new Error(`Failed to connect to cloud relay (HTTP ${getRes.status}).`);
+        }
 
-    // 2. Decrypt remote data if present
-    if (remoteEnvelope && remoteEnvelope.ciphertext && remoteEnvelope.salt && remoteEnvelope.iv) {
-      const decrypted = await cryptoService.decryptData<BackupPayload>(
-        remoteEnvelope,
-        creds.passphrase
-      );
+        const remoteEnvelope = (await getRes.json()) as EncryptedSyncEnvelope;
+        let pulledCount = 0;
+        let newDreamsCount = 0;
 
-      const validation = backupService.validateImportData(JSON.stringify(decrypted));
-      if (validation.valid && validation.data) {
-        const importRes = await backupService.importData(validation.data, 'merge');
-        pulledCount = importRes.dreamCount;
+        // 2. Decrypt remote data if present
+        if (remoteEnvelope && remoteEnvelope.ciphertext && remoteEnvelope.salt && remoteEnvelope.iv) {
+          let decrypted: BackupPayload;
+          try {
+            decrypted = await cryptoService.decryptData<BackupPayload>(
+              remoteEnvelope,
+              creds.passphrase
+            );
+          } catch {
+            throw new Error('Encryption Passphrase does not match this vault. Please check your credentials in Settings.');
+          }
+
+          const validation = backupService.validateImportData(JSON.stringify(decrypted));
+          if (validation.valid && validation.data) {
+            const importRes = await backupService.importData(validation.data, 'merge');
+            pulledCount = importRes.dreamCount;
+            newDreamsCount = importRes.newDreamsCount;
+          }
+        }
+
+        // 3. Export complete union of local dreams
+        const fullLocalData = await backupService.exportData();
+
+        // 4. Encrypt full dataset with client-side Web Crypto
+        const reEncrypted = await cryptoService.encryptData(fullLocalData, creds.passphrase);
+
+        const newEnvelope: EncryptedSyncEnvelope = {
+          version: 2,
+          vaultId: creds.vaultId,
+          salt: reEncrypted.salt,
+          iv: reEncrypted.iv,
+          ciphertext: reEncrypted.ciphertext,
+          updatedAt: new Date().toISOString(),
+          sourceDevice: creds.deviceName || 'Oneiric App',
+        };
+
+        // 5. Push back to relay
+        const putUrl = getRelayUrl(creds.relayUrl, creds.vaultId);
+        let putRes: Response;
+        try {
+          putRes = await fetch(putUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newEnvelope),
+          });
+        } catch (networkErr: unknown) {
+          throw new Error(
+            `Failed to update cloud relay: ${
+              networkErr instanceof Error ? networkErr.message : 'Network error'
+            }.`
+          );
+        }
+
+        if (!putRes.ok) {
+          throw new Error(`Failed to update cloud relay (HTTP ${putRes.status}).`);
+        }
+
+        // 6. Update local credentials timestamp & remote device metadata
+        const nowStr = new Date().toISOString();
+        creds.lastSyncedAt = nowStr;
+        if (remoteEnvelope?.sourceDevice) {
+          creds.lastRemoteDevice = remoteEnvelope.sourceDevice;
+        }
+        if (remoteEnvelope?.updatedAt) {
+          creds.lastRemoteUpdate = remoteEnvelope.updatedAt;
+        }
+        this.saveCredentials(creds);
+
+        return {
+          success: true,
+          pulledCount,
+          newDreamsCount,
+          pushedCount: fullLocalData.dreams.length,
+          timestamp: nowStr,
+        };
+      } finally {
+        activeSyncPromise = null;
       }
-    }
+    })();
 
-    // 3. Export complete union of local dreams
-    const fullLocalData = await backupService.exportData();
-
-    // 4. Encrypt full dataset with client-side Web Crypto
-    const reEncrypted = await cryptoService.encryptData(fullLocalData, creds.passphrase);
-
-    const newEnvelope: EncryptedSyncEnvelope = {
-      version: 2,
-      vaultId: creds.vaultId,
-      salt: reEncrypted.salt,
-      iv: reEncrypted.iv,
-      ciphertext: reEncrypted.ciphertext,
-      updatedAt: new Date().toISOString(),
-      sourceDevice: creds.deviceName || 'Oneiric App',
-    };
-
-    // 5. Push back to relay
-    const putUrl = getRelayUrl(creds.relayUrl, creds.vaultId);
-    let putRes: Response;
-    try {
-      putRes = await fetch(putUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newEnvelope),
-      });
-    } catch (networkErr: unknown) {
-      throw new Error(
-        `Failed to update cloud relay: ${
-          networkErr instanceof Error ? networkErr.message : 'Network error'
-        }.`
-      );
-    }
-
-    if (!putRes.ok) {
-      throw new Error(`Failed to update cloud relay (HTTP ${putRes.status}).`);
-    }
-
-    // 6. Update local credentials timestamp
-    const nowStr = new Date().toISOString();
-    creds.lastSyncedAt = nowStr;
-    this.saveCredentials(creds);
-
-    return {
-      success: true,
-      pulledCount,
-      pushedCount: fullLocalData.dreams.length,
-      timestamp: nowStr,
-    };
+    return activeSyncPromise;
   },
 
   /**
@@ -392,23 +427,25 @@ export const syncService = {
   },
 
   /**
-   * Debounced auto-sync trigger to run after changes
+   * Debounced auto-sync trigger to run after changes or window events
    */
-  triggerAutoSync(): void {
+  triggerAutoSync(options?: { immediate?: boolean }): void {
     const creds = this.getCredentials();
     if (!creds || !creds.autoSync) return;
 
     if (autoSyncTimeout) {
       clearTimeout(autoSyncTimeout);
+      autoSyncTimeout = null;
     }
 
+    const delay = options?.immediate ? 60 : 1500;
     autoSyncTimeout = setTimeout(async () => {
       try {
         await this.syncNow();
       } catch (err) {
         console.warn('Background auto-sync failed:', err);
       }
-    }, 4000);
+    }, delay);
   },
 
   /**
@@ -437,3 +474,30 @@ export const syncService = {
     return res.dreamCount;
   },
 };
+
+// Auto-sync on window focus or tab visibility return
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      syncService.triggerAutoSync({ immediate: true });
+    } else if (document.visibilityState === 'hidden') {
+      if (autoSyncTimeout) {
+        clearTimeout(autoSyncTimeout);
+        autoSyncTimeout = null;
+        syncService.syncNow().catch(() => {});
+      }
+    }
+  });
+
+  window.addEventListener('focus', () => {
+    syncService.triggerAutoSync({ immediate: true });
+  });
+
+  window.addEventListener('pagehide', () => {
+    if (autoSyncTimeout) {
+      clearTimeout(autoSyncTimeout);
+      autoSyncTimeout = null;
+      syncService.syncNow().catch(() => {});
+    }
+  });
+}

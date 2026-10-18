@@ -29,14 +29,21 @@ export const AnalyticsPage: React.FC = () => {
 
   useEffect(() => {
     let isMounted = true;
-    analyticsService.getAnalytics(timeRange, lucidityFilter).then((res) => {
-      if (isMounted) {
-        setData(res);
-        setIsLoading(false);
-      }
-    });
+    const fetchData = () => {
+      analyticsService.getAnalytics(timeRange, lucidityFilter).then((res) => {
+        if (isMounted) {
+          setData(res);
+          setIsLoading(false);
+        }
+      });
+    };
+    fetchData();
+    window.addEventListener('oneiric:dream-saved', fetchData);
+    window.addEventListener('oneiric:sample-data-changed', fetchData);
     return () => {
       isMounted = false;
+      window.removeEventListener('oneiric:dream-saved', fetchData);
+      window.removeEventListener('oneiric:sample-data-changed', fetchData);
     };
   }, [timeRange, lucidityFilter]);
 
@@ -55,25 +62,25 @@ export const AnalyticsPage: React.FC = () => {
       {/* Top Header & Filters */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100 tracking-tight flex items-center gap-2">
-            <BarChart3 className="w-6 h-6 text-blue-400" />
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-blue-400" />
             <span>Dream Intelligence & Analytics</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Data-driven patterns, circadian recall rhythms, and conscious agency metrics
+            Data-driven patterns, circadian recall rhythms, and conscious agency metrics.
           </p>
         </div>
 
         {/* Filter Controls */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Time range buttons */}
-          <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-0.5 text-xs">
+          <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-0.5 text-xs">
             {(['7d', '30d', '90d', '1y', 'all'] as TimeRangeFilter[]).map((tr) => (
               <button
                 key={tr}
                 type="button"
                 onClick={() => setTimeRange(tr)}
-                className={`px-3 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
                   timeRange === tr
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
@@ -89,7 +96,7 @@ export const AnalyticsPage: React.FC = () => {
             value={lucidityFilter}
             onChange={(e) => setLucidityFilter(e.target.value as 'all' | LucidityLevel)}
             aria-label="Filter by lucidity"
-            className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+            className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="all">All Dreams</option>
             <option value="lucid">Lucid Only</option>
@@ -115,28 +122,28 @@ export const AnalyticsPage: React.FC = () => {
           {/* Primary Metrics Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total Dreams in Period */}
-            <div className="p-5 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 shadow-md">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-1">
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+              <span className="text-xs font-semibold text-slate-400 block mb-1">
                 Dreams in Window
               </span>
-              <div className="text-3xl font-extrabold text-slate-100">{data.totalDreams}</div>
+              <div className="text-2xl font-bold text-slate-100">{data.totalDreams}</div>
               <p className="text-xs text-slate-400 mt-1">
                 {data.recordedDaysCount} of {data.calendarDaysCount} nights journaled
               </p>
             </div>
 
             {/* Recall Rate */}
-            <div className="p-5 rounded-2xl bg-[#0f172a]/70 border border-blue-500/30 celestial-glow shadow-md">
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold uppercase tracking-wider text-blue-300">
+                <span className="text-xs font-semibold text-slate-400">
                   Recall Consistency
                 </span>
                 <span className="text-xs font-bold text-blue-400">{data.recallRate}%</span>
               </div>
-              <div className="text-3xl font-extrabold text-slate-100">{data.recallRate}%</div>
+              <div className="text-2xl font-bold text-slate-100">{data.recallRate}%</div>
               <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
                 <div
-                  className="bg-blue-500 h-1.5 rounded-full transition-all duration-500"
+                  className="bg-blue-500 h-1.5 rounded-full"
                   style={{ width: `${data.recallRate}%` }}
                 />
               </div>
@@ -146,14 +153,14 @@ export const AnalyticsPage: React.FC = () => {
             </div>
 
             {/* Lucid Rate */}
-            <div className="p-5 rounded-2xl bg-[#0f172a]/70 border border-cyan-500/30 lucid-glow shadow-md">
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-semibold uppercase tracking-wider text-cyan-300">
+                <span className="text-xs font-semibold text-slate-400">
                   Lucidity Frequency
                 </span>
                 <Sparkles className="w-4 h-4 text-cyan-400" />
               </div>
-              <div className="text-3xl font-extrabold text-cyan-300">
+              <div className="text-2xl font-bold text-cyan-300">
                 {data.totalLucid}{' '}
                 <span className="text-sm font-normal text-slate-400">({data.lucidityRate}%)</span>
               </div>
@@ -163,18 +170,18 @@ export const AnalyticsPage: React.FC = () => {
             </div>
 
             {/* Average Vividness & Control */}
-            <div className="p-5 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 shadow-md">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-1">
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+              <span className="text-xs font-semibold text-slate-400 block mb-1">
                 Quality & Agency
               </span>
               <div className="flex items-center gap-3">
                 <div>
-                  <span className="text-2xl font-extrabold text-amber-300">{data.averageVividness}</span>
+                  <span className="text-2xl font-bold text-amber-300">{data.averageVividness}</span>
                   <span className="text-xs text-slate-500 block">Vividness (/5)</span>
                 </div>
                 <div className="h-8 w-px bg-slate-800" />
                 <div>
-                  <span className="text-2xl font-extrabold text-blue-300">
+                  <span className="text-2xl font-bold text-blue-300">
                     {data.averageDreamControl !== null ? data.averageDreamControl : '—'}
                   </span>
                   <span className="text-xs text-slate-500 block">Control (/5)</span>
@@ -184,7 +191,7 @@ export const AnalyticsPage: React.FC = () => {
           </div>
 
           {/* Scientific Disclaimer Note */}
-          <div className="p-3.5 rounded-xl bg-slate-900/50 border border-slate-800/80 text-xs text-slate-400 flex items-start gap-2.5">
+          <div className="p-3.5 rounded-lg bg-slate-900/50 border border-slate-800 text-xs text-slate-400 flex items-start gap-2.5">
             <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
             <p className="leading-relaxed">
               <strong>Measurement methodology:</strong> Recall consistency reflects recorded nights in the journal. Unrecorded nights indicate no entry was submitted; they do not assume the absence of dreams, as dream forgetting is a natural neurochemical occurrence.
@@ -192,10 +199,10 @@ export const AnalyticsPage: React.FC = () => {
           </div>
 
           {/* Main Visuals: Recall Timeline Chart */}
-          <div className="p-6 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 shadow-xl space-y-4">
+          <div className="p-5 sm:p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-blue-400" />
                   <span>Recall & Lucidity Volume Over Time</span>
                 </h2>
@@ -204,11 +211,11 @@ export const AnalyticsPage: React.FC = () => {
 
               <div className="flex items-center gap-4 text-xs">
                 <div className="flex items-center gap-1.5 text-blue-300">
-                  <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                  <span className="w-2.5 h-2.5 rounded-sm bg-blue-500" />
                   <span>Total Dreams</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-cyan-300">
-                  <span className="w-2.5 h-2.5 rounded-full bg-cyan-400" />
+                  <span className="w-2.5 h-2.5 rounded-sm bg-cyan-400" />
                   <span>Lucid Awakenings</span>
                 </div>
               </div>
@@ -235,7 +242,7 @@ export const AnalyticsPage: React.FC = () => {
                       if (active && payload && payload.length) {
                         const item = payload[0].payload;
                         return (
-                          <div className="p-3 bg-[#0b132b] border border-slate-700/80 rounded-xl shadow-xl text-xs space-y-1">
+                          <div className="p-3 bg-slate-900 border border-slate-700 rounded-lg shadow-xl text-xs space-y-1">
                             <p className="font-semibold text-slate-200">{formatDate(item.date)}</p>
                             <p className="text-blue-300">Total Dreams: <strong className="text-white">{item.total}</strong></p>
                             <p className="text-cyan-300">Lucid Dreams: <strong className="text-white">{item.lucid}</strong></p>
@@ -258,15 +265,15 @@ export const AnalyticsPage: React.FC = () => {
           {/* Comparative Trends Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Weekly Comparison */}
-            <div className="p-5 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 shadow-md">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-slate-400">
                   Weekly Recall Momentum
                 </span>
                 <Clock className="w-4 h-4 text-blue-400" />
               </div>
               <div className="flex items-baseline gap-3">
-                <span className="text-2xl font-bold text-slate-100">
+                <span className="text-xl font-bold text-slate-100">
                   {data.weeklyComparison.thisWeek} dreams
                 </span>
                 <span className="text-xs text-slate-400">this week</span>
@@ -274,9 +281,9 @@ export const AnalyticsPage: React.FC = () => {
               <div className="mt-2 text-xs flex items-center gap-2">
                 <span className="text-slate-400">vs last week: {data.weeklyComparison.lastWeek}</span>
                 <span
-                  className={`font-semibold px-2 py-0.5 rounded-full ${
+                  className={`font-semibold px-2 py-0.5 rounded-md ${
                     data.weeklyComparison.difference >= 0
-                      ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
+                      ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800/50'
                       : 'bg-slate-800 text-slate-400'
                   }`}
                 >
@@ -288,15 +295,15 @@ export const AnalyticsPage: React.FC = () => {
             </div>
 
             {/* Monthly Comparison */}
-            <div className="p-5 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 shadow-md">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-slate-400">
                   Monthly Recall Horizon
                 </span>
                 <Calendar className="w-4 h-4 text-blue-400" />
               </div>
               <div className="flex items-baseline gap-3">
-                <span className="text-2xl font-bold text-slate-100">
+                <span className="text-xl font-bold text-slate-100">
                   {data.monthlyComparison.thisMonth} dreams
                 </span>
                 <span className="text-xs text-slate-400">past 30 days</span>
@@ -304,9 +311,9 @@ export const AnalyticsPage: React.FC = () => {
               <div className="mt-2 text-xs flex items-center gap-2">
                 <span className="text-slate-400">vs prior 30 days: {data.monthlyComparison.lastMonth}</span>
                 <span
-                  className={`font-semibold px-2 py-0.5 rounded-full ${
+                  className={`font-semibold px-2 py-0.5 rounded-md ${
                     data.monthlyComparison.difference >= 0
-                      ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
+                      ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800/50'
                       : 'bg-slate-800 text-slate-400'
                   }`}
                 >
@@ -319,13 +326,13 @@ export const AnalyticsPage: React.FC = () => {
           </div>
 
           {/* Heatmap Activity Grid */}
-          <div className="p-6 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 shadow-xl space-y-4">
+          <div className="p-5 sm:p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
             <div>
-              <h2 className="text-base font-bold text-slate-100">Dream Recall Activity Heatmap</h2>
+              <h2 className="text-sm font-semibold text-slate-100">Dream Recall Activity Heatmap</h2>
               <p className="text-xs text-slate-400">Nocturnal distribution across the last 90 calendar days</p>
             </div>
 
-            <div className="flex flex-wrap gap-1.5 p-3 rounded-xl bg-slate-950/50 border border-slate-800/60">
+            <div className="flex flex-wrap gap-1.5 p-3 rounded-lg bg-slate-950/50 border border-slate-800/60">
               {data.heatmap.map((day) => {
                 const hasDreams = day.count > 0;
                 const hasLucid = day.lucidCount > 0;
@@ -337,11 +344,11 @@ export const AnalyticsPage: React.FC = () => {
                     title={`${formatDate(day.date)}: ${day.count} dream(s)${
                       hasLucid ? ` (${day.lucidCount} lucid)` : ''
                     }${hasFA ? ' [False Awakening]' : ''}`}
-                    className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-sm transition-all cursor-pointer ${
+                    className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-xs transition-colors cursor-pointer ${
                       hasLucid
-                        ? 'bg-cyan-400 shadow-sm shadow-cyan-400/50 scale-105'
+                        ? 'bg-cyan-400'
                         : hasFA
-                        ? 'bg-sky-500 shadow-sm shadow-sky-500/50'
+                        ? 'bg-sky-500'
                         : hasDreams
                         ? 'bg-blue-600'
                         : 'bg-slate-900 border border-slate-800/60'
@@ -372,10 +379,10 @@ export const AnalyticsPage: React.FC = () => {
           </div>
 
           {/* Emotions & Tags Frequencies Breakdown */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Top Emotions */}
-            <div className="p-6 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 shadow-xl space-y-4">
-              <h2 className="text-base font-bold text-slate-100">Dominant Emotional Frequencies</h2>
+            <div className="p-5 sm:p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
+              <h2 className="text-sm font-semibold text-slate-100">Dominant Emotional Frequencies</h2>
               {data.emotions.length === 0 ? (
                 <p className="text-xs text-slate-400 italic">No emotion tags recorded in this window.</p>
               ) : (
@@ -401,8 +408,8 @@ export const AnalyticsPage: React.FC = () => {
             </div>
 
             {/* Top Tags */}
-            <div className="p-6 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 shadow-xl space-y-4">
-              <h2 className="text-base font-bold text-slate-100">Recurring Thematic Tags</h2>
+            <div className="p-5 sm:p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
+              <h2 className="text-sm font-semibold text-slate-100">Recurring Thematic Tags</h2>
               {data.topTags.length === 0 ? (
                 <p className="text-xs text-slate-400 italic">No tags logged in this window.</p>
               ) : (
@@ -410,10 +417,10 @@ export const AnalyticsPage: React.FC = () => {
                   {data.topTags.map((t) => (
                     <div
                       key={t.tag}
-                      className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs flex items-center gap-2 text-slate-200"
+                      className="px-2.5 py-1 rounded-md bg-slate-900 border border-slate-800 text-xs flex items-center gap-1.5 text-slate-200"
                     >
                       <span className="text-blue-400">#{t.tag}</span>
-                      <span className="px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-400 text-[10px] font-mono">
+                      <span className="px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 text-[10px] font-mono">
                         {t.count}
                       </span>
                     </div>

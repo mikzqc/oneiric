@@ -32,16 +32,16 @@ export const TechniqueCard: React.FC<TechniqueCardProps> = ({ info }) => {
   };
 
   return (
-    <div className="p-5 sm:p-6 rounded-2xl bg-[#0f172a]/70 border border-slate-800/80 hover:border-slate-700/80 transition-all flex flex-col justify-between shadow-lg">
+    <div className="p-4 sm:p-5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-colors flex flex-col justify-between shadow-sm">
       <div className="space-y-3">
         {/* Top Badges & Timing */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-950/90 text-blue-300 border border-blue-700/60 font-mono">
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-950/90 text-blue-300 border border-blue-700/60 font-mono">
               {info.acronym}
             </span>
             <span
-              className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md border ${getDifficultyColor(
+              className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${getDifficultyColor(
                 info.difficulty
               )}`}
             >
@@ -52,7 +52,7 @@ export const TechniqueCard: React.FC<TechniqueCardProps> = ({ info }) => {
             </span>
           </div>
 
-          <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-900/90 text-slate-400 border border-slate-800 flex items-center gap-1 shrink-0">
+          <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-900 text-slate-400 border border-slate-800 flex items-center gap-1 shrink-0">
             <Clock className="w-3 h-3 text-blue-400" />
             <span>{info.recommendedTiming}</span>
           </span>
@@ -60,8 +60,8 @@ export const TechniqueCard: React.FC<TechniqueCardProps> = ({ info }) => {
 
         {/* Name & Short Description */}
         <div>
-          <h3 className="text-base sm:text-lg font-bold text-slate-100">{info.name}</h3>
-          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mt-1">
+          <h3 className="text-sm sm:text-base font-bold text-slate-100">{info.name}</h3>
+          <p className="text-xs text-slate-300 leading-relaxed mt-1">
             {info.shortDesc}
           </p>
         </div>
@@ -76,26 +76,26 @@ export const TechniqueCard: React.FC<TechniqueCardProps> = ({ info }) => {
 
         {/* Expanded Protocol Details */}
         {isExpanded && (
-          <div className="space-y-4 pt-3 border-t border-slate-800/80 text-xs text-slate-300 animate-fadeIn">
+          <div className="space-y-3.5 pt-3 border-t border-slate-800 text-xs text-slate-300">
             <p className="leading-relaxed text-slate-400">{info.description}</p>
 
             {/* Scientific Mechanism */}
-            <div className="p-3.5 rounded-xl bg-blue-950/30 border border-blue-800/40 text-slate-300 space-y-1">
-              <div className="flex items-center gap-1.5 font-semibold text-blue-300 uppercase tracking-wider text-[10px]">
+            <div className="p-3 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 space-y-1">
+              <div className="flex items-center gap-1.5 font-semibold text-blue-300 text-[11px]">
                 <Brain className="w-3.5 h-3.5 text-blue-400" />
                 <span>Neurocognitive Mechanism</span>
               </div>
-              <p className="text-[11px] leading-relaxed text-blue-200/90">
+              <p className="text-[11px] leading-relaxed text-slate-300">
                 {info.scientificMechanism}
               </p>
             </div>
 
             {/* Step-by-Step Protocol */}
             <div>
-              <h4 className="font-semibold text-slate-200 mb-2 uppercase tracking-wider text-[11px]">
+              <h4 className="font-semibold text-slate-200 mb-1.5 text-xs">
                 Step-by-Step Execution Protocol:
               </h4>
-              <ol className="space-y-2 list-decimal list-inside text-slate-300 leading-relaxed">
+              <ol className="space-y-1.5 list-decimal list-inside text-slate-300 leading-relaxed">
                 {info.steps.map((step, idx) => (
                   <li key={idx} className="pl-1">
                     <span className="text-slate-200">{step}</span>
@@ -106,7 +106,7 @@ export const TechniqueCard: React.FC<TechniqueCardProps> = ({ info }) => {
 
             {/* Keys to Success */}
             <div>
-              <h4 className="font-semibold text-slate-200 mb-2 uppercase tracking-wider text-[11px]">
+              <h4 className="font-semibold text-slate-200 mb-1.5 text-xs">
                 Keys to Success & Best Practices:
               </h4>
               <ul className="space-y-1.5 text-slate-300">
@@ -122,11 +122,11 @@ export const TechniqueCard: React.FC<TechniqueCardProps> = ({ info }) => {
             {/* Common Pitfalls */}
             {info.commonPitfalls && info.commonPitfalls.length > 0 && (
               <div>
-                <h4 className="font-semibold text-amber-300/90 mb-2 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                <h4 className="font-semibold text-amber-300 mb-1.5 text-xs flex items-center gap-1.5">
                   <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
                   <span>Common Pitfalls to Avoid:</span>
                 </h4>
-                <ul className="space-y-1.5 text-slate-400 text-[11px]">
+                <ul className="space-y-1 text-slate-400 text-[11px]">
                   {info.commonPitfalls.map((pitfall, idx) => (
                     <li key={idx} className="flex items-start gap-2">
                       <span className="text-amber-400 font-bold">•</span>
@@ -139,8 +139,8 @@ export const TechniqueCard: React.FC<TechniqueCardProps> = ({ info }) => {
 
             {/* Synergies */}
             {info.synergies && info.synergies.length > 0 && (
-              <div className="pt-2 border-t border-slate-800/60 flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] uppercase tracking-wider text-slate-400 flex items-center gap-1 font-semibold">
+              <div className="pt-2 border-t border-slate-800 flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] text-slate-400 flex items-center gap-1 font-semibold">
                   <Link2 className="w-3 h-3 text-blue-400" />
                   <span>Best Paired With:</span>
                 </span>

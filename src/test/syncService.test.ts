@@ -155,6 +155,7 @@ describe('syncService - Multi-Device Cloud Sync', () => {
     // 4. Device B connects using unified sync key
     const connectResult = await syncService.connectVault(unifiedKey);
     expect(connectResult.success).toBe(true);
+    expect(connectResult.newDreamsCount).toBe(1);
 
     // Device B now has BOTH dreams (dream1 pulled from vault, dream2 preserved and pushed)
     const dreamsOnB = await db.dreams.toArray();
@@ -175,6 +176,7 @@ describe('syncService - Multi-Device Cloud Sync', () => {
 
     const syncNowRes = await syncService.syncNow();
     expect(syncNowRes.success).toBe(true);
+    expect(syncNowRes.newDreamsCount).toBe(1);
     expect(await db.dreams.count()).toBe(2);
   });
 });

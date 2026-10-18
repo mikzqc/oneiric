@@ -14,7 +14,8 @@ import { EmptyState } from '../components/common/EmptyState';
 import {
   Network,
   Eye,
-  Sparkles,
+  Star,
+  Smile,
   AlertTriangle,
   Layers,
   Compass,
@@ -65,21 +66,29 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
   useEffect(() => {
     let isMounted = true;
 
-    correlationService
-      .computeCorrelations(filter)
-      .then((res) => {
-        if (isMounted) {
-          setReport(res);
-          setIsLoading(false);
-        }
-      })
-      .catch((err) => {
-        console.error('Failed to compute correlations:', err);
-        if (isMounted) setIsLoading(false);
-      });
+    const fetchReport = () => {
+      correlationService
+        .computeCorrelations(filter)
+        .then((res) => {
+          if (isMounted) {
+            setReport(res);
+            setIsLoading(false);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to compute correlations:', err);
+          if (isMounted) setIsLoading(false);
+        });
+    };
+
+    fetchReport();
+    window.addEventListener('oneiric:dream-saved', fetchReport);
+    window.addEventListener('oneiric:sample-data-changed', fetchReport);
 
     return () => {
       isMounted = false;
+      window.removeEventListener('oneiric:dream-saved', fetchReport);
+      window.removeEventListener('oneiric:sample-data-changed', fetchReport);
     };
   }, [filter]);
 
@@ -110,13 +119,13 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
     {
       id: 'signs-vividness' as CorrelationTab,
       label: 'Signs & Vividness',
-      icon: Sparkles,
+      icon: Star,
       count: report.signVividnessCorrelations.length,
     },
     {
       id: 'emotions' as CorrelationTab,
       label: 'Emotional Triggers',
-      icon: Sparkles,
+      icon: Smile,
       count: report.emotionLucidityCorrelations.length,
     },
     {
@@ -144,29 +153,24 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-blue-950/80 border border-blue-700/40 flex items-center justify-center text-blue-400 shrink-0">
-              <Network className="w-5 h-5 text-blue-400" />
-            </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight">
-              Cross-Dream Correlation Engine
-            </h1>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight">
+            Cross-Dream Correlation Engine
+          </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Empirical descriptive associations across recurring signs, emotions, scene complexity, and induction techniques
+            Empirical descriptive associations across recurring signs, emotions, scene complexity, and induction techniques.
           </p>
         </div>
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-2">
           {/* Time Range */}
-          <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-0.5 text-xs">
+          <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-0.5 text-xs">
             {(['30d', '90d', '1y', 'all'] as CorrelationTimeRange[]).map((tr) => (
               <button
                 key={tr}
                 type="button"
                 onClick={() => setFilter((prev) => ({ ...prev, timeRange: tr }))}
-                className={`px-2.5 py-1 rounded-lg font-medium transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
                   filter.timeRange === tr
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
@@ -187,7 +191,7 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
               }))
             }
             aria-label="Filter by sign status"
-            className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+            className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="all_active">All Active Signs (Confirmed + Suggested)</option>
             <option value="confirmed_only">Confirmed Signs Only</option>
@@ -200,7 +204,7 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
               setFilter((prev) => ({ ...prev, minOccurrences: Number(e.target.value) }))
             }
             aria-label="Filter by minimum occurrences"
-            className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+            className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value={2}>Min Occurrences: ≥ 2</option>
             <option value={3}>Min Occurrences: ≥ 3 (Recommended)</option>
@@ -217,7 +221,7 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
               }))
             }
             aria-label="Filter by sign category"
-            className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+            className="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="all">All Categories</option>
             <option value="anomaly">Anomalies</option>
@@ -234,12 +238,12 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
       <CorrelationSummaryBar report={report} />
 
       {/* Statistical Integrity Notice */}
-      <div className="p-3.5 rounded-xl bg-blue-950/30 border border-blue-800/40 text-xs text-blue-200 flex items-start gap-2.5">
+      <div className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800 text-xs text-slate-300 flex items-start gap-2.5">
         <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
         <div className="space-y-0.5">
-          <p className="font-semibold text-blue-300">Descriptive Nocturnal Associations (Correlation ≠ Causation)</p>
-          <p className="text-slate-300 leading-relaxed text-[11px]">
-            Statistical patterns represent observed co-occurrences in your private journal entries. They do not constitute scientific proof of causation. Sample size (<span className="font-mono text-blue-200">n</span>) and baseline comparisons are reported beside every observation.
+          <p className="font-semibold text-slate-200">Descriptive Nocturnal Associations (Correlation ≠ Causation)</p>
+          <p className="text-slate-400 leading-relaxed text-[11px]">
+            Statistical patterns represent observed co-occurrences in your private journal entries. They do not constitute scientific proof of causation. Sample size (<span className="font-mono text-slate-300">n</span>) and baseline comparisons are reported beside every observation.
           </p>
         </div>
       </div>
@@ -254,16 +258,16 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-3.5 py-2.5 border-b-2 text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3 py-2 border-b-2 text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
                 isActive
                   ? 'border-blue-500 text-blue-400 bg-blue-950/20'
                   : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-3.5 h-3.5" />
               <span>{tab.label}</span>
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                className={`text-[10px] px-1.5 py-0.2 rounded-md font-mono ${
                   isActive ? 'bg-blue-900/60 text-blue-200' : 'bg-slate-800 text-slate-400'
                 }`}
               >
@@ -336,7 +340,7 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
             <EmptyState
               title="No Vividness Correlations Found"
               description={`No signs meet the minimum threshold of ≥ ${filter.minOccurrences} rated dreams in this period.`}
-              icon={<Sparkles className="w-10 h-10 text-amber-400" />}
+              icon={<Star className="w-10 h-10 text-amber-400" />}
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -382,7 +386,7 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
             <EmptyState
               title="No Emotional Correlations Found"
               description="Add emotional tags when logging dreams to discover whether feelings like Wonder, Serenity, or Fear correlate with becoming lucid."
-              icon={<Sparkles className="w-10 h-10 text-amber-400" />}
+              icon={<Smile className="w-10 h-10 text-amber-400" />}
             />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -586,11 +590,11 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
                       </p>
                     </div>
                     {t.hasSufficientData ? (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-emerald-950 text-emerald-300 border border-emerald-800/60">
+                      <span className="text-[10px] px-2 py-0.5 rounded-md font-medium bg-emerald-950/80 text-emerald-300 border border-emerald-800/60">
                         Reliable (n ≥ 3)
                       </span>
                     ) : (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-amber-950/70 text-amber-300 border border-amber-800/50">
+                      <span className="text-[10px] px-2 py-0.5 rounded-md font-medium bg-amber-950/70 text-amber-300 border border-amber-800/50">
                         Low Sample (n &lt; 3)
                       </span>
                     )}
@@ -635,7 +639,7 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
         <button
           type="button"
           onClick={() => setShowMethodology(!showMethodology)}
-          className="w-full p-4 rounded-xl bg-slate-900/40 border border-slate-800 hover:border-slate-700 flex items-center justify-between text-xs text-slate-300 cursor-pointer transition-colors"
+          className="w-full p-3.5 rounded-lg bg-slate-900/40 border border-slate-800 hover:border-slate-700 flex items-center justify-between text-xs text-slate-300 cursor-pointer transition-colors"
         >
           <div className="flex items-center gap-2">
             <Info className="w-4 h-4 text-blue-400" />
@@ -645,7 +649,7 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
         </button>
 
         {showMethodology && (
-          <div className="p-4 mt-2 rounded-xl bg-slate-950 border border-slate-800/80 text-xs text-slate-300 space-y-3 leading-relaxed">
+          <div className="p-4 mt-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-3 leading-relaxed">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <span className="font-semibold text-blue-300">1. Distinct Entry Counting</span>

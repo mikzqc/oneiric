@@ -84,10 +84,11 @@ export const correlationService = {
       db.techniqueLogs.toArray(),
     ]);
 
-    // Exclude ephemeral sample preview data from production analysis unless specified
-    const allDreams = allDreamsRaw.filter((d) => !d.isSample);
-    const allSigns = allSignsRaw.filter((s) => !s.isSample);
-    const allTechniques = allTechniquesRaw.filter((t) => !t.isSample);
+    // Exclude ephemeral sample preview data from production analysis unless only sample data exists
+    const hasUserDreams = allDreamsRaw.some((d) => !d.isSample);
+    const allDreams = hasUserDreams ? allDreamsRaw.filter((d) => !d.isSample) : allDreamsRaw;
+    const allSigns = hasUserDreams ? allSignsRaw.filter((s) => !s.isSample) : allSignsRaw;
+    const allTechniques = hasUserDreams ? allTechniquesRaw.filter((t) => !t.isSample) : allTechniquesRaw;
 
     // 1. Determine Date Range Boundaries
     const todayStr = getTodayDateString(referenceDate);

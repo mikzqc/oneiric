@@ -6,7 +6,7 @@ import { Modal } from '../common/Modal';
 import { DreamEditor } from '../journal/DreamEditor';
 import { DreamEntry } from '../../types/dream';
 import { backupService } from '../../services/backupService';
-import { X, Sparkles } from 'lucide-react';
+import { X, Info } from 'lucide-react';
 
 export const AppLayout: React.FC = () => {
   const location = useLocation();
@@ -39,26 +39,25 @@ export const AppLayout: React.FC = () => {
   const handleExitPreview = async () => {
     await backupService.clearSampleData();
     setIsSamplePreview(false);
-    window.location.reload();
   };
 
   // Page titles lookup
   const getPageMeta = () => {
     const path = location.pathname;
-    if (path === '/') return { title: 'Dashboard', subtitle: 'Nocturnal overview and recall metrics' };
-    if (path.startsWith('/analytics')) return { title: 'Dream Intelligence & Analytics', subtitle: 'Longitudinal recall metrics, emotional distributions, and heatmaps' };
-    if (path.startsWith('/correlations')) return { title: 'Cross-Dream Correlation Engine', subtitle: 'Empirical associations across recurring signs, emotions, scene complexity, and induction techniques' };
-    if (path.startsWith('/journal/new')) return { title: 'Record Dream', subtitle: 'Capture your nocturnal memory' };
-    if (path.startsWith('/journal/edit')) return { title: 'Edit Dream', subtitle: 'Refine journal entry' };
-    if (path.startsWith('/journal')) return { title: 'Dream Journal', subtitle: 'Search and inspect recorded dreams' };
-    if (path.startsWith('/signs')) return { title: 'Dream Signs Library', subtitle: 'Recurring patterns, keyword detection, and reality check triggers' };
-    if (path.startsWith('/calendar')) return { title: 'Calendar', subtitle: 'Explore dreams across monthly cycles' };
-    if (path.startsWith('/timeline')) return { title: 'Dream Timeline', subtitle: 'Chronological nocturnal stream of dreams and techniques' };
-    if (path.startsWith('/lucid')) return { title: 'Lucid Dreams', subtitle: 'Archive of conscious nocturnal awakenings' };
-    if (path.startsWith('/false-awakenings')) return { title: 'False Awakenings', subtitle: 'Track simulated awakenings, belief status, and lucidity transitions' };
-    if (path.startsWith('/techniques')) return { title: 'Techniques Guide', subtitle: 'Scientific lucid dreaming protocols & induction encyclopedia' };
-    if (path.startsWith('/settings')) return { title: 'Settings', subtitle: 'Backups, imports, and privacy settings' };
-    return { title: 'Oneiric', subtitle: 'Lucid Dream Studio' };
+    if (path === '/') return { title: 'Dashboard', subtitle: 'Overview and recall metrics' };
+    if (path.startsWith('/analytics')) return { title: 'Analytics', subtitle: 'Recall rates, heatmaps, and pattern trends' };
+    if (path.startsWith('/correlations')) return { title: 'Correlations', subtitle: 'Descriptive relationships across signs, emotions, and lucidity' };
+    if (path.startsWith('/journal/new')) return { title: 'Record Dream', subtitle: 'New journal entry' };
+    if (path.startsWith('/journal/edit')) return { title: 'Edit Dream', subtitle: 'Update journal entry' };
+    if (path.startsWith('/journal')) return { title: 'Dream Journal', subtitle: 'Search and inspect entries' };
+    if (path.startsWith('/signs')) return { title: 'Dream Signs Library', subtitle: 'Recurring patterns and reality check reminders' };
+    if (path.startsWith('/calendar')) return { title: 'Calendar', subtitle: 'Monthly entries overview' };
+    if (path.startsWith('/timeline')) return { title: 'Timeline', subtitle: 'Chronological entries log' };
+    if (path.startsWith('/lucid')) return { title: 'Lucid Dreams', subtitle: 'Conscious dream entries' };
+    if (path.startsWith('/false-awakenings')) return { title: 'False Awakenings', subtitle: 'Simulated awakenings and transition patterns' };
+    if (path.startsWith('/techniques')) return { title: 'Techniques Guide', subtitle: 'Induction protocols and reference guide' };
+    if (path.startsWith('/settings')) return { title: 'Settings', subtitle: 'Data backup, export/import, and sync' };
+    return { title: 'Oneiric', subtitle: 'Dream Journal & Analysis' };
   };
 
   const { title, subtitle } = getPageMeta();
@@ -77,15 +76,21 @@ export const AppLayout: React.FC = () => {
 
   const handleEditorSaved = (_saved: DreamEntry) => {
     setIsEditorModalOpen(false);
-    // If we're on the journal or dashboard, triggering a rerender or navigate
+    try {
+      window.dispatchEvent(new CustomEvent('oneiric:dream-saved', { detail: _saved }));
+    } catch {
+      // ignore
+    }
     if (
-      location.pathname === '/journal' ||
-      location.pathname === '/' ||
-      location.pathname === '/calendar' ||
-      location.pathname === '/lucid'
+      location.pathname !== '/journal' &&
+      location.pathname !== '/' &&
+      location.pathname !== '/calendar' &&
+      location.pathname !== '/lucid' &&
+      location.pathname !== '/timeline' &&
+      location.pathname !== '/false-awakenings' &&
+      location.pathname !== '/analytics' &&
+      location.pathname !== '/correlations'
     ) {
-      window.location.reload();
-    } else {
       navigate('/journal');
     }
   };
@@ -101,18 +106,18 @@ export const AppLayout: React.FC = () => {
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden" role="dialog" aria-modal="true">
           <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-black/80 transition-opacity"
             onClick={() => setIsMobileMenuOpen(false)}
             aria-hidden="true"
           />
-          <div className="relative w-72 max-w-[80vw] h-full bg-[#0b132b] border-r border-slate-800 shadow-2xl z-10 flex flex-col">
+          <div className="relative w-64 max-w-[80vw] h-full bg-[#0b132b] border-r border-slate-800 shadow-xl z-10 flex flex-col">
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-100 rounded-lg hover:bg-slate-800"
+              className="absolute top-3.5 right-3.5 p-1.5 text-slate-400 hover:text-slate-100 rounded-md hover:bg-slate-800"
               aria-label="Close menu"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
             <Sidebar onCloseMobile={() => setIsMobileMenuOpen(false)} />
           </div>
@@ -123,17 +128,17 @@ export const AppLayout: React.FC = () => {
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Sample Preview Banner if active */}
         {isSamplePreview && (
-          <div className="bg-amber-950/90 border-b border-amber-800/80 px-4 py-2 text-xs text-amber-200 flex items-center justify-between gap-3 shrink-0 shadow-md">
+          <div className="bg-amber-950/70 border-b border-amber-800/80 px-4 py-2 text-xs text-amber-200 flex items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-400 shrink-0 animate-pulse" />
+              <Info className="w-4 h-4 text-amber-400 shrink-0" />
               <span>
-                <strong>Exploration Preview Active:</strong> You are viewing sample data. All sample entries will automatically disappear when you refresh the page.
+                <strong>Sample Preview:</strong> You are viewing sample data. Sample entries will be cleared upon page refresh or clicking Exit.
               </span>
             </div>
             <button
               type="button"
               onClick={handleExitPreview}
-              className="px-2.5 py-1 rounded-lg bg-amber-900 hover:bg-amber-800 text-amber-100 border border-amber-700 font-semibold cursor-pointer shrink-0 transition-colors"
+              className="px-2.5 py-1 rounded-md bg-amber-900/80 hover:bg-amber-800 text-amber-100 border border-amber-700/80 font-medium cursor-pointer shrink-0 transition-colors"
             >
               Exit Preview
             </button>
@@ -147,7 +152,7 @@ export const AppLayout: React.FC = () => {
           subtitle={subtitle}
         />
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-8 max-w-7xl mx-auto w-full">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7 max-w-7xl mx-auto w-full">
           <Outlet
             context={{
               onOpenNewDream: handleOpenNewDream,
@@ -161,8 +166,8 @@ export const AppLayout: React.FC = () => {
       <Modal
         isOpen={isEditorModalOpen}
         onClose={() => setIsEditorModalOpen(false)}
-        title={editingDream ? 'Edit Dream Entry' : 'Record a New Dream'}
-        subtitle="Capture memories immediately for maximum vividness and recall depth"
+        title={editingDream ? 'Edit Dream Entry' : 'Record Dream'}
+        subtitle="Write down your narrative while memory is freshest"
         maxWidth="2xl"
       >
         <DreamEditor

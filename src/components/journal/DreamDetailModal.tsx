@@ -8,7 +8,6 @@ import {
   Calendar,
   Clock,
   Star,
-  Sparkles,
   Edit,
   Trash2,
   Compass,
@@ -45,8 +44,8 @@ export const DreamDetailModal: React.FC<DreamDetailModalProps> = ({
             <LucidityBadge lucidity={dream.lucidity} size="md" />
 
             {dream.falseAwakening && (
-              <span className="inline-flex items-center gap-1 font-semibold rounded-full bg-blue-950/80 text-blue-300 border border-blue-600/40 text-xs px-2.5 py-1">
-                <AlertTriangle className="w-3 h-3 text-blue-400" />
+              <span className="inline-flex items-center gap-1 font-medium rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20 text-xs px-2 py-0.5">
+                <AlertTriangle className="w-3 h-3 text-amber-400" />
                 <span>False Awakening</span>
               </span>
             )}
@@ -92,7 +91,7 @@ export const DreamDetailModal: React.FC<DreamDetailModalProps> = ({
 
         {/* Title */}
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight leading-snug">
+          <h2 className="text-xl font-bold text-slate-100 tracking-tight leading-snug">
             {dream.title}
           </h2>
 
@@ -140,24 +139,24 @@ export const DreamDetailModal: React.FC<DreamDetailModalProps> = ({
 
         {/* False Awakening Box if recorded */}
         {dream.falseAwakening && dream.falseAwakeningDetails && (
-          <div className="p-4 rounded-xl bg-blue-950/40 border border-blue-800/40 text-xs text-blue-200 space-y-2">
-            <div className="flex items-center gap-1.5 font-semibold text-blue-300">
-              <AlertTriangle className="w-4 h-4 text-blue-400 shrink-0" />
+          <div className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800 text-xs text-slate-300 space-y-1.5">
+            <div className="flex items-center gap-1.5 font-medium text-amber-400">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
               <span>False Awakening Incident</span>
             </div>
             {dream.falseAwakeningDetails.environmentDescription && (
               <p>
-                <strong>Apparent Environment:</strong> {dream.falseAwakeningDetails.environmentDescription}
+                <strong className="text-slate-400">Environment:</strong> {dream.falseAwakeningDetails.environmentDescription}
               </p>
             )}
             {dream.falseAwakeningDetails.triggerOrAnomaly && (
               <p>
-                <strong>Trigger / Anomaly:</strong> {dream.falseAwakeningDetails.triggerOrAnomaly}
+                <strong className="text-slate-400">Trigger / Anomaly:</strong> {dream.falseAwakeningDetails.triggerOrAnomaly}
               </p>
             )}
             {dream.falseAwakeningDetails.realityCheckNotes && (
               <p>
-                <strong>Reality Check:</strong> {dream.falseAwakeningDetails.realityCheckNotes}
+                <strong className="text-slate-400">Reality Check:</strong> {dream.falseAwakeningDetails.realityCheckNotes}
               </p>
             )}
           </div>
@@ -165,30 +164,70 @@ export const DreamDetailModal: React.FC<DreamDetailModalProps> = ({
 
         {/* Dream Signs Box if recorded */}
         {dream.dreamSignsNotes && (
-          <div className="p-4 rounded-xl bg-cyan-950/30 border border-cyan-800/40 text-xs text-cyan-200">
-            <div className="flex items-center gap-1.5 font-semibold text-cyan-300 mb-1">
-              <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
-              <span>Dream Signs & Lucidity Triggers</span>
+          <div className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800 text-xs text-slate-300">
+            <div className="flex items-center gap-1.5 font-medium text-blue-400 mb-1">
+              <Compass className="w-3.5 h-3.5 shrink-0" />
+              <span>Dream Signs & Triggers</span>
             </div>
-            <p className="leading-relaxed text-cyan-100/90 whitespace-pre-wrap">
+            <p className="leading-relaxed whitespace-pre-wrap">
               {dream.dreamSignsNotes}
             </p>
           </div>
         )}
 
         {/* Narrative (Clean long-text typography) */}
-        <div className="text-slate-200 text-sm sm:text-base leading-relaxed space-y-4 whitespace-pre-wrap font-sans bg-slate-900/40 p-5 rounded-xl border border-slate-800/60">
+        <div className="text-slate-200 text-sm sm:text-base leading-relaxed space-y-4 whitespace-pre-wrap font-sans bg-slate-900/40 p-4 sm:p-5 rounded-lg border border-slate-800">
           {dream.narrative}
         </div>
 
+        {/* Multi-Scene Breakdown if recorded */}
+        {dream.scenes && dream.scenes.length > 0 && (
+          <div className="space-y-2.5 pt-1">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
+              <Layers className="w-3.5 h-3.5 text-blue-400" />
+              <span>Sequential Scene Breakdown ({dream.scenes.length} Scenes)</span>
+            </div>
+            <div className="space-y-2">
+              {dream.scenes.map((scene) => (
+                <div
+                  key={scene.id}
+                  className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 space-y-1.5 text-xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-blue-300">
+                        Scene {scene.sceneNumber}
+                        {scene.title ? `: ${scene.title}` : ''}
+                      </span>
+                      {scene.lucid && (
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800">
+                          Lucid
+                        </span>
+                      )}
+                      {scene.falseAwakening && (
+                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">
+                          False Awakening
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">
+                    {scene.narrative}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Personal Interpretation Notes if recorded */}
         {dream.interpretationNotes && (
-          <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-800/40 text-xs text-blue-200">
-            <div className="flex items-center gap-1.5 font-semibold text-blue-300 mb-1">
+          <div className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800 text-xs text-slate-300">
+            <div className="flex items-center gap-1.5 font-medium text-slate-300 mb-1">
               <BookOpen className="w-3.5 h-3.5 text-blue-400 shrink-0" />
               <span>Personal Interpretation & Reflections</span>
             </div>
-            <p className="leading-relaxed text-slate-300 whitespace-pre-wrap">
+            <p className="leading-relaxed whitespace-pre-wrap">
               {dream.interpretationNotes}
             </p>
           </div>

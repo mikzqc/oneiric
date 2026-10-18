@@ -6,7 +6,6 @@ import { EmptyState } from '../components/common/EmptyState';
 import { formatDate } from '../utils/dateUtils';
 import {
   AlertTriangle,
-  Sparkles,
   Home,
   Clock,
   ArrowRight,
@@ -37,6 +36,15 @@ export const FalseAwakeningsPage: React.FC<FalseAwakeningsPageProps> = ({
 
   useEffect(() => {
     loadData();
+    const handleUpdate = () => {
+      loadData();
+    };
+    window.addEventListener('oneiric:dream-saved', handleUpdate);
+    window.addEventListener('oneiric:sample-data-changed', handleUpdate);
+    return () => {
+      window.removeEventListener('oneiric:dream-saved', handleUpdate);
+      window.removeEventListener('oneiric:sample-data-changed', handleUpdate);
+    };
   }, []);
 
   const totalFA = dreams.length;
@@ -62,16 +70,16 @@ export const FalseAwakeningsPage: React.FC<FalseAwakeningsPageProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-slate-100 tracking-tight flex items-center gap-2">
-              <AlertTriangle className="w-6 h-6 text-blue-400" />
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-blue-400" />
               <span>False Awakening Tracker</span>
             </h1>
-            <span className="px-2 py-0.5 rounded-full bg-blue-950 text-blue-300 border border-blue-800 text-xs font-semibold">
+            <span className="px-2 py-0.5 rounded-md bg-blue-950 text-blue-300 border border-blue-800 text-xs font-semibold">
               {totalFA} logged
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Analyze hyper-realistic illusions of waking up and transform them into conscious lucidity launchpads
+            Analyze hyper-realistic illusions of waking up and transform them into conscious lucidity launchpads.
           </p>
         </div>
       </div>
@@ -79,47 +87,47 @@ export const FalseAwakeningsPage: React.FC<FalseAwakeningsPageProps> = ({
       {/* Metrics Row */}
       {totalFA > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-5 rounded-2xl bg-[#0f172a]/80 border border-blue-900/40 shadow-lg">
-            <span className="text-xs font-semibold uppercase tracking-wider text-blue-300 block mb-1">
+          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+            <span className="text-xs font-semibold text-slate-400 block mb-1">
               Recorded Occurrences
             </span>
-            <div className="text-3xl font-extrabold text-slate-100">{totalFA}</div>
+            <div className="text-2xl font-bold text-slate-100">{totalFA}</div>
             <p className="text-xs text-slate-400 mt-1">Simulated awakenings captured</p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-[#0f172a]/80 border border-cyan-500/30 lucid-glow shadow-lg">
+          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-semibold uppercase tracking-wider text-cyan-300">
+              <span className="text-xs font-semibold text-slate-400">
                 Lucidity Breakthrough Rate
               </span>
-              <Sparkles className="w-4 h-4 text-cyan-400" />
+              <AlertTriangle className="w-4 h-4 text-cyan-400" />
             </div>
-            <div className="text-3xl font-extrabold text-cyan-300">{lucidConversionRate}%</div>
+            <div className="text-2xl font-bold text-cyan-300">{lucidConversionRate}%</div>
             <p className="text-xs text-slate-400 mt-1">
               {lucidFA} of {totalFA} resulted in conscious lucidity
             </p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-[#0f172a]/80 border border-slate-800/80 shadow-lg">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-1">
+          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+            <span className="text-xs font-semibold text-slate-400 block mb-1">
               Believed Awake
             </span>
-            <div className="text-3xl font-extrabold text-slate-100">{believedAwakeRate}%</div>
+            <div className="text-2xl font-bold text-slate-100">{believedAwakeRate}%</div>
             <p className="text-xs text-slate-400 mt-1">Initial cognitive deception rate</p>
           </div>
 
           {topEnvironments.length > 0 && (
-            <div className="col-span-1 md:col-span-3 p-4 rounded-xl bg-slate-900/40 border border-slate-800 text-xs">
+            <div className="col-span-1 md:col-span-3 p-3.5 rounded-lg bg-slate-900/40 border border-slate-800 text-xs">
               <span className="text-slate-400 font-medium block mb-2">Recurring Simulated Environments:</span>
               <div className="flex flex-wrap gap-2">
                 {topEnvironments.map(([env, count]) => (
                   <span
                     key={env}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-950/40 text-blue-300 border border-blue-800/50"
+                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700"
                   >
-                    <Home className="w-3 h-3 text-blue-400" />
+                    <Home className="w-3 h-3 text-slate-400" />
                     <span>{env}</span>
-                    <span className="px-1.5 py-0.2 rounded bg-blue-900 text-blue-200 text-[10px] font-mono">
+                    <span className="px-1.5 py-0.2 rounded bg-slate-900 text-slate-300 text-[10px] font-mono">
                       {count}x
                     </span>
                   </span>
@@ -146,27 +154,27 @@ export const FalseAwakeningsPage: React.FC<FalseAwakeningsPageProps> = ({
           />
 
           {/* Educational Explainer */}
-          <div className="p-6 rounded-2xl bg-[#0f172a]/60 border border-slate-800 shadow-xl space-y-4">
-            <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+          <div className="p-5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
+            <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
               <Home className="w-4 h-4 text-blue-400" />
-              <span>Why False Awakenings Are The Lucid Dreamer's Greatest Asset</span>
+              <span>Why False Awakenings Are An Asset for Lucidity</span>
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-300">
-              <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+              <div className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800">
                 <span className="font-semibold text-blue-300 block mb-1">Peak REM Proximity</span>
                 <p className="leading-relaxed text-slate-400">
                   False awakenings almost always occur during peak late-morning REM cycles when lucidity duration and vividness are highest.
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+              <div className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800">
                 <span className="font-semibold text-blue-300 block mb-1">Habitual Nose-Pinch</span>
                 <p className="leading-relaxed text-slate-400">
                   Tying a reality check to the exact physical sensation of opening your eyes turns every simulated awakening into instantaneous lucidity.
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+              <div className="p-3.5 rounded-lg bg-slate-900/60 border border-slate-800">
                 <span className="font-semibold text-blue-300 block mb-1">Clocks & Mirrors</span>
                 <p className="leading-relaxed text-slate-400">
                   Bedroom clocks, light switches, and bathroom mirrors are the most common anomaly triggers in false awakenings.
@@ -177,7 +185,7 @@ export const FalseAwakeningsPage: React.FC<FalseAwakeningsPageProps> = ({
         </div>
       ) : (
         <div className="space-y-4">
-          <h2 className="text-lg font-bold text-slate-100">Chronological False Awakening Ledger</h2>
+          <h2 className="text-sm font-semibold text-slate-100">Chronological False Awakening Ledger</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {dreams.map((dream) => {
@@ -188,7 +196,7 @@ export const FalseAwakeningsPage: React.FC<FalseAwakeningsPageProps> = ({
                 <div
                   key={dream.id}
                   onClick={() => setSelectedDreamForView(dream)}
-                  className="p-5 rounded-2xl bg-[#0f172a]/80 border border-blue-900/40 hover:border-blue-600/60 transition-all cursor-pointer shadow-md space-y-3"
+                  className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-colors cursor-pointer space-y-3"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs text-slate-400 flex items-center gap-1.5">
@@ -197,9 +205,9 @@ export const FalseAwakeningsPage: React.FC<FalseAwakeningsPageProps> = ({
                     </span>
 
                     <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      className={`text-[10px] font-medium px-2 py-0.5 rounded-md ${
                         isLucid
-                          ? 'bg-cyan-950 text-cyan-300 border border-cyan-700/50 lucid-glow'
+                          ? 'bg-blue-950 text-cyan-300 border border-cyan-800/60'
                           : 'bg-slate-800 text-slate-400'
                       }`}
                     >
@@ -207,23 +215,23 @@ export const FalseAwakeningsPage: React.FC<FalseAwakeningsPageProps> = ({
                     </span>
                   </div>
 
-                  <h3 className="text-base font-bold text-slate-100">{dream.title}</h3>
+                  <h3 className="text-sm sm:text-base font-bold text-slate-100">{dream.title}</h3>
 
                   {details?.environmentDescription && (
-                    <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs">
+                    <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-xs">
                       <span className="text-slate-400 block font-medium">Apparent Environment:</span>
                       <p className="text-slate-200 mt-0.5">{details.environmentDescription}</p>
                     </div>
                   )}
 
                   {details?.triggerOrAnomaly && (
-                    <div className="p-3 rounded-xl bg-blue-950/30 border border-blue-800/40 text-xs text-blue-200">
+                    <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300">
                       <span className="text-blue-300 block font-medium">Illusion Breaker:</span>
                       <p className="mt-0.5">{details.triggerOrAnomaly}</p>
                     </div>
                   )}
 
-                  <div className="pt-2 flex items-center justify-between text-xs text-blue-400 font-medium">
+                  <div className="pt-1 flex items-center justify-between text-xs text-blue-400 font-medium">
                     <span>Inspect Dream Entry</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </div>

@@ -6,10 +6,10 @@ import {
   BookOpen,
   CalendarDays,
   Clock,
-  Sparkles,
+  Compass,
+  Brain,
   Eye,
   AlertTriangle,
-  Compass,
   Network,
   Settings,
   ShieldCheck,
@@ -23,54 +23,53 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
   const navSections = [
     {
-      title: 'Core Journal',
+      title: 'Journal',
       items: [
         { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-        { to: '/analytics', label: 'Analytics', icon: BarChart3 },
         { to: '/journal', label: 'Dream Journal', icon: BookOpen },
         { to: '/timeline', label: 'Timeline', icon: Clock },
         { to: '/calendar', label: 'Calendar', icon: CalendarDays },
       ],
     },
     {
-      title: 'Intelligence & Lucidity',
+      title: 'Analysis & Lucidity',
       items: [
-        { to: '/correlations', label: 'Correlations', icon: Network, highlight: true },
-        { to: '/signs', label: 'Dream Signs', icon: Sparkles },
+        { to: '/analytics', label: 'Analytics', icon: BarChart3 },
+        { to: '/correlations', label: 'Correlations', icon: Network },
+        { to: '/signs', label: 'Dream Signs', icon: Compass },
         { to: '/lucid', label: 'Lucid Dreams', icon: Eye },
         { to: '/false-awakenings', label: 'False Awakenings', icon: AlertTriangle },
-        { to: '/techniques', label: 'Techniques Guide', icon: Compass },
+        { to: '/techniques', label: 'Techniques Guide', icon: Brain },
       ],
     },
     {
-      title: 'Preferences',
+      title: 'System',
       items: [
-        { to: '/settings', label: 'Settings', icon: Settings },
+        { to: '/settings', label: 'Settings & Sync', icon: Settings },
       ],
     },
   ];
 
   return (
-    <aside className="w-64 h-full flex flex-col bg-[#0b132b] border-r border-slate-800/80 text-slate-300 shrink-0 select-none">
+    <aside className="w-60 h-full flex flex-col bg-[#0b132b] border-r border-slate-800 text-slate-300 shrink-0 select-none">
       {/* Brand Header */}
-      <div className="p-6 border-b border-slate-800/80 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 flex items-center justify-center text-white shadow-lg shadow-blue-900/40 border border-blue-500/30">
-          <Moon className="w-5 h-5 fill-blue-200 text-blue-100" />
+      <div className="px-5 py-4 border-b border-slate-800 flex items-center gap-2.5">
+        <div className="w-8 h-8 rounded-md bg-[#132042] border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
+          <Moon className="w-4 h-4 fill-blue-400/20 text-blue-400" />
         </div>
         <div>
           <div className="flex items-center gap-1.5">
-            <span className="font-bold text-base tracking-wider text-slate-100 uppercase">Oneiric</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800/50 font-mono font-medium">v2.0</span>
+            <span className="font-semibold text-sm tracking-wide text-slate-100">Oneiric</span>
           </div>
-          <p className="text-xs text-slate-400 font-medium tracking-tight">Lucid Dream Studio</p>
+          <p className="text-[11px] text-slate-400 font-normal">Dream Journal & Analysis</p>
         </div>
       </div>
 
       {/* Navigation Links */}
-      <nav className="grow px-3 py-3 space-y-4 overflow-y-auto">
+      <nav className="grow px-2.5 py-3 space-y-4 overflow-y-auto">
         {navSections.map((section) => (
           <div key={section.title} className="space-y-0.5">
-            <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+            <div className="px-2.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
               {section.title}
             </div>
             {section.items.map((item) => {
@@ -82,28 +81,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                   end={item.to === '/'}
                   onClick={onCloseMobile}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium transition-all duration-150 ${
+                    `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
                       isActive
-                        ? 'bg-blue-600/20 text-blue-300 border border-blue-500/40 font-semibold shadow-sm'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'
+                        ? 'bg-blue-600/15 text-blue-300 font-semibold border-l-2 border-blue-500 pl-2'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                     }`
                   }
                 >
                   {({ isActive }) => (
                     <>
                       <Icon
-                        className={`w-4 h-4 shrink-0 transition-colors ${
-                          isActive
-                            ? 'text-blue-400'
-                            : item.highlight
-                            ? 'text-cyan-400'
-                            : 'text-slate-400 group-hover:text-slate-300'
+                        className={`w-3.5 h-3.5 shrink-0 ${
+                          isActive ? 'text-blue-400' : 'text-slate-400'
                         }`}
                       />
                       <span>{item.label}</span>
-                      {item.highlight && (
-                        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shadow-sm shadow-cyan-400" />
-                      )}
                     </>
                   )}
                 </NavLink>
@@ -113,14 +105,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
         ))}
       </nav>
 
-      {/* Bottom Privacy & Offline Info Card */}
-      <div className="p-4 m-3 rounded-xl bg-slate-900/60 border border-slate-800/70 text-xs text-slate-400">
-        <div className="flex items-center gap-2 text-blue-400 font-medium mb-1">
-          <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0" />
+      {/* Privacy Notice */}
+      <div className="p-3 m-2.5 rounded-lg bg-slate-900/60 border border-slate-800/80 text-xs text-slate-400">
+        <div className="flex items-center gap-1.5 text-blue-400 font-medium mb-0.5">
+          <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
           <span>Local & Private</span>
         </div>
-        <p className="text-[11px] text-slate-300 leading-relaxed">
-          Your dreams remain strictly on this device via IndexedDB. No external servers or tracking.
+        <p className="text-[11px] text-slate-400 leading-normal">
+          Entries stay locally on this device in IndexedDB.
         </p>
       </div>
     </aside>

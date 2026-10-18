@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { DreamDraft, DreamEntry, PREDEFINED_EMOTIONS, LucidityLevel, RecallQuality } from '../../types/dream';
+import { DreamDraft, DreamEntry, DreamScene, PREDEFINED_EMOTIONS, LucidityLevel, RecallQuality } from '../../types/dream';
 import { dreamService } from '../../services/dreamService';
 import { getTodayDateString } from '../../utils/dateUtils';
 import { Button } from '../common/Button';
 import {
-  Sparkles,
   Star,
   Clock,
   Calendar,
@@ -19,6 +18,8 @@ import {
   Brain,
   Shield,
   Layers,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 
 interface DreamEditorProps {
@@ -78,11 +79,20 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   );
 
   // Phase 2 Intelligence Fields
+  const [scenes, setScenes] = useState<DreamScene[]>(() => {
+    if (initialDream?.scenes && initialDream.scenes.length > 0) {
+      return initialDream.scenes;
+    }
+    const d = draft as (Partial<DreamDraft> & { scenes?: DreamScene[] }) | null;
+    return d?.scenes || [];
+  });
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(
     !!(
       initialDream?.falseAwakening ||
       (initialDream?.dreamControl && initialDream.dreamControl > 0) ||
-      initialDream?.interpretationNotes
+      initialDream?.interpretationNotes ||
+      (initialDream?.scenes && initialDream.scenes.length > 0) ||
+      ((draft as unknown as { scenes?: DreamScene[] })?.scenes && (draft as unknown as { scenes?: DreamScene[] }).scenes!.length > 0)
     )
   );
   const [falseAwakening, setFalseAwakening] = useState<boolean>(initialDream?.falseAwakening || false);
@@ -100,7 +110,9 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   );
 
   const [dreamControl, setDreamControl] = useState<number>(initialDream?.dreamControl || 0);
-  const [scenesCount, setScenesCount] = useState<number>(initialDream?.scenesCount || 1);
+  const [scenesCount, setScenesCount] = useState<number>(
+    initialDream?.scenes?.length || initialDream?.scenesCount || (draft as unknown as { scenes?: DreamScene[] })?.scenes?.length || 1
+  );
   const [interpretationNotes, setInterpretationNotes] = useState<string>(
     initialDream?.interpretationNotes || ''
   );
@@ -113,6 +125,34 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [hasRestoredDraft, setHasRestoredDraft] = useState(!!draft);
 
+  const handleAddScene = () => {
+    const nextNumber = scenes.length + 1;
+    const newScene: DreamScene = {
+      id: `scene-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      sceneNumber: nextNumber,
+      title: '',
+      narrative: '',
+      lucid: false,
+      falseAwakening: false,
+    };
+    const updated = [...scenes, newScene];
+    setScenes(updated);
+    setScenesCount(updated.length);
+  };
+
+  const handleUpdateScene = (id: string, updates: Partial<DreamScene>) => {
+    setScenes((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, ...updates } : s))
+    );
+  };
+
+  const handleRemoveScene = (id: string) => {
+    const filtered = scenes.filter((s) => s.id !== id);
+    const renumbered = filtered.map((s, idx) => ({ ...s, sceneNumber: idx + 1 }));
+    setScenes(renumbered);
+    setScenesCount(Math.max(1, renumbered.length));
+  };
+
   // Load distinct tags from DB
   useEffect(() => {
     dreamService.getDistinctTags().then((t) => setAvailableTags(t));
@@ -121,7 +161,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   // Persist draft for unsaved work when creating
   useEffect(() => {
     if (!isEditing) {
-      if (title.trim() || narrative.trim() || dreamSignsNotes.trim()) {
+      if (title.trim() || narrative.trim() || dreamSignsNotes.trim() || scenes.length > 0) {
         const draftObj = {
           title,
           narrative,
@@ -135,11 +175,14 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
           dreamSignsNotes,
           falseAwakening,
           dreamControl,
-          scenesCount,
+          scenesCount: scenes.length > 0 ? scenes.length : scenesCount,
+          scenes: scenes.length > 0 ? scenes : undefined,
           interpretationNotes,
           realityChecksUseful: usefulRealityChecks,
         };
         localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftObj));
+      } else {
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
       }
     }
   }, [
@@ -157,6 +200,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     falseAwakening,
     dreamControl,
     scenesCount,
+    scenes,
     interpretationNotes,
     usefulRealityChecks,
   ]);
@@ -230,7 +274,8 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
         dreamSignsNotes: dreamSignsNotes.trim() || undefined,
 
         // Phase 2 Fields
-        scenesCount: Math.max(1, scenesCount),
+        scenesCount: scenes.length > 0 ? scenes.length : Math.max(1, scenesCount),
+        scenes: scenes.length > 0 ? scenes : undefined,
         dreamControl: dreamControl > 0 ? dreamControl : undefined,
         falseAwakening,
         falseAwakeningDetails: falseAwakening
@@ -305,15 +350,15 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     <form onSubmit={handleSave} className="space-y-6">
       {/* Draft Restored Banner */}
       {hasRestoredDraft && (
-        <div className="flex items-center justify-between p-3 rounded-xl bg-blue-950/70 border border-blue-700/60 text-xs text-blue-200">
+        <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/80 border border-slate-800 text-xs text-slate-300">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-blue-400 shrink-0" />
+            <Compass className="w-4 h-4 text-blue-400 shrink-0" />
             <span>Restored an unsaved dream draft from your previous session.</span>
           </div>
           <button
             type="button"
             onClick={clearDraft}
-            className="text-xs text-blue-400 hover:text-blue-100 underline ml-2 cursor-pointer"
+            className="text-xs text-blue-400 hover:text-blue-300 underline ml-2 cursor-pointer"
           >
             Discard draft
           </button>
@@ -322,7 +367,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
 
       {/* Validation Error Banner */}
       {validationError && (
-        <div className="flex items-center gap-2 p-3.5 rounded-xl bg-red-950/70 border border-red-800 text-sm text-red-200">
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-red-950/50 border border-red-800/80 text-xs text-red-200">
           <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
           <span>{validationError}</span>
         </div>
@@ -330,7 +375,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
 
       {/* Title */}
       <div>
-        <label htmlFor="dream-title" className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+        <label htmlFor="dream-title" className="block text-xs font-semibold text-slate-300 mb-1.5">
           Dream Title <span className="text-blue-400">*</span>
         </label>
         <input
@@ -338,76 +383,75 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g. Flight through the bioluminescent caverns"
-          className="w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-700/80 text-slate-100 placeholder-slate-500 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-medium"
+          placeholder="e.g. Flight through the mountain pass"
+          className="w-full px-3.5 py-2.5 rounded-lg bg-slate-900/90 border border-slate-800 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500 transition-colors font-medium"
           autoFocus={!isModal}
         />
       </div>
 
       {/* Lucidity Status (Three Segments) */}
       <div>
-        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+        <label className="block text-xs font-semibold text-slate-300 mb-1.5">
           Lucidity Status <span className="text-blue-400">*</span>
         </label>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <button
             type="button"
             onClick={() => setLucidity('non-lucid')}
-            className={`p-3 rounded-xl border text-left flex flex-col gap-1 transition-all cursor-pointer ${
+            className={`p-3 rounded-lg border text-left flex flex-col gap-1 transition-colors cursor-pointer ${
               lucidity === 'non-lucid'
-                ? 'bg-slate-800 border-slate-500 text-white shadow-md'
-                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                ? 'bg-slate-800 border-slate-600 text-slate-100'
+                : 'bg-slate-900/50 border-slate-800/80 text-slate-400 hover:bg-slate-800/40 hover:text-slate-200'
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-slate-200">Non-Lucid</span>
-              {lucidity === 'non-lucid' && <Check className="w-4 h-4 text-blue-400" />}
+              <span className="text-xs font-semibold text-slate-200">Non-Lucid</span>
+              {lucidity === 'non-lucid' && <Check className="w-3.5 h-3.5 text-blue-400" />}
             </div>
-            <p className="text-xs text-slate-400 leading-snug">Standard dream; unaware that I was dreaming.</p>
+            <p className="text-[11px] text-slate-400 leading-snug">Standard dream; unaware of dreaming state.</p>
           </button>
 
           <button
             type="button"
             onClick={() => setLucidity('lucid')}
-            className={`p-3 rounded-xl border text-left flex flex-col gap-1 transition-all cursor-pointer ${
+            className={`p-3 rounded-lg border text-left flex flex-col gap-1 transition-colors cursor-pointer ${
               lucidity === 'lucid'
-                ? 'bg-cyan-950/70 border-cyan-500 text-cyan-200 shadow-md shadow-cyan-900/40 lucid-glow'
-                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                ? 'bg-blue-950/70 border-blue-500 text-blue-100'
+                : 'bg-slate-900/50 border-slate-800/80 text-slate-400 hover:bg-slate-800/40 hover:text-slate-200'
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-cyan-300 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="text-xs font-semibold text-blue-300">
                 Lucid Dream
               </span>
-              {lucidity === 'lucid' && <Check className="w-4 h-4 text-cyan-400" />}
+              {lucidity === 'lucid' && <Check className="w-3.5 h-3.5 text-blue-400" />}
             </div>
-            <p className="text-xs text-slate-400 leading-snug">Consciously aware that I was dreaming while asleep.</p>
+            <p className="text-[11px] text-slate-400 leading-snug">Consciously aware that I was dreaming while asleep.</p>
           </button>
 
           <button
             type="button"
             onClick={() => setLucidity('uncertain')}
-            className={`p-3 rounded-xl border text-left flex flex-col gap-1 transition-all cursor-pointer ${
+            className={`p-3 rounded-lg border text-left flex flex-col gap-1 transition-colors cursor-pointer ${
               lucidity === 'uncertain'
-                ? 'bg-amber-950/60 border-amber-500 text-amber-200 shadow-md'
-                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                ? 'bg-amber-950/50 border-amber-500/80 text-amber-200'
+                : 'bg-slate-900/50 border-slate-800/80 text-slate-400 hover:bg-slate-800/40 hover:text-slate-200'
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-amber-300">Uncertain / Pre-Lucid</span>
-              {lucidity === 'uncertain' && <Check className="w-4 h-4 text-amber-400" />}
+              <span className="text-xs font-semibold text-amber-300">Uncertain / Pre-Lucid</span>
+              {lucidity === 'uncertain' && <Check className="w-3.5 h-3.5 text-amber-400" />}
             </div>
-            <p className="text-xs text-slate-400 leading-snug">Brief suspicion or fleeting doubt without control.</p>
+            <p className="text-[11px] text-slate-400 leading-snug">Brief suspicion or fleeting doubt without control.</p>
           </button>
         </div>
       </div>
 
       {/* Date, Wake-up Time & Recall Quality Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {/* Date */}
         <div>
-          <label htmlFor="dream-date" className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
+          <label htmlFor="dream-date" className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
             <Calendar className="w-3.5 h-3.5 text-blue-400" />
             Date of Dream
           </label>
@@ -416,13 +460,13 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700/80 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-blue-500 transition-colors"
           />
         </div>
 
         {/* Wake-up Time */}
         <div>
-          <label htmlFor="dream-time" className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
+          <label htmlFor="dream-time" className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
             <Clock className="w-3.5 h-3.5 text-blue-400" />
             Approx. Wake-up Time
           </label>
@@ -432,13 +476,13 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
             value={wakeUpTime}
             onChange={(e) => setWakeUpTime(e.target.value)}
             placeholder="07:00"
-            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700/80 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-blue-500 transition-colors"
           />
         </div>
 
         {/* Recall Quality */}
         <div>
-          <label htmlFor="dream-recall" className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
+          <label htmlFor="dream-recall" className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
             <Compass className="w-3.5 h-3.5 text-blue-400" />
             Recall Quality
           </label>
@@ -446,7 +490,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
             id="dream-recall"
             value={recallQuality}
             onChange={(e) => setRecallQuality(e.target.value as RecallQuality)}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700/80 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            className="w-full px-3 py-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
           >
             <option value="hazy">Hazy / Faint fragments</option>
             <option value="fragmentary">Fragmentary scenes</option>
@@ -458,12 +502,12 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
 
       {/* Vividness Slider (1 - 5) */}
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <label htmlFor="dream-vividness" className="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+        <div className="flex items-center justify-between mb-1.5">
+          <label htmlFor="dream-vividness" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
             <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
             Vividness Rating
           </label>
-          <span className="text-xs font-medium text-amber-400 bg-amber-950/60 px-2.5 py-1 rounded-full border border-amber-800/40">
+          <span className="text-xs font-medium text-amber-300 bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-800/40">
             {vividnessLabels[vividness]}
           </span>
         </div>
@@ -473,10 +517,10 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
               key={lvl}
               type="button"
               onClick={() => setVividness(lvl)}
-              className={`flex-1 py-2 px-1 rounded-xl border text-center transition-all cursor-pointer ${
+              className={`flex-1 py-1.5 px-1 rounded-lg border text-center transition-colors cursor-pointer ${
                 vividness >= lvl
-                  ? 'bg-amber-950/60 border-amber-600/60 text-amber-300 font-semibold shadow-sm'
-                  : 'bg-slate-900/60 border-slate-800 text-slate-500 hover:border-slate-700'
+                  ? 'bg-amber-950/50 border-amber-600/60 text-amber-300 font-semibold'
+                  : 'bg-slate-900/50 border-slate-800 text-slate-500 hover:border-slate-700'
               }`}
             >
               <div className="flex items-center justify-center gap-1">
@@ -494,8 +538,8 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
 
       {/* Dream Narrative */}
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <label htmlFor="dream-narrative" className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+        <div className="flex items-center justify-between mb-1.5">
+          <label htmlFor="dream-narrative" className="text-xs font-semibold text-slate-300">
             Dream Narrative <span className="text-blue-400">*</span>
           </label>
           <span className="text-xs text-slate-400 font-mono">
@@ -508,14 +552,14 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
           onChange={(e) => setNarrative(e.target.value)}
           placeholder="Describe your dream in vivid detail. What did you see, hear, feel, and experience? What led up to your awareness?"
           rows={8}
-          className="w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-700/80 text-slate-100 placeholder-slate-500 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-sans"
+          className="w-full px-3.5 py-2.5 rounded-lg bg-slate-900/90 border border-slate-800 text-slate-100 placeholder-slate-500 text-sm leading-relaxed focus:outline-none focus:border-blue-500 transition-colors font-sans"
         />
       </div>
 
       {/* Dream Signs Notes */}
       <div>
-        <label htmlFor="dream-signs" className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5 flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+        <label htmlFor="dream-signs" className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
+          <Compass className="w-3.5 h-3.5 text-blue-400" />
           Dream Signs & Lucidity Triggers (Optional)
         </label>
         <textarea
@@ -524,13 +568,13 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
           onChange={(e) => setDreamSignsNotes(e.target.value)}
           placeholder="Note any dream signs: impossible physics, strange clocks/mirrors, breathing underwater, recurring people, or what triggered your lucidity."
           rows={2}
-          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-100 placeholder-slate-500 text-xs leading-relaxed focus:outline-none focus:border-blue-500 transition-colors"
         />
       </div>
 
       {/* Emotions Selection */}
       <div>
-        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 flex items-center gap-1.5">
+        <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
           <Smile className="w-3.5 h-3.5 text-blue-400" />
           Emotions & Tone
         </label>
@@ -542,9 +586,9 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
                 key={emotion}
                 type="button"
                 onClick={() => toggleEmotion(emotion)}
-                className={`text-xs px-2.5 py-1.5 rounded-lg border transition-all cursor-pointer ${
+                className={`text-xs px-2.5 py-1 rounded-md border transition-colors cursor-pointer ${
                   isSelected
-                    ? 'bg-blue-600/30 text-blue-200 border-blue-500/60 font-semibold shadow-sm'
+                    ? 'bg-blue-950/70 text-blue-200 border-blue-500/60 font-medium'
                     : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-300'
                 }`}
               >
@@ -557,24 +601,24 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
 
       {/* Tags Selection & Creation */}
       <div>
-        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2 flex items-center gap-1.5">
+        <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
           <TagIcon className="w-3.5 h-3.5 text-blue-400" />
           Tags & Categories
         </label>
 
         {/* Existing & Active tags */}
-        <div className="flex flex-wrap gap-1.5 mb-2.5">
+        <div className="flex flex-wrap gap-1.5 mb-2">
           {tags.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-950/60 border border-blue-700/60 text-xs text-blue-200"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-800/80 border border-slate-700/80 text-xs text-slate-200"
             >
-              <span className="text-blue-400">#</span>
+              <span className="text-slate-400">#</span>
               <span>{tag}</span>
               <button
                 type="button"
                 onClick={() => removeTag(tag)}
-                className="text-blue-400 hover:text-blue-100 cursor-pointer ml-1 text-sm font-bold"
+                className="text-slate-400 hover:text-slate-100 cursor-pointer ml-1 text-xs font-bold"
                 aria-label={`Remove tag ${tag}`}
               >
                 &times;
@@ -596,7 +640,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
               }
             }}
             placeholder="Add custom tag (press Enter)"
-            className="grow px-3 py-1.5 rounded-lg bg-slate-900/80 border border-slate-700/80 text-slate-100 placeholder-slate-500 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="grow px-3 py-1.5 rounded-md bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 text-xs focus:outline-none focus:border-blue-500"
           />
           <Button type="button" size="sm" variant="secondary" onClick={() => handleAddTag()}>
             Add
@@ -606,7 +650,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
         {/* Quick Suggestions from DB */}
         {availableTags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1 items-center">
-            <span className="text-[11px] text-slate-300 mr-1">Suggestions:</span>
+            <span className="text-[11px] text-slate-400 mr-1">Suggestions:</span>
             {availableTags
               .filter((t) => !tags.includes(t))
               .slice(0, 6)
@@ -615,7 +659,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
                   key={suggested}
                   type="button"
                   onClick={() => setTags((prev) => [...prev, suggested])}
-                  className="text-[11px] text-slate-300 hover:text-blue-300 px-2 py-0.5 rounded bg-slate-900/40 hover:bg-slate-800 border border-slate-800/80 cursor-pointer"
+                  className="text-[11px] text-slate-300 hover:text-blue-300 px-2 py-0.5 rounded bg-slate-900/60 hover:bg-slate-800 border border-slate-800 cursor-pointer"
                 >
                   +{suggested}
                 </button>
@@ -625,20 +669,20 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
       </div>
 
       {/* PHASE 2: Advanced Intelligence Collapsible Section */}
-      <div className="pt-2">
+      <div className="pt-1">
         <button
           type="button"
           onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
-          className="w-full flex items-center justify-between p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 text-left transition-all cursor-pointer"
+          className="w-full flex items-center justify-between p-3 rounded-lg bg-slate-900/60 border border-slate-800 hover:border-slate-700 text-left transition-colors cursor-pointer"
         >
           <div className="flex items-center gap-2.5">
             <Sliders className="w-4 h-4 text-blue-400" />
             <div>
-              <span className="text-xs font-bold text-slate-200 uppercase tracking-wider block">
-                Advanced Pattern & Lucidity Intelligence
+              <span className="text-xs font-semibold text-slate-200 block">
+                Pattern & Lucidity Parameters
               </span>
               <span className="text-[11px] text-slate-400">
-                False awakenings, dream control level, scene shifts, and psychological interpretations
+                False awakenings, dream control level, scene count, and interpretation
               </span>
             </div>
           </div>
@@ -650,7 +694,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
         </button>
 
         {isAdvancedOpen && (
-          <div className="mt-3 p-4 sm:p-5 rounded-2xl bg-slate-900/40 border border-slate-800/80 space-y-5 animate-fadeIn">
+          <div className="mt-2.5 p-4 rounded-lg bg-slate-900/40 border border-slate-800 space-y-4">
             {/* False Awakening Checkbox & Details */}
             <div className="space-y-3 pb-4 border-b border-slate-800/80">
               <label className="flex items-start gap-3 cursor-pointer">
@@ -766,13 +810,107 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
                     type="number"
                     min={1}
                     max={10}
-                    value={scenesCount}
-                    onChange={(e) => setScenesCount(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-24 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs focus:ring-2 focus:ring-blue-500 font-mono"
+                    value={scenes.length > 0 ? scenes.length : scenesCount}
+                    onChange={(e) => {
+                      const val = Math.max(1, parseInt(e.target.value) || 1);
+                      setScenesCount(val);
+                    }}
+                    disabled={scenes.length > 0}
+                    className="w-24 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-xs focus:ring-2 focus:ring-blue-500 font-mono disabled:opacity-60"
                   />
-                  <span className="text-xs text-slate-400">distinct sequential scenes</span>
+                  <span className="text-xs text-slate-400">
+                    {scenes.length > 0 ? 'derived from structured scenes below' : 'distinct sequential scenes'}
+                  </span>
                 </div>
               </div>
+            </div>
+
+            {/* Sequential Scenes Breakdown (Optional Structured Scenes) */}
+            <div className="space-y-3 pb-4 border-b border-slate-800/80">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-slate-200 block">
+                    Sequential Scene Breakdown
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    Optionally segment dream into chronological scenes with individual lucidity & false awakening states.
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  size="xs"
+                  variant="secondary"
+                  onClick={handleAddScene}
+                  className="flex items-center gap-1 shrink-0"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>Add Scene</span>
+                </Button>
+              </div>
+
+              {scenes.length > 0 && (
+                <div className="space-y-3 pt-1">
+                  {scenes.map((scene) => (
+                    <div
+                      key={scene.id}
+                      className="p-3 rounded-lg bg-slate-900/60 border border-slate-800 space-y-2.5"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 grow">
+                          <span className="text-xs font-semibold text-blue-300 font-mono shrink-0">
+                            Scene #{scene.sceneNumber}
+                          </span>
+                          <input
+                            type="text"
+                            value={scene.title || ''}
+                            onChange={(e) => handleUpdateScene(scene.id, { title: e.target.value })}
+                            placeholder="Optional scene title (e.g. Flight across canyon)"
+                            className="w-full px-2.5 py-1 rounded-md bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveScene(scene.id)}
+                          className="p-1 text-slate-400 hover:text-red-400 hover:bg-red-950/30 rounded transition-colors cursor-pointer"
+                          title="Remove scene"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <textarea
+                        value={scene.narrative}
+                        onChange={(e) => handleUpdateScene(scene.id, { narrative: e.target.value })}
+                        placeholder="What happened in this specific scene?"
+                        rows={2}
+                        className="w-full px-2.5 py-1.5 rounded-md bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder-slate-500 leading-relaxed focus:outline-none focus:border-blue-500"
+                      />
+
+                      <div className="flex flex-wrap items-center gap-4 text-xs">
+                        <label className="flex items-center gap-1.5 text-slate-300 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={!!scene.lucid}
+                            onChange={(e) => handleUpdateScene(scene.id, { lucid: e.target.checked })}
+                            className="rounded text-blue-600 focus:ring-blue-500 bg-slate-800 border-slate-700 w-3.5 h-3.5"
+                          />
+                          <span className="text-[11px]">Lucid during this scene</span>
+                        </label>
+
+                        <label className="flex items-center gap-1.5 text-slate-300 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={!!scene.falseAwakening}
+                            onChange={(e) => handleUpdateScene(scene.id, { falseAwakening: e.target.checked })}
+                            className="rounded text-amber-600 focus:ring-amber-500 bg-slate-800 border-slate-700 w-3.5 h-3.5"
+                          />
+                          <span className="text-[11px]">False Awakening in this scene</span>
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Reality Checks that could have helped */}
@@ -832,7 +970,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
                 onChange={(e) => setInterpretationNotes(e.target.value)}
                 placeholder="What personal significance, waking reflections, emotional symbols, or subconscious parallels do you associate with this dream?"
                 rows={3}
-                className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-100 placeholder-slate-500 text-xs leading-relaxed focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 text-xs leading-relaxed focus:outline-none focus:border-blue-500"
               />
             </div>
           </div>
@@ -840,11 +978,11 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
       </div>
 
       {/* Form Action Buttons */}
-      <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-800/80">
+      <div className="flex items-center justify-end gap-3 pt-5 border-t border-slate-800">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>
           Cancel
         </Button>
-        <Button type="submit" variant="celestial" isLoading={isSaving}>
+        <Button type="submit" variant="primary" isLoading={isSaving}>
           {isEditing ? 'Save Changes' : 'Record Dream'}
         </Button>
       </div>

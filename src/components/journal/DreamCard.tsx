@@ -2,7 +2,7 @@ import React from 'react';
 import { DreamEntry } from '../../types/dream';
 import { LucidityBadge, EmotionBadge, TagBadge } from '../common/Badge';
 import { formatDate, formatTime } from '../../utils/dateUtils';
-import { Star, Clock, Calendar, Eye, Edit, Trash2, Sparkles } from 'lucide-react';
+import { Star, Clock, Calendar, Eye, Edit, Trash2 } from 'lucide-react';
 
 interface DreamCardProps {
   dream: DreamEntry;
@@ -22,19 +22,19 @@ export const DreamCard: React.FC<DreamCardProps> = ({
   return (
     <article
       onClick={() => onView(dream)}
-      className={`group relative p-5 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between ${
+      className={`group relative p-4 rounded-xl border transition-colors cursor-pointer flex flex-col justify-between ${
         isLucid
-          ? 'bg-[#0f172a]/90 hover:bg-[#131d36] border-cyan-500/30 hover:border-cyan-400/50 shadow-lg shadow-cyan-950/20 lucid-glow'
-          : 'bg-[#0f172a]/60 hover:bg-[#141e34] border-slate-800/80 hover:border-slate-700/80 shadow-md shadow-black/40'
+          ? 'bg-[#0f172a]/80 hover:bg-[#131d36] border-slate-800 hover:border-slate-700 border-l-2 border-l-sky-500'
+          : 'bg-[#0f172a]/60 hover:bg-[#121a30] border-slate-800/80 hover:border-slate-700'
       }`}
     >
       <div>
         {/* Top Meta Line */}
-        <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center justify-between gap-2 mb-2.5">
           <div className="flex flex-wrap items-center gap-1.5">
             <LucidityBadge lucidity={dream.lucidity} size="sm" />
             {dream.falseAwakening && (
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-950/80 text-blue-300 border border-blue-700/50">
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-950/60 text-blue-300 border border-blue-800/50">
                 FA
               </span>
             )}
@@ -51,7 +51,7 @@ export const DreamCard: React.FC<DreamCardProps> = ({
           </div>
 
           {/* Vividness Rating */}
-          <div className="flex items-center gap-0.5">
+          <div className="flex items-center gap-0.5" title={`Vividness: ${dream.vividness}/5`}>
             {[1, 2, 3, 4, 5].map((lvl) => (
               <Star
                 key={lvl}
@@ -66,28 +66,28 @@ export const DreamCard: React.FC<DreamCardProps> = ({
         </div>
 
         {/* Title */}
-        <h3 className="text-base font-semibold text-slate-100 group-hover:text-blue-200 transition-colors line-clamp-1 mb-2">
+        <h3 className="text-sm sm:text-base font-semibold text-slate-100 group-hover:text-blue-300 transition-colors line-clamp-1 mb-1.5">
           {dream.title}
         </h3>
 
         {/* Narrative Excerpt */}
-        <p className="text-xs sm:text-sm text-slate-300 line-clamp-3 leading-relaxed mb-4 font-normal">
+        <p className="text-xs sm:text-sm text-slate-300 line-clamp-3 leading-relaxed mb-3 font-normal">
           {dream.narrative}
         </p>
 
         {/* Dream sign indicator if exists */}
         {dream.dreamSignsNotes && (
-          <div className="mb-3 flex items-center gap-1.5 text-[11px] text-cyan-300 bg-cyan-950/40 px-2.5 py-1 rounded-md border border-cyan-800/40 line-clamp-1">
-            <Sparkles className="w-3 h-3 text-cyan-400 shrink-0" />
+          <div className="mb-3 flex items-center gap-1.5 text-[11px] text-slate-300 bg-slate-900 px-2 py-0.5 rounded border border-slate-800 line-clamp-1">
+            <span className="text-blue-400 font-medium">Sign:</span>
             <span className="truncate">{dream.dreamSignsNotes}</span>
           </div>
         )}
       </div>
 
       {/* Footer Tags & Actions */}
-      <div className="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
+      <div className="pt-2.5 border-t border-slate-800/70 flex flex-wrap items-center justify-between gap-2">
         {/* Emotions & Tags preview */}
-        <div className="flex flex-wrap items-center gap-1.5 max-w-[70%] overflow-hidden">
+        <div className="flex flex-wrap items-center gap-1 max-w-[70%] overflow-hidden">
           {dream.emotions && dream.emotions.slice(0, 2).map((emotion) => (
             <EmotionBadge key={emotion} emotion={emotion} size="sm" />
           ))}
@@ -95,7 +95,7 @@ export const DreamCard: React.FC<DreamCardProps> = ({
             <TagBadge key={tag} tag={tag} size="sm" />
           ))}
           {((dream.emotions?.length || 0) + (dream.tags?.length || 0) > 4) && (
-            <span className="text-[10px] text-slate-400 font-medium">
+            <span className="text-[10px] text-slate-500 font-medium">
               +{((dream.emotions?.length || 0) + (dream.tags?.length || 0)) - 4}
             </span>
           )}
@@ -103,13 +103,13 @@ export const DreamCard: React.FC<DreamCardProps> = ({
 
         {/* Action icons */}
         <div
-          className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity"
+          className="flex items-center gap-0.5"
           onClick={(e) => e.stopPropagation()}
         >
           <button
             type="button"
             onClick={() => onView(dream)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
             title="Read entry"
             aria-label="Read dream entry"
           >
@@ -118,7 +118,7 @@ export const DreamCard: React.FC<DreamCardProps> = ({
           <button
             type="button"
             onClick={() => onEdit(dream)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-300 hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1 rounded-md text-slate-400 hover:text-blue-300 hover:bg-slate-800 transition-colors cursor-pointer"
             title="Edit entry"
             aria-label="Edit dream entry"
           >
@@ -127,7 +127,7 @@ export const DreamCard: React.FC<DreamCardProps> = ({
           <button
             type="button"
             onClick={() => onDelete(dream)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1 rounded-md text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors cursor-pointer"
             title="Delete entry"
             aria-label="Delete dream entry"
           >

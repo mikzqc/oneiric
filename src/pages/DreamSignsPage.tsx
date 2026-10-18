@@ -12,7 +12,6 @@ import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { Button } from '../components/common/Button';
 import { formatDate } from '../utils/dateUtils';
 import {
-  Sparkles,
   Search,
   Plus,
   Check,
@@ -453,21 +452,20 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
   ).size;
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-slate-100 tracking-tight flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-blue-400" />
-              <span>Dream Signs & Pattern Library</span>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight">
+              Dream Signs & Pattern Library
             </h1>
-            <span className="px-2 py-0.5 rounded-full bg-blue-950 text-blue-300 border border-blue-800 text-xs font-semibold">
+            <span className="px-2 py-0.5 rounded-md bg-blue-950 text-blue-300 border border-blue-800 text-xs font-semibold">
               {signs.length} detected
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Local, rule-based detection mapping repeating personal anomalies across distinct entries
+            Local, rule-based detection mapping repeating personal anomalies across distinct entries.
           </p>
         </div>
 
@@ -483,7 +481,7 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
           </Button>
 
           <Button
-            variant="celestial"
+            variant="primary"
             size="sm"
             icon={<Plus className="w-4 h-4" />}
             onClick={handleOpenCreateSign}
@@ -496,7 +494,7 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
       {/* Operation Feedback Banner */}
       {feedback && (
         <div
-          className={`p-3.5 rounded-2xl border flex items-center justify-between gap-3 text-xs shadow-lg transition-all ${
+          className={`p-3.5 rounded-lg border flex items-center justify-between gap-3 text-xs shadow-md transition-all ${
             feedback.type === 'success'
               ? 'bg-emerald-950/60 border-emerald-800 text-emerald-200'
               : feedback.type === 'error'
@@ -515,7 +513,7 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
           <button
             type="button"
             onClick={() => setFeedback(null)}
-            className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-slate-200 transition-colors"
+            className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-slate-200 transition-colors"
             title="Dismiss notification"
           >
             <X className="w-3.5 h-3.5" />
@@ -525,9 +523,9 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
 
       {/* Bulk Action Sticky Bar when items are selected */}
       {selectedSignIds.size > 0 && (
-        <div className="p-3.5 rounded-2xl bg-blue-950/95 border border-blue-700/80 shadow-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs text-blue-100 sticky top-3 z-30 backdrop-blur-md animate-fadeIn">
+        <div className="p-3 rounded-lg bg-blue-950/95 border border-blue-800 shadow-xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs text-blue-100 sticky top-3 z-30 backdrop-blur-md">
           <div className="flex items-center gap-2.5">
-            <span className="font-bold px-2.5 py-0.5 rounded-full bg-blue-800 text-blue-100 text-xs shadow-inner">
+            <span className="font-bold px-2 py-0.5 rounded-md bg-blue-800 text-blue-100 text-xs">
               {selectedSignIds.size}
             </span>
             <span className="font-medium">
@@ -542,7 +540,7 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
             <button
               type="button"
               onClick={handleClearSelection}
-              className="px-2.5 py-1.5 rounded-lg text-blue-300 hover:text-white hover:bg-blue-900/60 font-medium transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-md text-blue-300 hover:text-white hover:bg-blue-900/60 font-medium transition-colors cursor-pointer"
             >
               Clear Selection
             </button>
@@ -581,9 +579,9 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
 
       {/* Suggested Patterns Review Banner if any */}
       {suggestedCount > 0 && statusFilter !== 'suggested' && (
-        <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-800/60 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-200">
+        <div className="p-3.5 rounded-lg bg-amber-950/40 border border-amber-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-200">
           <div className="flex items-center gap-2.5">
-            <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+            <Info className="w-4 h-4 text-amber-400 shrink-0" />
             <span>
               <strong>{suggestedCount} candidate {suggestedCount === 1 ? 'pattern' : 'patterns'}</strong> detected across multiple distinct dreams. Review suggestions to confirm or dismiss them as personal dream signs.
             </span>
@@ -594,7 +592,7 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
               setStatusFilter('suggested');
               setCategoryFilter('all');
             }}
-            className="px-3 py-1.5 rounded-lg bg-amber-900/80 hover:bg-amber-800 text-amber-100 border border-amber-700/60 font-semibold cursor-pointer shrink-0 transition-colors"
+            className="px-3 py-1.5 rounded-md bg-amber-900/80 hover:bg-amber-800 text-amber-100 border border-amber-700/60 font-medium cursor-pointer shrink-0 transition-colors"
           >
             Review Suggestions
           </button>
@@ -602,7 +600,7 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
       )}
 
       {/* Search & Filter Toolbar */}
-      <div className="p-4 rounded-2xl bg-[#0f172a]/80 border border-slate-800/80 shadow-lg space-y-3">
+      <div className="p-3 sm:p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="relative grow">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -679,7 +677,7 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
           <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
         </div>
       ) : filteredSigns.length === 0 ? (
-        <div className="p-12 text-center rounded-2xl bg-slate-900/40 border border-slate-800 text-xs text-slate-400 space-y-3">
+        <div className="p-12 text-center rounded-xl bg-slate-900/40 border border-slate-800 text-xs text-slate-400 space-y-3">
           <p>
             {statusFilter === 'dismissed'
               ? 'No dismissed dream signs found. Dismissed signs remain safely archived here and can be restored.'
@@ -701,13 +699,13 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
               <div
                 key={sign.id}
                 onClick={() => handleOpenDetail(sign)}
-                className={`p-5 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-md relative group ${
+                className={`p-4 rounded-xl border transition-colors cursor-pointer flex flex-col justify-between shadow-sm relative group ${
                   isSelected
-                    ? 'ring-2 ring-blue-500 border-blue-500 bg-[#121c38]'
+                    ? 'ring-2 ring-blue-500 border-blue-500 bg-slate-900'
                     : isSuggested
-                    ? 'bg-amber-950/20 border-amber-600/40 hover:border-amber-500/60'
+                    ? 'bg-amber-950/20 border-amber-800/40 hover:border-amber-700/60'
                     : isConfirmed
-                    ? 'bg-[#0f172a]/80 border-slate-800/80 hover:border-blue-500/50 hover:bg-[#121a30]'
+                    ? 'bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-900/80'
                     : 'bg-slate-950/40 border-slate-900 opacity-70 hover:opacity-100'
                 }`}
               >
@@ -723,7 +721,7 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
                         title="Select sign"
                         aria-label={`Select ${sign.name}`}
                       />
-                      <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                      <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700/60">
                         {categoryLabels[sign.category]}
                       </span>
                     </div>
@@ -732,18 +730,18 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
                       {sign.isRealityCheckReminder && (
                         <span
                           title="Active Reality Check Reminder"
-                          className="p-1 rounded-full bg-blue-950 text-blue-300 border border-blue-700/50"
+                          className="p-1 rounded-md bg-blue-950 text-blue-300 border border-blue-700/50"
                         >
                           <Bell className="w-3 h-3 text-blue-400" />
                         </span>
                       )}
 
                       <span
-                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                        className={`text-[10px] font-medium px-2 py-0.5 rounded-md ${
                           isConfirmed
-                            ? 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
+                            ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800/50'
                             : isSuggested
-                            ? 'bg-amber-950 text-amber-300 border border-amber-800/50 animate-pulse'
+                            ? 'bg-amber-950/80 text-amber-300 border border-amber-800/50'
                             : 'bg-slate-800 text-slate-400 border border-slate-700'
                         }`}
                       >
@@ -1294,7 +1292,7 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
             <Button type="button" variant="secondary" onClick={() => setIsSignFormOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" variant="celestial">
+            <Button type="submit" variant="primary">
               {editingSign ? 'Save Changes' : 'Create Sign'}
             </Button>
           </div>

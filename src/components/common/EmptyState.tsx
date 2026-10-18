@@ -1,5 +1,5 @@
 import React from 'react';
-import { Moon, Sparkles } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { Button } from './Button';
 
 export interface EmptyStateProps {
@@ -25,27 +25,24 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <div
-      className={`flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-2xl border border-slate-800/80 bg-slate-900/30 backdrop-blur-sm ${className}`}
+      className={`flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-xl border border-slate-800 bg-[#0f172a]/40 ${className}`}
     >
-      <div className="relative mb-4">
-        <div className="w-16 h-16 rounded-2xl bg-blue-950/50 border border-blue-800/40 flex items-center justify-center text-blue-400 celestial-glow">
-          {icon || <Moon className="w-8 h-8" />}
-        </div>
-        <Sparkles className="w-4 h-4 text-blue-400 absolute -top-1 -right-1 animate-pulse" />
+      <div className="w-10 h-10 rounded-lg bg-slate-800/80 border border-slate-700/80 flex items-center justify-center text-slate-400 mb-3.5">
+        {icon || <BookOpen className="w-5 h-5" />}
       </div>
 
-      <h3 className="text-lg font-semibold text-slate-100 mb-2">{title}</h3>
-      <p className="text-sm text-slate-400 max-w-md leading-relaxed mb-6">{description}</p>
+      <h3 className="text-sm font-semibold text-slate-200 mb-1.5">{title}</h3>
+      <p className="text-xs text-slate-400 max-w-sm leading-relaxed mb-5">{description}</p>
 
       {(actionText || secondaryActionText) && (
-        <div className="flex flex-wrap items-center justify-center gap-3">
+        <div className="flex flex-wrap items-center justify-center gap-2.5">
           {actionText && onAction && (
-            <Button variant="celestial" onClick={onAction}>
+            <Button size="sm" variant="primary" onClick={onAction}>
               {actionText}
             </Button>
           )}
           {secondaryActionText && onSecondaryAction && (
-            <Button variant="outline" onClick={onSecondaryAction}>
+            <Button size="sm" variant="outline" onClick={onSecondaryAction}>
               {secondaryActionText}
             </Button>
           )}
