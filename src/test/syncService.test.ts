@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { syncService } from '../services/syncService';
+import { dreamService } from '../services/dreamService';
 import { db } from '../db/database';
 import { DreamEntry } from '../types/dream';
 
@@ -271,5 +272,95 @@ describe('syncService - Multi-Device Cloud Sync', () => {
 
     const allPCDreams = await db.dreams.toArray();
     expect(allPCDreams.some((d) => d.id === 'dream-2')).toBe(true);
+  });
+
+  it('permanently deletes dreams across sync without zombie resurrection', async () => {
+    let cloudVault: unknown = null;
+
+    globalThis.fetch = vi.fn().mockImplementation(async (url: string, options?: RequestInit) => {
+      const method = options?.method || 'GET';
+      if (method === 'POST' || method === 'PUT') {
+        cloudVault = JSON.parse(options?.body as string);
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({ id: 'vault-del-test', status: 0 }),
+        };
+      }
+      if (method === 'GET') {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => cloudVault,
+        };
+      }
+      return { ok: false, status: 400 };
+    }) as unknown as typeof fetch;
+
+    // Device A creates a dream and initializes vault
+    const d1 = await dreamService.createDream({
+      title: 'Dream to Delete',
+      narrative: 'This dream should be permanently deleted and never resurrect.',
+      date: '2026-10-18',
+      vividness: 3,
+      recallQuality: 'detailed',
+      lucidity: 'non-lucid',
+      emotions: [],
+      tags: [],
+    });
+    const d2 = await dreamService.createDream({
+      title: 'Keeper Dream',
+      narrative: 'This dream stays.',
+      date: '2026-10-18',
+      vividness: 4,
+      recallQuality: 'crystal',
+      lucidity: 'lucid',
+      emotions: [],
+      tags: [],
+    });
+
+    const { vaultId, passphrase, unifiedKey } = await syncService.createVault();
+    expect(await db.dreams.count()).toBe(2);
+
+    // Device B connects and receives both dreams
+    await db.dreams.clear();
+    syncService.clearCredentials();
+    const connectRes = await syncService.connectVault(unifiedKey);
+    expect(connectRes.pulledCount).toBe(2);
+    expect(await db.dreams.count()).toBe(2);
+
+    // Device A deletes d1
+    await db.dreams.clear();
+    await db.dreams.bulkAdd([d1, d2]);
+    syncService.saveCredentials({
+      vaultId,
+      passphrase,
+      createdAt: '2026-10-18T10:00:00Z',
+      autoSync: true,
+    });
+
+    // Perform actual deletion via dreamService
+    await dreamService.deleteDream(d1.id);
+    expect(await db.dreams.count()).toBe(1);
+
+    // Sync runs on Device A (pulls vault which still had d1, but tombstones prevent resurrection, then pushes vault without d1)
+    await syncService.syncNow();
+    expect(await db.dreams.count()).toBe(1);
+    expect(await db.dreams.get(d1.id)).toBeUndefined();
+
+    // Now Device B syncs: Device B should have d1 deleted as well!
+    await db.dreams.clear();
+    await db.dreams.bulkAdd([d1, d2]);
+    syncService.saveCredentials({
+      vaultId,
+      passphrase,
+      createdAt: '2026-10-18T10:00:00Z',
+      autoSync: true,
+    });
+
+    await syncService.syncNow();
+    expect(await db.dreams.get(d1.id)).toBeUndefined();
+    expect(await db.dreams.count()).toBe(1);
+    expect(await db.dreams.get(d2.id)).toBeDefined();
   });
 });

@@ -26,6 +26,7 @@ interface DreamEditorProps {
   initialDream?: DreamEntry;
   onSaved: (dream: DreamEntry) => void;
   onCancel: () => void;
+  onDelete?: () => void;
   isModal?: boolean;
 }
 
@@ -51,6 +52,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   initialDream,
   onSaved,
   onCancel,
+  onDelete,
   isModal = false,
 }) => {
   const isEditing = !!initialDream;
@@ -978,13 +980,29 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
       </div>
 
       {/* Form Action Buttons */}
-      <div className="flex items-center justify-end gap-3 pt-5 border-t border-slate-800">
-        <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>
-          Cancel
-        </Button>
-        <Button type="submit" variant="primary" isLoading={isSaving}>
-          {isEditing ? 'Save Changes' : 'Record Dream'}
-        </Button>
+      <div className="flex items-center justify-between gap-3 pt-5 border-t border-slate-800">
+        <div>
+          {isEditing && onDelete && (
+            <Button
+              type="button"
+              variant="danger"
+              size="sm"
+              icon={<Trash2 className="w-4 h-4" />}
+              onClick={onDelete}
+              disabled={isSaving}
+            >
+              Delete Entry
+            </Button>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>
+            Cancel
+          </Button>
+          <Button type="submit" variant="primary" isLoading={isSaving}>
+            {isEditing ? 'Save Changes' : 'Record Dream'}
+          </Button>
+        </div>
       </div>
     </form>
   );

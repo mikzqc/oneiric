@@ -4,6 +4,7 @@ import { DreamEntry } from '../types/dream';
 import { TechniqueLog } from '../types/technique';
 import { DreamSign } from '../types/dreamSign';
 import { generateSampleData } from '../db/sampleData';
+import { tombstoneService } from '../utils/tombstones';
 
 const SAMPLE_PREVIEW_SESSION_KEY = 'oneiric_sample_preview_active';
 
@@ -14,6 +15,7 @@ export const backupService = {
     const techniqueLogs = (await db.techniqueLogs.toArray()).filter((t) => !t.isSample);
     const customTags = await db.customTags.toArray();
     const dreamSigns = (await db.dreamSigns.toArray()).filter((s) => !s.isSample);
+    const deletedIds = tombstoneService.getDeletedIds();
 
     return {
       version: 2,
@@ -23,6 +25,7 @@ export const backupService = {
       techniqueLogs,
       customTags,
       dreamSigns,
+      deletedIds,
     };
   },
 
@@ -139,6 +142,9 @@ export const backupService = {
     let newDreamsCount = 0;
 
     if (mode === 'replace') {
+      if (payload.deletedIds && payload.deletedIds.length > 0) {
+        tombstoneService.recordDeletions(payload.deletedIds);
+      }
       newDreamsCount = payload.dreams.length;
       await db.transaction('rw', [db.dreams, db.techniqueLogs, db.customTags, db.dreamSigns], async () => {
         await db.dreams.clear();
@@ -160,13 +166,31 @@ export const backupService = {
         }
       });
     } else {
-      // Merge mode: Last-Write-Wins (LWW) conflict resolution
+      // Merge mode:
+      // 1. Process any incoming tombstones (deleted IDs)
+      if (payload.deletedIds && payload.deletedIds.length > 0) {
+        tombstoneService.recordDeletions(payload.deletedIds);
+        await db.transaction('rw', [db.dreams, db.techniqueLogs, db.dreamSigns], async () => {
+          for (const delId of payload.deletedIds!) {
+            await db.dreams.delete(delId);
+            await db.techniqueLogs.delete(delId);
+            await db.dreamSigns.delete(delId);
+          }
+        });
+      }
+
+      // 2. Merge dreams with Last-Write-Wins and skip deleted items
       const dreamsToPut: DreamEntry[] = [];
       if (payload.dreams.length > 0) {
         const existingDreams = await db.dreams.toArray();
         const existingMap = new Map(existingDreams.map((d) => [d.id, d]));
 
         for (const dream of payload.dreams) {
+          // Never re-insert a dream that has been marked as deleted
+          if (tombstoneService.isDeleted(dream.id)) {
+            continue;
+          }
+
           const existing = existingMap.get(dream.id);
           if (!existing) {
             newDreamsCount++;
@@ -181,12 +205,17 @@ export const backupService = {
         }
       }
 
+      // 3. Merge technique logs and skip deleted items
       const techniquesToPut: TechniqueLog[] = [];
       if (payload.techniqueLogs && payload.techniqueLogs.length > 0) {
         const existingLogs = await db.techniqueLogs.toArray();
         const existingMap = new Map(existingLogs.map((t) => [t.id, t]));
 
         for (const log of payload.techniqueLogs) {
+          if (tombstoneService.isDeleted(log.id)) {
+            continue;
+          }
+
           const existing = existingMap.get(log.id);
           if (!existing) {
             techniquesToPut.push(log);
@@ -200,12 +229,17 @@ export const backupService = {
         }
       }
 
+      // 4. Merge dream signs and skip deleted items
       const signsToPut: DreamSign[] = [];
       if (signs.length > 0) {
         const existingSigns = await db.dreamSigns.toArray();
         const existingMap = new Map(existingSigns.map((s) => [s.id, s]));
 
         for (const sign of signs) {
+          if (tombstoneService.isDeleted(sign.id)) {
+            continue;
+          }
+
           const existing = existingMap.get(sign.id);
           if (!existing) {
             signsToPut.push(sign);
@@ -253,6 +287,7 @@ export const backupService = {
   },
 
   async wipeAllData(): Promise<void> {
+    tombstoneService.clearTombstones();
     await db.transaction('rw', [db.dreams, db.techniqueLogs, db.customTags, db.dreamSigns], async () => {
       await db.dreams.clear();
       await db.techniqueLogs.clear();

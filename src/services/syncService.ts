@@ -7,6 +7,7 @@ import {
   SyncState,
 } from '../types/sync';
 import { BackupPayload } from '../types/backup';
+import { tombstoneService } from '../utils/tombstones';
 
 const CREDENTIALS_STORAGE_KEY = 'oneiric_sync_vault';
 
@@ -61,6 +62,41 @@ export const syncService = {
   clearCredentials(): void {
     localStorage.removeItem(CREDENTIALS_STORAGE_KEY);
     this.notifyStatusChanged();
+  },
+
+  /**
+   * Records a deleted record ID to prevent resurrection during sync
+   */
+  recordDeletion(id: string): void {
+    tombstoneService.recordDeletion(id);
+  },
+
+  /**
+   * Records multiple deleted record IDs
+   */
+  recordDeletions(ids: string[]): void {
+    tombstoneService.recordDeletions(ids);
+  },
+
+  /**
+   * Checks if an ID has been marked as deleted
+   */
+  isDeleted(id: string): boolean {
+    return tombstoneService.isDeleted(id);
+  },
+
+  /**
+   * Returns list of currently tracked deleted IDs
+   */
+  getDeletedIds(): string[] {
+    return tombstoneService.getDeletedIds();
+  },
+
+  /**
+   * Clears tombstones on full data reset
+   */
+  clearTombstones(): void {
+    tombstoneService.clearTombstones();
   },
 
   /**

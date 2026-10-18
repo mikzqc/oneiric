@@ -16,6 +16,7 @@ export interface BackupPayload {
   techniqueLogs: TechniqueLog[];
   customTags?: CustomTag[];
   dreamSigns?: DreamSign[];
+  deletedIds?: string[];
 }
 
 export interface ImportValidationResult {

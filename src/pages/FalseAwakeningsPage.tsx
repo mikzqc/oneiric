@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { dreamService } from '../services/dreamService';
 import { DreamEntry } from '../types/dream';
 import { DreamDetailModal } from '../components/journal/DreamDetailModal';
+import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { EmptyState } from '../components/common/EmptyState';
 import { formatDate } from '../utils/dateUtils';
 import {
@@ -23,6 +24,8 @@ export const FalseAwakeningsPage: React.FC<FalseAwakeningsPageProps> = ({
   const [dreams, setDreams] = useState<DreamEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDreamForView, setSelectedDreamForView] = useState<DreamEntry | null>(null);
+  const [dreamToDelete, setDreamToDelete] = useState<DreamEntry | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadData = async () => {
     try {
@@ -31,6 +34,18 @@ export const FalseAwakeningsPage: React.FC<FalseAwakeningsPageProps> = ({
       setDreams(list);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!dreamToDelete) return;
+    try {
+      setIsDeleting(true);
+      await dreamService.deleteDream(dreamToDelete.id);
+      setDreamToDelete(null);
+      await loadData();
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -251,10 +266,26 @@ export const FalseAwakeningsPage: React.FC<FalseAwakeningsPageProps> = ({
           setSelectedDreamForView(null);
           if (onEditDream) onEditDream(d);
         }}
-        onDelete={async () => {
+        onDelete={(d) => {
           setSelectedDreamForView(null);
-          await loadData();
+          setDreamToDelete(d);
         }}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDialog
+        isOpen={!!dreamToDelete}
+        title="Delete Dream Entry"
+        message={
+          dreamToDelete
+            ? `Are you sure you want to permanently delete "${dreamToDelete.title}"? This action cannot be undone.`
+            : ''
+        }
+        confirmText="Delete Entry"
+        isDestructive={true}
+        isLoading={isDeleting}
+        onConfirm={handleDeleteConfirm}
+        onClose={() => setDreamToDelete(null)}
       />
     </div>
   );

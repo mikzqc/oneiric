@@ -3,6 +3,7 @@ import { DreamDraft, DreamEntry } from '../types/dream';
 import { calculateJournalingStreak, getLastNDays, getTodayDateString } from '../utils/dateUtils';
 import { dreamSignService } from './dreamSignService';
 import { syncService } from './syncService';
+import { tombstoneService } from '../utils/tombstones';
 
 export interface TimelineNightGroup {
   date: string;
@@ -106,6 +107,7 @@ export const dreamService = {
   },
 
   async deleteDream(id: string): Promise<void> {
+    tombstoneService.recordDeletion(id);
     await db.dreams.delete(id);
     // Trigger dream signs update in background
     dreamSignService.scanAndDetectSigns().catch(() => {});

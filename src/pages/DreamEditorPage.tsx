@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { dreamService } from '../services/dreamService';
 import { DreamEntry } from '../types/dream';
 import { DreamEditor } from '../components/journal/DreamEditor';
+import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '../components/common/Button';
 
@@ -13,6 +14,8 @@ export const DreamEditorPage: React.FC = () => {
 
   const [initialDream, setInitialDream] = useState<DreamEntry | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(!!id);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const prefillDate = searchParams.get('date');
 
@@ -31,6 +34,18 @@ export const DreamEditorPage: React.FC = () => {
 
   const handleSaved = (_saved: DreamEntry) => {
     navigate('/journal');
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+    try {
+      setIsDeleting(true);
+      await dreamService.deleteDream(id);
+      navigate('/journal');
+    } finally {
+      setIsDeleting(false);
+      setIsConfirmingDelete(false);
+    }
   };
 
   if (isLoading) {
@@ -87,9 +102,26 @@ export const DreamEditorPage: React.FC = () => {
           initialDream={dreamWithPrefill}
           onSaved={handleSaved}
           onCancel={() => navigate(-1)}
+          onDelete={id ? () => setIsConfirmingDelete(true) : undefined}
           isModal={false}
         />
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDialog
+        isOpen={isConfirmingDelete}
+        title="Delete Dream Entry"
+        message={
+          initialDream
+            ? `Are you sure you want to permanently delete "${initialDream.title}"? This action cannot be undone.`
+            : 'Are you sure you want to permanently delete this dream entry?'
+        }
+        confirmText="Delete Entry"
+        isDestructive={true}
+        isLoading={isDeleting}
+        onConfirm={handleDelete}
+        onClose={() => setIsConfirmingDelete(false)}
+      />
     </div>
   );
 };

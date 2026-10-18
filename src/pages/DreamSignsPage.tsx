@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { dreamSignService } from '../services/dreamSignService';
+import { dreamService } from '../services/dreamService';
 import {
   DreamSign,
   DreamSignCategory,
@@ -78,6 +79,8 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
 
   // Delete modal state
   const [signToDelete, setSignToDelete] = useState<DreamSign | null>(null);
+  const [dreamToDelete, setDreamToDelete] = useState<DreamEntry | null>(null);
+  const [isDeletingDream, setIsDeletingDream] = useState(false);
 
   // Single-dream unlink confirmation dialog state
   const [dreamToUnlink, setDreamToUnlink] = useState<{ sign: DreamSign; dream: DreamEntry } | null>(null);
@@ -414,6 +417,31 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
       });
     } finally {
       setSignToDelete(null);
+    }
+  };
+
+  const handleDeleteDreamConfirm = async () => {
+    if (!dreamToDelete) return;
+    try {
+      setIsDeletingDream(true);
+      await dreamService.deleteDream(dreamToDelete.id);
+      setFeedback({
+        type: 'success',
+        message: `Dream "${dreamToDelete.title}" deleted successfully.`,
+      });
+      setDreamToDelete(null);
+      await loadSigns();
+      if (activeSignDetail) {
+        const dreams = await dreamSignService.getLinkedDreams(activeSignDetail.id);
+        setLinkedDreams(dreams);
+      }
+    } catch {
+      setFeedback({
+        type: 'error',
+        message: `Failed to delete dream "${dreamToDelete.title}".`,
+      });
+    } finally {
+      setIsDeletingDream(false);
     }
   };
 
@@ -1205,9 +1233,9 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
           setSelectedDreamForView(null);
           if (onEditDream) onEditDream(d);
         }}
-        onDelete={async () => {
+        onDelete={(d) => {
           setSelectedDreamForView(null);
-          await loadSigns();
+          setDreamToDelete(d);
         }}
       />
 
@@ -1349,6 +1377,21 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
         title={`Delete "${signToDelete?.name}" from Library`}
         message={`Delete "${signToDelete?.name}" (${signToDelete?.distinctDreamCount || 0} dream occurrences)? This will remove the sign from your library and prevent automatic re-detection. Original dream entries and narratives will remain 100% untouched.`}
         confirmText="Delete from Library"
+        isDestructive={true}
+      />
+
+      {/* Linked Dream Delete Confirmation */}
+      <ConfirmDialog
+        isOpen={!!dreamToDelete}
+        onClose={() => setDreamToDelete(null)}
+        onConfirm={handleDeleteDreamConfirm}
+        title="Delete Dream Entry"
+        message={
+          dreamToDelete
+            ? `Are you sure you want to permanently delete "${dreamToDelete.title}"? This action cannot be undone.`
+            : ''
+        }
+        confirmText={isDeletingDream ? 'Deleting...' : 'Delete Entry'}
         isDestructive={true}
       />
     </div>

@@ -6,6 +6,8 @@ import {
   DreamSignDraft,
   DreamSignStatus,
 } from '../types/dreamSign';
+import { tombstoneService } from '../utils/tombstones';
+import { syncService } from './syncService';
 
 // Comprehensive stopword list for future NLP extensions
 const _STOPWORDS = new Set([
@@ -239,6 +241,7 @@ export const dreamSignService = {
    * Also safely removes any matching duplicates by name.
    */
   async deleteSign(id: string, preventRecreation = true): Promise<void> {
+    tombstoneService.recordDeletion(id);
     const sign = await db.dreamSigns.get(id);
     if (sign && preventRecreation) {
       ignoreSignName(sign.name);
@@ -249,11 +252,13 @@ export const dreamSignService = {
         .equalsIgnoreCase(sign.name)
         .toArray();
       for (const m of allMatching) {
+        tombstoneService.recordDeletion(m.id);
         await db.dreamSigns.delete(m.id);
       }
     } else {
       await db.dreamSigns.delete(id);
     }
+    syncService.triggerAutoSync({ immediate: true });
   },
 
   /**
