@@ -40,3 +40,11 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #334155;
 }
+
+/* Mask secret strings cleanly without triggering browser password saving heuristics */
+.mask-secret-disc {
+  -webkit-text-security: disc;
+}
+.mask-secret-none {
+  -webkit-text-security: none;
+}

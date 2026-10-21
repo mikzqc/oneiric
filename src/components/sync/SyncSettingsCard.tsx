@@ -38,10 +38,12 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
   const [connectPassphrase, setConnectPassphrase] = useState('');
   const [connectDeviceName, setConnectDeviceName] = useState('Mobile Device');
   const [showSeparateInputs, setShowSeparateInputs] = useState(false);
+  const [showConnectPassphrase, setShowConnectPassphrase] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
   // Active vault state
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showSyncKey, setShowSyncKey] = useState(false);
   const [showPassphrase, setShowPassphrase] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isDisconnectDialogOpen, setIsDisconnectDialogOpen] = useState(false);
@@ -52,6 +54,7 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
   const [directPassphrase, setDirectPassphrase] = useState('');
   const [importCodeInput, setImportCodeInput] = useState('');
   const [importPassInput, setImportPassInput] = useState('');
+  const [showImportPass, setShowImportPass] = useState(false);
   const [isExportingDirect, setIsExportingDirect] = useState(false);
   const [isImportingDirect, setIsImportingDirect] = useState(false);
 
@@ -261,17 +264,33 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                   <Key className="w-4 h-4 text-blue-400" />
                   <span>Device Sync Key</span>
                 </div>
-                <span className="text-[10px] text-slate-400 font-mono">Single-string pair</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-slate-400 font-mono">Single-string pair</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowSyncKey(!showSyncKey)}
+                    className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1 cursor-pointer"
+                  >
+                    {showSyncKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    <span>{showSyncKey ? 'Hide' : 'Reveal'}</span>
+                  </button>
+                </div>
               </div>
               <p className="text-xs text-slate-400">
                 Paste this key into Oneiric Settings on your phone or other device to pair automatically.
               </p>
               <div className="flex items-center gap-2">
                 <input
-                  type="password"
+                  type="text"
                   readOnly
+                  autoComplete="off"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
+                  data-form-type="other"
                   value={unifiedKey}
-                  className="grow px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-slate-300 focus:outline-none select-all"
+                  className={`grow px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-slate-300 focus:outline-none select-all ${
+                    showSyncKey ? 'mask-secret-none' : 'mask-secret-disc'
+                  }`}
                 />
                 <Button
                   size="sm"
@@ -303,10 +322,16 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
 
               <div className="flex items-center gap-2">
                 <input
-                  type={showPassphrase ? 'text' : 'password'}
+                  type="text"
                   readOnly
+                  autoComplete="off"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
+                  data-form-type="other"
                   value={credentials.passphrase}
-                  className="grow px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-slate-300 focus:outline-none select-all"
+                  className={`grow px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-slate-300 focus:outline-none select-all ${
+                    showPassphrase ? 'mask-secret-none' : 'mask-secret-disc'
+                  }`}
                 />
                 <Button
                   size="sm"
@@ -404,7 +429,7 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
 
           {activeTab === 'create' ? (
             /* Creation Form */
-            <form onSubmit={handleCreateVault} className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 space-y-4">
+            <form onSubmit={handleCreateVault} autoComplete="off" className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 space-y-4">
               <div className="space-y-1">
                 <h3 className="text-sm font-semibold text-slate-200">Initialize a New Private Sync Vault</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
@@ -417,6 +442,7 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                   <label className="text-xs text-slate-400">Device Name (optional)</label>
                   <input
                     type="text"
+                    autoComplete="off"
                     value={createDeviceName}
                     onChange={(e) => setCreateDeviceName(e.target.value)}
                     placeholder="e.g. My Laptop"
@@ -438,6 +464,10 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                   </div>
                   <input
                     type="text"
+                    autoComplete="off"
+                    data-1p-ignore="true"
+                    data-lpignore="true"
+                    data-form-type="other"
                     value={createPassphrase}
                     onChange={(e) => setCreatePassphrase(e.target.value)}
                     placeholder="astral-lucid-starlight-nebula-aurora-velvet"
@@ -459,7 +489,7 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
             </form>
           ) : (
             /* Connection Form */
-            <form onSubmit={handleConnectVault} className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 space-y-4">
+            <form onSubmit={handleConnectVault} autoComplete="off" className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 space-y-4">
               <div className="space-y-1">
                 <h3 className="text-sm font-semibold text-slate-200">Connect to an Existing Vault</h3>
                 <p className="text-xs text-slate-400 leading-relaxed">
@@ -481,6 +511,10 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                   </div>
                   <input
                     type="text"
+                    autoComplete="off"
+                    data-1p-ignore="true"
+                    data-lpignore="true"
+                    data-form-type="other"
                     value={connectSyncKey}
                     onChange={(e) => setConnectSyncKey(e.target.value)}
                     placeholder={showSeparateInputs ? 'e.g. ddcbcaa' : 'ONR-SYNC-ddcbcaa::celestial-lucid-...'}
@@ -490,13 +524,29 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
 
                 {showSeparateInputs && (
                   <div className="space-y-1">
-                    <label className="text-xs text-slate-400">Secret Encryption Passphrase</label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs text-slate-400">Secret Encryption Passphrase</label>
+                      <button
+                        type="button"
+                        onClick={() => setShowConnectPassphrase(!showConnectPassphrase)}
+                        className="text-[11px] text-slate-400 hover:text-slate-200 flex items-center gap-1 cursor-pointer"
+                      >
+                        {showConnectPassphrase ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                        <span>{showConnectPassphrase ? 'Hide' : 'Reveal'}</span>
+                      </button>
+                    </div>
                     <input
-                      type="password"
+                      type="text"
+                      autoComplete="off"
+                      data-1p-ignore="true"
+                      data-lpignore="true"
+                      data-form-type="other"
                       value={connectPassphrase}
                       onChange={(e) => setConnectPassphrase(e.target.value)}
                       placeholder="Enter the 6-word passphrase from your primary device"
-                      className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-slate-200 focus:outline-none focus:border-blue-500"
+                      className={`w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-slate-200 focus:outline-none focus:border-blue-500 ${
+                        showConnectPassphrase ? 'mask-secret-none' : 'mask-secret-disc'
+                      }`}
                     />
                   </div>
                 )}
@@ -505,6 +555,7 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                   <label className="text-xs text-slate-400">This Device Name</label>
                   <input
                     type="text"
+                    autoComplete="off"
                     value={connectDeviceName}
                     onChange={(e) => setConnectDeviceName(e.target.value)}
                     placeholder="e.g. iPhone / Safari"
@@ -588,7 +639,7 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
               </div>
 
               {/* Direct Import */}
-              <form onSubmit={handleImportDirectTransfer} className="p-3.5 rounded-lg bg-slate-950 border border-slate-800/80 space-y-2.5">
+              <form onSubmit={handleImportDirectTransfer} autoComplete="off" className="p-3.5 rounded-lg bg-slate-950 border border-slate-800/80 space-y-2.5">
                 <span className="text-xs font-semibold text-slate-300">Import Direct Code</span>
                 <textarea
                   rows={2}
@@ -597,13 +648,28 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                   placeholder="Paste encrypted transfer package here..."
                   className="w-full p-2 rounded bg-slate-900 text-[10px] font-mono text-slate-300 border border-slate-800 focus:outline-none resize-none"
                 />
-                <input
-                  type="password"
-                  value={importPassInput}
-                  onChange={(e) => setImportPassInput(e.target.value)}
-                  placeholder="Enter decryption passphrase"
-                  className="w-full px-2.5 py-1.5 rounded bg-slate-900 text-xs font-mono text-slate-200 border border-slate-800 focus:outline-none"
-                />
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    autoComplete="off"
+                    data-1p-ignore="true"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    value={importPassInput}
+                    onChange={(e) => setImportPassInput(e.target.value)}
+                    placeholder="Enter decryption passphrase"
+                    className={`w-full px-2.5 py-1.5 pr-8 rounded bg-slate-900 text-xs font-mono text-slate-200 border border-slate-800 focus:outline-none ${
+                      showImportPass ? 'mask-secret-none' : 'mask-secret-disc'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowImportPass(!showImportPass)}
+                    className="absolute right-2 text-slate-400 hover:text-slate-200 cursor-pointer"
+                  >
+                    {showImportPass ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
                 <Button
                   type="submit"
                   size="sm"
