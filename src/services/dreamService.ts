@@ -14,7 +14,7 @@ export interface TimelineNightGroup {
   maxVividness: number;
 }
 
-export type RecallRange = '1w' | '2w' | '1m' | 'all';
+export type RecallRange = '1w' | '2w' | '3w' | '1m' | 'all';
 
 export interface RecallChartDataPoint {
   date: string;
@@ -32,6 +32,8 @@ export function calculateRecallChartData(
   let days = 7;
   if (range === '2w') {
     days = 14;
+  } else if (range === '3w') {
+    days = 21;
   } else if (range === '1m') {
     days = 30;
   } else if (range === 'all') {

@@ -50,6 +50,7 @@ interface DashboardProps {
 const RECALL_RANGE_OPTIONS: { value: RecallRange; label: string; shortLabel: string }[] = [
   { value: '1w', label: '1 Week', shortLabel: '1W' },
   { value: '2w', label: '2 Weeks', shortLabel: '2W' },
+  { value: '3w', label: '3 Weeks', shortLabel: '3W' },
   { value: '1m', label: '1 Month', shortLabel: '1M' },
   { value: 'all', label: 'All Time', shortLabel: 'All' },
 ];
@@ -57,6 +58,7 @@ const RECALL_RANGE_OPTIONS: { value: RecallRange; label: string; shortLabel: str
 const RECALL_RANGE_TITLES: Record<RecallRange, string> = {
   '1w': '7-Day Recall Activity',
   '2w': '14-Day Recall Activity',
+  '3w': '21-Day Recall Activity',
   '1m': '30-Day Recall Activity',
   'all': 'All-Time Recall Activity',
 };
@@ -70,7 +72,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [recallRange, setRecallRange] = useState<RecallRange>(() => {
     try {
       const saved = localStorage.getItem('oneiric_recall_range');
-      if (saved === '1w' || saved === '2w' || saved === '1m' || saved === 'all') {
+      if (saved === '1w' || saved === '2w' || saved === '3w' || saved === '1m' || saved === 'all') {
         return saved;
       }
     } catch {

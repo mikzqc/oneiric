@@ -115,12 +115,17 @@ describe('dreamService & Streak Calculations', () => {
       expect(data[data.length - 1].label).toBe('Wed');
     });
 
-    it('generates 14 data points for 2w and 30 data points for 1m', () => {
+    it('generates 14 data points for 2w, 21 for 3w, and 30 data points for 1m', () => {
       const data2w = calculateRecallChartData(mockDreams, '2w', refDate);
       expect(data2w).toHaveLength(14);
       expect(data2w[data2w.length - 1].date).toBe('2026-10-14');
       // For 2w, label is M/D date, fullLabel is weekday
       expect(data2w[data2w.length - 1].fullLabel).toBe('Wed');
+
+      const data3w = calculateRecallChartData(mockDreams, '3w', refDate);
+      expect(data3w).toHaveLength(21);
+      expect(data3w[data3w.length - 1].date).toBe('2026-10-14');
+      expect(data3w[data3w.length - 1].fullLabel).toBe('Wed');
 
       const data1m = calculateRecallChartData(mockDreams, '1m', refDate);
       expect(data1m).toHaveLength(30);
