@@ -22,7 +22,7 @@ interface RecallChartProps {
 }
 
 export const RecallChart: React.FC<RecallChartProps> = ({ data }) => {
-  const maxCount = Math.max(...data.map((d) => d.count), 3);
+  const maxCount = data.length > 0 ? Math.max(...data.map((d) => d.count), 3) : 3;
 
   return (
     <div className="w-full h-64">
@@ -52,6 +52,7 @@ export const RecallChart: React.FC<RecallChartProps> = ({ data }) => {
             fontSize={12}
             tickLine={false}
             axisLine={{ stroke: 'rgba(255, 255, 255, 0.1)' }}
+            minTickGap={20}
           />
           <YAxis
             stroke="#64748b"

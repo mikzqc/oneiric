@@ -6,6 +6,7 @@ import { techniqueService } from '../services/techniqueService';
 import { analyticsService } from '../services/analyticsService';
 import { DreamDraft } from '../types/dream';
 import { TechniqueDraft } from '../types/technique';
+import { getLastNDays } from '../utils/dateUtils';
 
 describe('Phase 2: Dream Intelligence & Pattern Analysis Suite', () => {
   beforeEach(async () => {
@@ -207,11 +208,15 @@ describe('Phase 2: Dream Intelligence & Pattern Analysis Suite', () => {
 
   describe('Analytics Intelligence & Heatmap Calculation', () => {
     it('accurately computes recall consistency without fabricating missing nights', async () => {
+      const recentDays = getLastNDays(2);
+      const day1 = recentDays[1].dateStr;
+      const day2 = recentDays[0].dateStr;
+
       // Add 2 dreams in the last 7 days
       await dreamService.createDream({
         title: 'Dream A',
         narrative: 'Narrative A',
-        date: '2026-10-14',
+        date: day1,
         vividness: 4,
         recallQuality: 'detailed',
         lucidity: 'lucid',
@@ -222,7 +227,7 @@ describe('Phase 2: Dream Intelligence & Pattern Analysis Suite', () => {
       await dreamService.createDream({
         title: 'Dream B',
         narrative: 'Narrative B',
-        date: '2026-10-13',
+        date: day2,
         vividness: 2,
         recallQuality: 'fragment',
         lucidity: 'non-lucid',

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { dreamService } from '../services/dreamService';
+import { dreamService, RecallRange } from '../services/dreamService';
 import { techniqueService } from '../services/techniqueService';
 import { backupService } from '../services/backupService';
 import { DreamEntry } from '../types/dream';
@@ -47,11 +47,37 @@ interface DashboardProps {
   onEditDream: (dream: DreamEntry) => void;
 }
 
+const RECALL_RANGE_OPTIONS: { value: RecallRange; label: string; shortLabel: string }[] = [
+  { value: '1w', label: '1 Week', shortLabel: '1W' },
+  { value: '2w', label: '2 Weeks', shortLabel: '2W' },
+  { value: '1m', label: '1 Month', shortLabel: '1M' },
+  { value: 'all', label: 'All Time', shortLabel: 'All' },
+];
+
+const RECALL_RANGE_TITLES: Record<RecallRange, string> = {
+  '1w': '7-Day Recall Activity',
+  '2w': '14-Day Recall Activity',
+  '1m': '30-Day Recall Activity',
+  'all': 'All-Time Recall Activity',
+};
+
 export const Dashboard: React.FC<DashboardProps> = ({
   onOpenNewDream,
   onEditDream,
 }) => {
   const navigate = useNavigate();
+
+  const [recallRange, setRecallRange] = useState<RecallRange>(() => {
+    try {
+      const saved = localStorage.getItem('oneiric_recall_range');
+      if (saved === '1w' || saved === '2w' || saved === '1m' || saved === 'all') {
+        return saved;
+      }
+    } catch {
+      // ignore
+    }
+    return '1w';
+  });
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentTechniques, setRecentTechniques] = useState<TechniqueLog[]>([]);
@@ -71,11 +97,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [dreamToDelete, setDreamToDelete] = useState<DreamEntry | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = async (targetRange: RecallRange = recallRange) => {
     try {
       setIsLoading(true);
       const [dashStats, techLogs] = await Promise.all([
-        dreamService.getDashboardStats(),
+        dreamService.getDashboardStats(new Date(), targetRange),
         techniqueService.getAllLogs(),
       ]);
       setStats(dashStats);
@@ -83,6 +109,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
       setRecentTechniques(techLogs.slice(0, 5));
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleRangeChange = async (newRange: RecallRange) => {
+    setRecallRange(newRange);
+    try {
+      localStorage.setItem('oneiric_recall_range', newRange);
+    } catch {
+      // ignore
+    }
+    try {
+      const chartData = await dreamService.getRecallChartData(newRange);
+      setStats((prev) => (prev ? { ...prev, recallChartData: chartData } : null));
+    } catch (err) {
+      console.error('Failed to update recall chart range:', err);
     }
   };
 
@@ -236,24 +277,57 @@ export const Dashboard: React.FC<DashboardProps> = ({
         />
       </div>
 
-      {/* Main Content Area: 7-Day Chart & Quick Activity */}
+      {/* Main Content Area: Recall Chart & Quick Activity */}
       {stats.hasEntries ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* 7-Day Recall Frequency Chart (2 cols) */}
+          {/* Recall Frequency Chart (2 cols) */}
           <div className="lg:col-span-2 p-5 sm:p-6 rounded-xl bg-slate-900/50 border border-slate-800 flex flex-col justify-between">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div>
-                <h2 className="text-sm font-semibold text-slate-100">7-Day Recall Activity</h2>
+                <h2 className="text-sm font-semibold text-slate-100">
+                  {RECALL_RANGE_TITLES[recallRange]}
+                </h2>
                 <p className="text-xs text-slate-400">Total entries and lucid dreams per night</p>
               </div>
-              <div className="flex items-center gap-4 text-xs">
-                <div className="flex items-center gap-1.5 text-slate-300">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-blue-500" />
-                  <span>Total</span>
+
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Range Selector */}
+                <div
+                  role="group"
+                  aria-label="Recall date range"
+                  className="inline-flex items-center p-0.5 rounded-lg bg-[#0b132b] border border-slate-800 text-xs"
+                >
+                  {RECALL_RANGE_OPTIONS.map((opt) => {
+                    const isSelected = recallRange === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => handleRangeChange(opt.value)}
+                        className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none ${
+                          isSelected
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'text-slate-400 hover:text-slate-200'
+                        }`}
+                        aria-pressed={isSelected}
+                      >
+                        <span className="hidden sm:inline">{opt.label}</span>
+                        <span className="sm:hidden">{opt.shortLabel}</span>
+                      </button>
+                    );
+                  })}
                 </div>
-                <div className="flex items-center gap-1.5 text-cyan-300">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-cyan-400" />
-                  <span>Lucid</span>
+
+                {/* Legend */}
+                <div className="flex items-center gap-3 text-xs pl-1">
+                  <div className="flex items-center gap-1.5 text-slate-300">
+                    <span className="w-2.5 h-2.5 rounded-sm bg-blue-500" />
+                    <span>Total</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-cyan-300">
+                    <span className="w-2.5 h-2.5 rounded-sm bg-cyan-400" />
+                    <span>Lucid</span>
+                  </div>
                 </div>
               </div>
             </div>

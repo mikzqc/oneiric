@@ -1,6 +1,6 @@
 import { db } from '../db/database';
 import { DreamDraft, DreamEntry } from '../types/dream';
-import { calculateJournalingStreak, getLastNDays, getTodayDateString } from '../utils/dateUtils';
+import { calculateJournalingStreak, getLastNDays, getTodayDateString, parseLocalDate } from '../utils/dateUtils';
 import { dreamSignService } from './dreamSignService';
 import { syncService } from './syncService';
 import { tombstoneService } from '../utils/tombstones';
@@ -12,6 +12,66 @@ export interface TimelineNightGroup {
   hasLucid: boolean;
   hasFalseAwakening: boolean;
   maxVividness: number;
+}
+
+export type RecallRange = '1w' | '2w' | '1m' | 'all';
+
+export interface RecallChartDataPoint {
+  date: string;
+  label: string;
+  fullLabel: string;
+  count: number;
+  lucidCount: number;
+}
+
+export function calculateRecallChartData(
+  allDreams: { date: string; lucidity: string }[],
+  range: RecallRange = '1w',
+  referenceDate: Date = new Date()
+): RecallChartDataPoint[] {
+  let days = 7;
+  if (range === '2w') {
+    days = 14;
+  } else if (range === '1m') {
+    days = 30;
+  } else if (range === 'all') {
+    if (allDreams.length > 0) {
+      const dates = allDreams.map((d) => d.date).filter(Boolean).sort();
+      if (dates.length > 0) {
+        const earliest = parseLocalDate(dates[0]);
+        const today = parseLocalDate(getTodayDateString(referenceDate));
+        const diffDays = Math.ceil((today.getTime() - earliest.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        days = Math.max(7, Math.min(diffDays, 365 * 5));
+      }
+    }
+  }
+
+  const daysList = getLastNDays(days, referenceDate);
+  const dateLookup = new Map<string, { total: number; lucid: number }>();
+  for (const day of daysList) {
+    dateLookup.set(day.dateStr, { total: 0, lucid: 0 });
+  }
+
+  for (const dream of allDreams) {
+    const entry = dateLookup.get(dream.date);
+    if (entry) {
+      entry.total += 1;
+      if (dream.lucidity === 'lucid') {
+        entry.lucid += 1;
+      }
+    }
+  }
+
+  return daysList.map((d) => {
+    const stats = dateLookup.get(d.dateStr) || { total: 0, lucid: 0 };
+    return {
+      date: d.dateStr,
+      label: range === '1w' ? d.dayOfWeek : d.label,
+      fullLabel: range === '1w' ? d.label : d.dayOfWeek,
+      count: stats.total,
+      lucidCount: stats.lucid,
+    };
+  });
 }
 
 export const dreamService = {
@@ -151,41 +211,23 @@ export const dreamService = {
     return Array.from(tagSet).sort();
   },
 
-  async getDashboardStats(referenceDate: Date = new Date()) {
+  async getDashboardStats(referenceDate: Date = new Date(), recallRange: RecallRange = '1w') {
     const allDreams = await db.dreams.toArray();
     const totalDreams = allDreams.length;
     const totalLucid = allDreams.filter((d) => d.lucidity === 'lucid').length;
     const totalFalseAwakenings = allDreams.filter((d) => !!d.falseAwakening).length;
 
-    // 7-day recall calculations
+    // 7-day recall calculations for weekly summary metric
     const last7Days = getLastNDays(7, referenceDate);
-    const dateLookup = new Map<string, { total: number; lucid: number }>();
-    for (const day of last7Days) {
-      dateLookup.set(day.dateStr, { total: 0, lucid: 0 });
-    }
-
+    const last7DaysSet = new Set(last7Days.map((d) => d.dateStr));
     let weeklyDreams = 0;
     for (const dream of allDreams) {
-      const entry = dateLookup.get(dream.date);
-      if (entry) {
-        entry.total += 1;
+      if (last7DaysSet.has(dream.date)) {
         weeklyDreams += 1;
-        if (dream.lucidity === 'lucid') {
-          entry.lucid += 1;
-        }
       }
     }
 
-    const recallChartData = last7Days.map((d) => {
-      const stats = dateLookup.get(d.dateStr) || { total: 0, lucid: 0 };
-      return {
-        date: d.dateStr,
-        label: d.dayOfWeek,
-        fullLabel: d.label,
-        count: stats.total,
-        lucidCount: stats.lucid,
-      };
-    });
+    const recallChartData = calculateRecallChartData(allDreams, recallRange, referenceDate);
 
     // Journaling streak calculation
     const recordedDates = allDreams.map((d) => d.date);
@@ -207,6 +249,11 @@ export const dreamService = {
       hasEntries: totalDreams > 0,
       todayRecorded: recordedDates.includes(getTodayDateString(referenceDate)),
     };
+  },
+
+  async getRecallChartData(range: RecallRange = '1w', referenceDate: Date = new Date()): Promise<RecallChartDataPoint[]> {
+    const allDreams = await db.dreams.toArray();
+    return calculateRecallChartData(allDreams, range, referenceDate);
   },
 
   /**

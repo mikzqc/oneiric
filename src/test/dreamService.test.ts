@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { dreamService } from '../services/dreamService';
+import { dreamService, calculateRecallChartData } from '../services/dreamService';
 import { db } from '../db/database';
 import { calculateJournalingStreak } from '../utils/dateUtils';
 
@@ -94,5 +94,67 @@ describe('dreamService & Streak Calculations', () => {
     // Duplicate dates on the same day shouldn't inflate streak
     const datesDuplicates = ['2026-10-14', '2026-10-14', '2026-10-13', '2026-10-13'];
     expect(calculateJournalingStreak(datesDuplicates, refDate)).toBe(2);
+  });
+
+  describe('Recall Activity Chart Ranges', () => {
+    const mockDreams = [
+      { date: '2026-10-14', lucidity: 'lucid' },
+      { date: '2026-10-14', lucidity: 'non-lucid' },
+      { date: '2026-10-10', lucidity: 'lucid' },
+      { date: '2026-09-20', lucidity: 'non-lucid' },
+    ];
+    const refDate = new Date(2026, 9, 14); // 2026-10-14
+
+    it('generates 7 data points for 1w with weekday labels', () => {
+      const data = calculateRecallChartData(mockDreams, '1w', refDate);
+      expect(data).toHaveLength(7);
+      expect(data[data.length - 1].date).toBe('2026-10-14');
+      expect(data[data.length - 1].count).toBe(2);
+      expect(data[data.length - 1].lucidCount).toBe(1);
+      // For 1w, label is weekday, fullLabel is M/D date
+      expect(data[data.length - 1].label).toBe('Wed');
+    });
+
+    it('generates 14 data points for 2w and 30 data points for 1m', () => {
+      const data2w = calculateRecallChartData(mockDreams, '2w', refDate);
+      expect(data2w).toHaveLength(14);
+      expect(data2w[data2w.length - 1].date).toBe('2026-10-14');
+      // For 2w, label is M/D date, fullLabel is weekday
+      expect(data2w[data2w.length - 1].fullLabel).toBe('Wed');
+
+      const data1m = calculateRecallChartData(mockDreams, '1m', refDate);
+      expect(data1m).toHaveLength(30);
+      expect(data1m[data1m.length - 1].date).toBe('2026-10-14');
+    });
+
+    it('generates all-time span covering earliest recorded dream date', () => {
+      const dataAll = calculateRecallChartData(mockDreams, 'all', refDate);
+      // From 2026-09-20 to 2026-10-14 is 25 days inclusive
+      expect(dataAll.length).toBe(25);
+      expect(dataAll[0].date).toBe('2026-09-20');
+      expect(dataAll[dataAll.length - 1].date).toBe('2026-10-14');
+      expect(dataAll[0].count).toBe(1);
+    });
+
+    it('retrieves recall chart data from db using getRecallChartData and getDashboardStats', async () => {
+      await dreamService.createDream({
+        title: 'Recent Lucid Dream',
+        narrative: 'Testing chart data retrieval',
+        date: '2026-10-14',
+        vividness: 4,
+        recallQuality: 'detailed',
+        lucidity: 'lucid',
+        emotions: ['Joy'],
+        tags: [],
+      });
+
+      const chartData2w = await dreamService.getRecallChartData('2w', refDate);
+      expect(chartData2w).toHaveLength(14);
+      expect(chartData2w[chartData2w.length - 1].count).toBe(1);
+      expect(chartData2w[chartData2w.length - 1].lucidCount).toBe(1);
+
+      const stats1m = await dreamService.getDashboardStats(refDate, '1m');
+      expect(stats1m.recallChartData).toHaveLength(30);
+    });
   });
 });
