@@ -25,6 +25,11 @@ export const SettingsPage: React.FC = () => {
     text: string;
   } | null>(null);
 
+  // Subsequent lucid dream celebrations toggle
+  const [subsequentCelebrationEnabled, setSubsequentCelebrationEnabled] = useState(() =>
+    celebrationService.isSubsequentCelebrationEnabled()
+  );
+
   // Import flow state
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importCandidate, setImportCandidate] = useState<ImportValidationResult | null>(null);
@@ -59,6 +64,17 @@ export const SettingsPage: React.FC = () => {
     setTimeout(() => {
       setFeedbackMessage(null);
     }, 5000);
+  };
+
+  const handleToggleSubsequent = (enabled: boolean) => {
+    celebrationService.setSubsequentCelebrationEnabled(enabled);
+    setSubsequentCelebrationEnabled(enabled);
+    showFeedback(
+      'success',
+      enabled
+        ? 'Subsequent lucid dream celebrations enabled.'
+        : 'Subsequent lucid dream celebrations turned off.'
+    );
   };
 
   // 1. Export Data
@@ -100,40 +116,57 @@ export const SettingsPage: React.FC = () => {
   // 3. Confirm Import
   const handleConfirmImport = async () => {
     if (!importCandidate || !importCandidate.data) return;
+
     try {
       setIsImporting(true);
-      const result = await backupService.importData(importCandidate.data, importMode);
+      const res = await backupService.importData(importCandidate.data, importMode);
       setImportCandidate(null);
       await checkSampleStatus();
       showFeedback(
         'success',
-        `Import completed (${importMode} mode): ${result.dreamCount} dreams and ${result.techniqueCount} technique logs loaded.`
+        `Successfully restored ${res.dreamCount} dreams and ${res.techniqueCount} technique logs.`
       );
     } catch (err: unknown) {
-      showFeedback('error', err instanceof Error ? err.message : 'Import execution failed.');
+      showFeedback('error', err instanceof Error ? err.message : 'Import failed.');
     } finally {
       setIsImporting(false);
     }
   };
 
-  // 4. Sample Data
-  const handleLoadSample = async () => {
+  // 4. Wipe all data
+  const handleWipeAllConfirm = async () => {
     try {
-      const result = await backupService.loadSampleData();
+      setIsWiping(true);
+      await backupService.wipeAllData();
       await checkSampleStatus();
-      showFeedback('success', `Loaded ${result.dreamCount} sample dreams and ${result.techniqueCount} technique logs.`);
+      setIsWipeDialogOpen(false);
+      showFeedback('success', 'All local journal records have been securely cleared.');
     } catch (err: unknown) {
-      showFeedback('error', err instanceof Error ? err.message : 'Could not load sample data.');
+      showFeedback('error', err instanceof Error ? err.message : 'Failed to clear data.');
+    } finally {
+      setIsWiping(false);
     }
   };
 
+  // 5. Load sample exploration data
+  const handleLoadSample = async () => {
+    try {
+      await backupService.loadSampleData();
+      await checkSampleStatus();
+      showFeedback('success', 'Sample exploration entries loaded. They will disappear when you refresh.');
+    } catch (err: unknown) {
+      showFeedback('error', err instanceof Error ? err.message : 'Failed to load sample data.');
+    }
+  };
+
+  // 6. Clear sample data immediately
   const handleClearSampleConfirm = async () => {
     try {
       setIsClearingSample(true);
-      const count = await backupService.clearSampleData();
+      await backupService.clearSampleData();
       await checkSampleStatus();
       setIsClearSampleDialogOpen(false);
-      showFeedback('success', `Removed ${count} sample entries cleanly. Real journal entries remain untouched.`);
+      showFeedback('success', 'Sample exploration entries removed.');
     } catch (err: unknown) {
       showFeedback('error', err instanceof Error ? err.message : 'Failed to clear sample data.');
     } finally {
@@ -141,59 +174,48 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
-  // 5. Factory Reset / Wipe All Data
-  const handleWipeAllConfirm = async () => {
-    try {
-      setIsWiping(true);
-      await backupService.wipeAllData();
-      await checkSampleStatus();
-      setIsWipeDialogOpen(false);
-      showFeedback('success', 'All local application data has been wiped.');
-    } catch (err: unknown) {
-      showFeedback('error', err instanceof Error ? err.message : 'Failed to wipe data.');
-    } finally {
-      setIsWiping(false);
-    }
-  };
-
   return (
-    <div className="max-w-4xl space-y-8 animate-fadeIn">
-      {/* Title */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-100 tracking-tight">System & Data Settings</h1>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1">
-          Manage local backups, privacy safeguards, and database maintenance
-        </p>
-      </div>
-
-      {/* Global Feedback Banner */}
+    <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn">
+      {/* Toast Feedback */}
       {feedbackMessage && (
         <div
-          className={`p-4 rounded-xl border flex items-center gap-3 text-xs sm:text-sm transition-all ${
+          role="status"
+          aria-live="polite"
+          className={`p-3.5 rounded-lg border text-xs sm:text-sm font-medium flex items-center justify-between transition-all ${
             feedbackMessage.type === 'success'
-              ? 'bg-emerald-950/80 border-emerald-700/60 text-emerald-200'
-              : 'bg-red-950/80 border-red-700/60 text-red-200'
+              ? 'bg-emerald-950/60 border-emerald-800 text-emerald-200'
+              : 'bg-red-950/60 border-red-800 text-red-200'
           }`}
         >
-          {feedbackMessage.type === 'success' ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          ) : (
-            <AlertTriangle className="w-5 h-5 text-red-400 shrink-0" />
-          )}
           <span>{feedbackMessage.text}</span>
+          <button
+            type="button"
+            onClick={() => setFeedbackMessage(null)}
+            className="text-xs opacity-70 hover:opacity-100 cursor-pointer ml-3 font-semibold"
+          >
+            &times;
+          </button>
         </div>
       )}
 
-      {/* Multi-Device Cloud Sync Card */}
+      {/* Header */}
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight">Settings & Storage</h1>
+        <p className="text-xs sm:text-sm text-slate-400 mt-1">
+          Manage local backups, multi-device synchronization, and celebration settings
+        </p>
+      </div>
+
+      {/* Sync Card */}
       <SyncSettingsCard onFeedback={showFeedback} />
 
       {/* Section 1: Backup & Restore */}
-      <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-5">
+      <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
         <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
           <Database className="w-5 h-5 text-blue-400" />
           <div>
             <h2 className="text-base font-bold text-slate-100">Backup & Restore</h2>
-            <p className="text-xs text-slate-400">Export your dream ledger or restore from a backup file</p>
+            <p className="text-xs text-slate-400">Offline-first JSON export and validated import</p>
           </div>
         </div>
 
@@ -283,38 +305,65 @@ export const SettingsPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Section 3: Celebration & Party Mode Diagnostics (Developer / QA Test Tools) */}
-      <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
+      {/* Section 3: Lucid Dream Celebration / Party Mode Preferences & Diagnostics */}
+      <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-5">
         <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
           <Sparkles className="w-5 h-5 text-amber-400" />
           <div>
-            <h2 className="text-base font-bold text-slate-100">Party Mode & Celebration Diagnostics</h2>
+            <h2 className="text-base font-bold text-slate-100">Lucid Dream Celebrations</h2>
             <p className="text-xs text-slate-400">
-              Developer and QA testing suite for the Lucid Dream Celebration system
+              Configure full-screen celebration party mode and testing tools
             </p>
           </div>
         </div>
 
-        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-          Preview the celebratory particle explosion and milestone animations safely without altering your dream database or creating permanent fake achievements.
-        </p>
+        {/* Toggle Subsequent Celebrations */}
+        <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-slate-900/80 border border-slate-800">
+          <div className="space-y-1">
+            <label htmlFor="toggle-subsequent-celebration" className="text-sm font-semibold text-slate-200 cursor-pointer">
+              Subsequent Lucid Dream Celebrations
+            </label>
+            <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
+              When turned on, the full-screen celebration erupts whenever you record any lucid dream. When turned off, celebrations only trigger for your first-ever lucid dream, keeping subsequent journal entries quiet and uninterrupted.
+            </p>
+          </div>
+          <div className="flex items-center pt-0.5">
+            <input
+              id="toggle-subsequent-celebration"
+              type="checkbox"
+              checked={subsequentCelebrationEnabled}
+              onChange={(e) => handleToggleSubsequent(e.target.checked)}
+              className="w-5 h-5 rounded bg-slate-800 border-slate-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            />
+          </div>
+        </div>
 
-        <div className="flex flex-wrap items-center gap-3 pt-2">
-          <Button
-            variant="secondary"
-            onClick={() => celebrationService.triggerDevPreview(true)}
-            icon={<Sparkles className="w-4 h-4 text-amber-400" />}
-          >
-            Preview First Lucid Dream (Full Explosion)
-          </Button>
+        {/* Diagnostics & Testing Tools */}
+        <div className="space-y-2 pt-2 border-t border-slate-800/60">
+          <div className="text-xs font-semibold text-slate-300">
+            Developer & QA Testing Tools
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Preview the full-screen celebration safely without modifying your dream database or creating fake entries.
+          </p>
 
-          <Button
-            variant="outline"
-            onClick={() => celebrationService.triggerDevPreview(false)}
-            icon={<CheckCircle2 className="w-4 h-4 text-blue-400" />}
-          >
-            Preview Subsequent Lucid Dream (Standard)
-          </Button>
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <Button
+              variant="secondary"
+              onClick={() => celebrationService.triggerDevPreview(true)}
+              icon={<Sparkles className="w-4 h-4 text-amber-400" />}
+            >
+              Preview First Lucid Dream (Full Explosion)
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => celebrationService.triggerDevPreview(false)}
+              icon={<CheckCircle2 className="w-4 h-4 text-blue-400" />}
+            >
+              Preview Subsequent Lucid Dream (Standard)
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -346,7 +395,7 @@ export const SettingsPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Section 4: Danger Zone (Factory Reset) */}
+      {/* Section 5: Danger Zone (Factory Reset) */}
       <section className="p-6 rounded-xl bg-red-950/20 border border-red-900/40 space-y-4">
         <div className="flex items-center gap-2.5 pb-4 border-b border-red-900/40">
           <Trash2 className="w-5 h-5 text-red-400" />

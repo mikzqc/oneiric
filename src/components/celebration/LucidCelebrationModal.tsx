@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { LucidCelebrationEvent } from '../../services/celebrationService';
 import { Button } from '../common/Button';
-import { Award, Compass, Sparkles, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface LucidCelebrationModalProps {
   event: LucidCelebrationEvent | null;
   onDismiss: () => void;
+  onGoToSettings?: () => void;
 }
 
 interface ConfettiParticle {
@@ -21,22 +22,26 @@ interface ConfettiParticle {
   shape: 'rect' | 'circle' | 'streamer';
   streamerLength?: number;
   opacity: number;
-  decay: number;
 }
 
+// Tasteful blue, gold, and white confetti palette
 const PALETTE = [
-  '#fbbf24', // Amber gold
-  '#f59e0b', // Deep gold
-  '#60a5fa', // Soft cobalt
-  '#3b82f6', // Cobalt blue
-  '#06b6d4', // Cyan
-  '#38bdf8', // Sky
-  '#818cf8', // Indigo
-  '#a855f7', // Purple
-  '#f8fafc', // Starlight white
+  '#2563eb', // Cobalt blue
+  '#3b82f6', // Vivid blue
+  '#60a5fa', // Soft sky blue
+  '#93c5fd', // Light starlight blue
+  '#fbbf24', // Warm gold
+  '#f59e0b', // Deep amber gold
+  '#fde047', // Radiant gold
+  '#ffffff', // Crisp white
+  '#f1f5f9', // Slate starlight
 ];
 
-export const LucidCelebrationModal: React.FC<LucidCelebrationModalProps> = ({ event, onDismiss }) => {
+export const LucidCelebrationModal: React.FC<LucidCelebrationModalProps> = ({
+  event,
+  onDismiss,
+  onGoToSettings,
+}) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const dismissBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -61,6 +66,14 @@ export const LucidCelebrationModal: React.FC<LucidCelebrationModalProps> = ({ ev
     onDismiss();
   }, [onDismiss]);
 
+  const handleGoToSettings = useCallback(() => {
+    if (onGoToSettings) {
+      onGoToSettings();
+    } else {
+      onDismiss();
+    }
+  }, [onGoToSettings, onDismiss]);
+
   // Lock body scroll and handle Escape key
   useEffect(() => {
     if (!event) return;
@@ -75,7 +88,6 @@ export const LucidCelebrationModal: React.FC<LucidCelebrationModalProps> = ({ ev
     };
     window.addEventListener('keydown', handleKeyDown);
 
-    // Focus primary dismiss button
     const timer = setTimeout(() => {
       dismissBtnRef.current?.focus();
     }, 100);
@@ -112,16 +124,22 @@ export const LucidCelebrationModal: React.FC<LucidCelebrationModalProps> = ({ ev
     };
     window.addEventListener('resize', handleResize);
 
-    const particleCount = event.isFirstLucid ? 220 : 100;
+    // Particle count: animation intensity difference between first and subsequent celebrations
+    const particleCount = event.isFirstLucid ? 300 : 150;
     const particles: ConfettiParticle[] = [];
 
-    // Initialize particles with central burst for first-lucid or festive arc for subsequent
     for (let i = 0; i < particleCount; i++) {
       const isFirst = event.isFirstLucid;
-      const angle = isFirst ? Math.random() * Math.PI * 2 : (Math.PI / 4) + Math.random() * (Math.PI / 2);
-      const speed = isFirst ? 4 + Math.random() * 12 : 3 + Math.random() * 8;
-      const startX = isFirst ? width / 2 + (Math.random() - 0.5) * 80 : Math.random() * width;
-      const startY = isFirst ? height / 2 + (Math.random() - 0.5) * 80 : -20 - Math.random() * 100;
+      const angle = isFirst
+        ? Math.random() * Math.PI * 2
+        : (Math.PI / 4) + Math.random() * (Math.PI / 2);
+      const speed = isFirst ? 5 + Math.random() * 14 : 3 + Math.random() * 8;
+      const startX = isFirst
+        ? width / 2 + (Math.random() - 0.5) * 120
+        : Math.random() * width;
+      const startY = isFirst
+        ? height / 2 + (Math.random() - 0.5) * 120
+        : -20 - Math.random() * 120;
 
       const shapes: ('rect' | 'circle' | 'streamer')[] = ['rect', 'rect', 'circle', 'streamer'];
       const shape = shapes[Math.floor(Math.random() * shapes.length)];
@@ -130,21 +148,20 @@ export const LucidCelebrationModal: React.FC<LucidCelebrationModalProps> = ({ ev
         x: startX,
         y: startY,
         vx: isFirst ? Math.cos(angle) * speed : (Math.random() - 0.5) * 4,
-        vy: isFirst ? Math.sin(angle) * speed - 3 : speed,
-        size: shape === 'streamer' ? 3 + Math.random() * 3 : 5 + Math.random() * 6,
+        vy: isFirst ? Math.sin(angle) * speed - 4 : speed,
+        size: shape === 'streamer' ? 3 + Math.random() * 3 : 5 + Math.random() * 7,
         color: PALETTE[Math.floor(Math.random() * PALETTE.length)],
         tilt: Math.random() * 10 - 5,
-        tiltSpeed: 0.05 + Math.random() * 0.08,
+        tiltSpeed: 0.04 + Math.random() * 0.08,
         tiltAngle: Math.random() * Math.PI * 2,
         shape,
-        streamerLength: shape === 'streamer' ? 14 + Math.random() * 18 : undefined,
+        streamerLength: shape === 'streamer' ? 16 + Math.random() * 22 : undefined,
         opacity: 1,
-        decay: 0.0005 + Math.random() * 0.001,
       });
     }
 
-    const gravity = 0.12;
-    const drag = 0.985;
+    const gravity = 0.11;
+    const drag = 0.988;
     let isRunning = true;
 
     const render = () => {
@@ -156,7 +173,6 @@ export const LucidCelebrationModal: React.FC<LucidCelebrationModalProps> = ({ ev
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
 
-        // Apply physics
         p.vx *= drag;
         p.vy = p.vy * drag + gravity;
         p.x += p.vx;
@@ -166,8 +182,8 @@ export const LucidCelebrationModal: React.FC<LucidCelebrationModalProps> = ({ ev
         p.tilt = Math.sin(p.tiltAngle) * 12;
 
         // Wrap around bottom
-        if (p.y > height + 40) {
-          p.y = -20;
+        if (p.y > height + 50) {
+          p.y = -25;
           p.x = Math.random() * width;
           p.vy = 2 + Math.random() * 4;
           p.vx = (Math.random() - 0.5) * 2;
@@ -222,10 +238,10 @@ export const LucidCelebrationModal: React.FC<LucidCelebrationModalProps> = ({ ev
     <div
       role="dialog"
       aria-modal="true"
-      aria-labelledby="celebration-title"
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0b132b]/85 backdrop-blur-md animate-fadeIn"
+      aria-labelledby="celebration-heading"
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-6 sm:p-12 overflow-hidden bg-[#0b132b]/95 backdrop-blur-xl animate-fadeIn select-none"
     >
-      {/* Confetti Canvas */}
+      {/* Full-Screen Confetti Canvas */}
       {!prefersReducedMotion && (
         <canvas
           ref={canvasRef}
@@ -234,87 +250,82 @@ export const LucidCelebrationModal: React.FC<LucidCelebrationModalProps> = ({ ev
         />
       )}
 
-      {/* Main Celebration Card */}
-      <div className="relative z-10 w-full max-w-md p-6 sm:p-8 rounded-xl bg-[#101a38] border border-blue-500/50 shadow-2xl text-center overflow-hidden">
-        {/* Subtle decorative glow */}
-        <div
-          className="absolute -top-24 -left-24 w-48 h-48 bg-blue-600/15 rounded-full blur-3xl pointer-events-none"
-          aria-hidden="true"
-        />
-        <div
-          className="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-500/15 rounded-full blur-3xl pointer-events-none"
-          aria-hidden="true"
-        />
+      {/* Atmospheric Midnight Lighting */}
+      <div
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute bottom-1/4 left-1/2 -translate-x-1/2 translate-y-1/2 w-[500px] h-[500px] bg-amber-400/8 rounded-full blur-[130px] pointer-events-none"
+        aria-hidden="true"
+      />
 
-        {/* Close Icon (Top Right) */}
-        <button
-          type="button"
-          onClick={handleDismiss}
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-100 p-1.5 rounded-lg hover:bg-slate-800/60 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500"
-          aria-label="Dismiss celebration"
-        >
-          <X className="w-5 h-5" />
-        </button>
+      {/* Subtle Close Button (Top Right) */}
+      <button
+        type="button"
+        onClick={handleDismiss}
+        className="absolute top-6 right-6 text-slate-400 hover:text-white p-2 rounded-full hover:bg-slate-800/60 transition-colors cursor-pointer z-30 focus-visible:ring-2 focus-visible:ring-blue-500"
+        aria-label="Dismiss celebration"
+      >
+        <X className="w-6 h-6" />
+      </button>
 
-        {/* Achievement / Lucidity Milestone Badge */}
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase mb-3 border shadow-sm">
-          {event.isFirstLucid ? (
-            <div className="inline-flex items-center gap-1.5 text-amber-300 bg-amber-950/60 border border-amber-500/50 px-3 py-1 rounded-full">
-              <Award className="w-4 h-4 text-amber-400 animate-bounce" />
-              <span>FIRST LUCID DREAM UNLOCKED</span>
-            </div>
-          ) : (
-            <div className="inline-flex items-center gap-1.5 text-blue-300 bg-blue-950/60 border border-blue-500/50 px-3 py-1 rounded-full">
-              <Sparkles className="w-4 h-4 text-blue-400" />
-              <span>LUCID DREAM #{event.lucidCount}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Primary Celebratory Headline */}
+      {/* Dominant Screen Content */}
+      <div className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto px-4">
+        {/* Giant Hero Headline */}
         <h1
-          id="celebration-title"
-          className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-1.5 drop-shadow-sm font-sans"
+          id="celebration-heading"
+          className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight text-white drop-shadow-[0_10px_35px_rgba(37,99,235,0.35)] leading-none mb-3 sm:mb-5 font-sans"
         >
           YOU DID IT!
         </h1>
 
-        {/* Secondary Headline */}
-        <h2 className="text-base sm:text-lg font-bold text-blue-400 tracking-wide uppercase mb-3">
-          YOU HAD A LUCID DREAM!
-        </h2>
+        {/* Enormous Secondary Congratulation */}
+        <div className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-200 to-blue-300 uppercase mb-4 sm:mb-6 drop-shadow-md">
+          CONGRATULATIONS!
+        </div>
 
-        {/* Congratulatory Message */}
-        <p className="text-slate-300 text-xs sm:text-sm leading-relaxed mb-5 font-normal max-w-sm mx-auto">
-          You recognized the dream. Your practice is paying off.
+        {/* Lucid Dream Clarification Line */}
+        <p className="text-lg sm:text-2xl md:text-3xl text-slate-200 font-light tracking-wide max-w-2xl mx-auto mb-2 sm:mb-3">
+          You had a lucid dream!
         </p>
 
-        {/* Optional Dream Title Reference */}
+        {/* Optional Dream Title */}
         {event.dreamTitle && (
-          <div className="flex items-center justify-center gap-2 mb-6 px-3 py-1.5 rounded-lg bg-slate-900/90 border border-slate-800 text-xs text-slate-300 max-w-xs mx-auto truncate font-mono">
-            <Compass className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-            <span className="truncate">&ldquo;{event.dreamTitle}&rdquo;</span>
-          </div>
+          <p className="text-xs sm:text-sm text-blue-300/80 font-mono tracking-wide max-w-md mx-auto truncate mb-4">
+            &ldquo;{event.dreamTitle}&rdquo;
+          </p>
         )}
 
-        {/* Developer Preview Badge Notice */}
-        {event.isDevPreview && (
-          <div className="mb-4 inline-block text-[11px] font-mono text-amber-300/90 bg-amber-950/50 border border-amber-800/60 px-2.5 py-0.5 rounded-md">
-            Developer Test Mode &middot; No records modified
-          </div>
-        )}
-
-        {/* Primary Action Button */}
-        <div className="pt-2">
+        {/* Action Controls & Turn Off Link */}
+        <div className="mt-8 sm:mt-12 flex flex-col items-center gap-3">
           <Button
             ref={dismissBtnRef}
             variant="primary"
-            size="md"
-            className="w-full text-sm font-semibold justify-center py-2.5 shadow-md shadow-blue-600/30 cursor-pointer"
+            size="lg"
+            className="px-8 py-3 text-base sm:text-lg font-semibold tracking-wide shadow-2xl shadow-blue-600/40 hover:shadow-blue-500/60 hover:scale-[1.02] active:scale-[0.98] transition-all rounded-xl cursor-pointer"
             onClick={handleDismiss}
           >
             Return to Journal
           </Button>
+
+          {/* Subsequent celebration toggle shortcut */}
+          {!event.isFirstLucid && !event.isDevPreview && (
+            <button
+              type="button"
+              onClick={handleGoToSettings}
+              className="text-xs text-slate-400 hover:text-slate-200 underline underline-offset-4 transition-colors cursor-pointer pt-2"
+            >
+              Want to turn it off?
+            </button>
+          )}
+
+          {/* Dev Preview Notice */}
+          {event.isDevPreview && (
+            <span className="text-[11px] font-mono text-amber-300/90 bg-amber-950/40 border border-amber-800/40 px-3 py-1 rounded-md mt-2">
+              Developer Test Mode &middot; No records altered
+            </span>
+          )}
         </div>
       </div>
     </div>

@@ -9,6 +9,7 @@ describe('Lucid Dream Celebration & Party Mode Service', () => {
     await db.dreams.clear();
     await db.customTags.clear();
     celebrationService.resetAchievementHistory();
+    celebrationService.setSubsequentCelebrationEnabled(true);
     localStorage.clear();
   });
 
@@ -51,6 +52,44 @@ describe('Lucid Dream Celebration & Party Mode Service', () => {
     expect(eligibility.shouldCelebrate).toBe(true);
     expect(eligibility.isFirstLucid).toBe(false);
     expect(eligibility.lucidCount).toBe(2);
+  });
+
+  it('allows disabling subsequent celebrations in settings while keeping first-lucid celebration active', async () => {
+    // Disable subsequent celebrations
+    celebrationService.setSubsequentCelebrationEnabled(false);
+    expect(celebrationService.isSubsequentCelebrationEnabled()).toBe(false);
+
+    // First lucid dream should STILL celebrate
+    const firstCheck = await celebrationService.checkCelebrationEligibility(true, 'lucid');
+    expect(firstCheck.shouldCelebrate).toBe(true);
+    expect(firstCheck.isFirstLucid).toBe(true);
+
+    // Create the first lucid dream in DB
+    await dreamService.createDream({
+      title: 'First Flight',
+      narrative: 'Floating softly.',
+      date: '2026-10-10',
+      vividness: 4,
+      recallQuality: 'detailed',
+      lucidity: 'lucid',
+      emotions: ['Joy'],
+      tags: [],
+    });
+
+    // Subsequent lucid dream should now be SILENCED
+    const subsequentCheck = await celebrationService.checkCelebrationEligibility(true, 'lucid');
+    expect(subsequentCheck.shouldCelebrate).toBe(false);
+    expect(subsequentCheck.isFirstLucid).toBe(false);
+
+    // Re-enable in settings
+    celebrationService.setSubsequentCelebrationEnabled(true);
+    expect(celebrationService.isSubsequentCelebrationEnabled()).toBe(true);
+
+    // Now subsequent lucid dream celebrates again
+    const reEnabledCheck = await celebrationService.checkCelebrationEligibility(true, 'lucid');
+    expect(reEnabledCheck.shouldCelebrate).toBe(true);
+    expect(reEnabledCheck.isFirstLucid).toBe(false);
+    expect(reEnabledCheck.lucidCount).toBe(2);
   });
 
   it('resets first-lucid eligibility if the only lucid dream is deleted, but not if others remain', async () => {

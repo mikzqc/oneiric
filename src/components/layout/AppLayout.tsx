@@ -212,6 +212,10 @@ export const AppLayout: React.FC = () => {
             navigate('/journal');
           }
         }}
+        onGoToSettings={() => {
+          setCelebrationEvent(null);
+          navigate('/settings');
+        }}
       />
     </div>
   );

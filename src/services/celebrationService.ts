@@ -15,6 +15,7 @@ export interface AchievementHistoryRecord {
 }
 
 const ACHIEVEMENT_HISTORY_KEY = 'oneiric_achievement_history';
+const SUBSEQUENT_CELEBRATION_ENABLED_KEY = 'oneiric_subsequent_celebration_enabled';
 const CELEBRATION_EVENT_NAME = 'oneiric:lucid-celebration';
 
 // In-memory subscribers for immediate UI updates
@@ -43,6 +44,37 @@ function saveHistory(record: AchievementHistoryRecord): void {
 }
 
 export const celebrationService = {
+  /**
+   * Checks whether subsequent lucid dream celebrations are enabled by the user.
+   * Default is true.
+   */
+  isSubsequentCelebrationEnabled(): boolean {
+    try {
+      const val = localStorage.getItem(SUBSEQUENT_CELEBRATION_ENABLED_KEY);
+      return val !== 'false';
+    } catch {
+      return true;
+    }
+  },
+
+  /**
+   * Updates whether subsequent lucid dream celebrations are enabled.
+   */
+  setSubsequentCelebrationEnabled(enabled: boolean): void {
+    try {
+      localStorage.setItem(SUBSEQUENT_CELEBRATION_ENABLED_KEY, enabled ? 'true' : 'false');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(
+          new CustomEvent('oneiric:celebration-settings-changed', {
+            detail: { subsequentEnabled: enabled },
+          })
+        );
+      }
+    } catch {
+      // ignore
+    }
+  },
+
   /**
    * Derives how many active, non-deleted qualifying lucid dream entries currently exist in the database.
    */
@@ -74,6 +106,15 @@ export const celebrationService = {
     const currentCount = await this.getQualifyingLucidCount();
     const isFirstLucid = currentCount === 0;
     const lucidCount = currentCount + 1;
+
+    // Check if subsequent celebrations are disabled by the user
+    if (!isFirstLucid && !this.isSubsequentCelebrationEnabled()) {
+      return {
+        shouldCelebrate: false,
+        isFirstLucid: false,
+        lucidCount,
+      };
+    }
 
     return {
       shouldCelebrate: true,
@@ -154,6 +195,7 @@ export const celebrationService = {
   resetAchievementHistory(): void {
     try {
       localStorage.removeItem(ACHIEVEMENT_HISTORY_KEY);
+      localStorage.removeItem(SUBSEQUENT_CELEBRATION_ENABLED_KEY);
     } catch {
       // ignore
     }

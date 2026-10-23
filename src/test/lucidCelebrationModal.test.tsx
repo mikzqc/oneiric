@@ -3,13 +3,13 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { LucidCelebrationModal } from '../components/celebration/LucidCelebrationModal';
 import { LucidCelebrationEvent } from '../services/celebrationService';
 
-describe('<LucidCelebrationModal /> Component', () => {
+describe('<LucidCelebrationModal /> Pure Celebration UI', () => {
   it('renders nothing when event is null', () => {
     const { container } = render(<LucidCelebrationModal event={null} onDismiss={() => {}} />);
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders First Lucid Dream celebration banner and headline', () => {
+  it('renders enormous congratulatory headlines and lucid message without gamification or achievement badges', () => {
     const event: LucidCelebrationEvent = {
       isFirstLucid: true,
       lucidCount: 1,
@@ -19,12 +19,19 @@ describe('<LucidCelebrationModal /> Component', () => {
     const handleDismiss = vi.fn();
     render(<LucidCelebrationModal event={event} onDismiss={handleDismiss} />);
 
-    expect(screen.getByText('FIRST LUCID DREAM UNLOCKED')).toBeInTheDocument();
+    // Bold, dominant celebratory headlines
     expect(screen.getByText('YOU DID IT!')).toBeInTheDocument();
-    expect(screen.getByText('YOU HAD A LUCID DREAM!')).toBeInTheDocument();
-    expect(screen.getByText('You recognized the dream. Your practice is paying off.')).toBeInTheDocument();
+    expect(screen.getByText('CONGRATULATIONS!')).toBeInTheDocument();
+    expect(screen.getByText('You had a lucid dream!')).toBeInTheDocument();
     expect(screen.getByText(/The Celestial Lake/)).toBeInTheDocument();
 
+    // Verify NO gamification / achievement text or badges exist
+    expect(screen.queryByText(/FIRST LUCID DREAM UNLOCKED/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/LUCID DREAM #/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Milestone/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Achievement/i)).not.toBeInTheDocument();
+
+    // Return to Journal button works
     const returnBtn = screen.getByRole('button', { name: /Return to Journal/i });
     expect(returnBtn).toBeInTheDocument();
 
@@ -32,17 +39,44 @@ describe('<LucidCelebrationModal /> Component', () => {
     expect(handleDismiss).toHaveBeenCalledTimes(1);
   });
 
-  it('renders Subsequent Lucid Dream with counter badge', () => {
+  it('renders "Want to turn it off?" link on subsequent celebrations and navigates to settings', () => {
     const event: LucidCelebrationEvent = {
       isFirstLucid: false,
-      lucidCount: 5,
-      dreamTitle: 'Flying Across the Sea',
+      lucidCount: 3,
+      dreamTitle: 'Soaring Over the Ocean',
+    };
+
+    const handleDismiss = vi.fn();
+    const handleGoToSettings = vi.fn();
+    render(
+      <LucidCelebrationModal
+        event={event}
+        onDismiss={handleDismiss}
+        onGoToSettings={handleGoToSettings}
+      />
+    );
+
+    // Headlines
+    expect(screen.getByText('YOU DID IT!')).toBeInTheDocument();
+    expect(screen.getByText('CONGRATULATIONS!')).toBeInTheDocument();
+    expect(screen.getByText('You had a lucid dream!')).toBeInTheDocument();
+
+    // Subsequent has the link to turn it off
+    const turnOffLink = screen.getByRole('button', { name: /Want to turn it off\?/i });
+    expect(turnOffLink).toBeInTheDocument();
+
+    fireEvent.click(turnOffLink);
+    expect(handleGoToSettings).toHaveBeenCalledTimes(1);
+  });
+
+  it('does NOT render "Want to turn it off?" link on the first lucid dream celebration', () => {
+    const event: LucidCelebrationEvent = {
+      isFirstLucid: true,
+      lucidCount: 1,
     };
 
     render(<LucidCelebrationModal event={event} onDismiss={() => {}} />);
-
-    expect(screen.getByText('LUCID DREAM #5')).toBeInTheDocument();
-    expect(screen.getByText('YOU DID IT!')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Want to turn it off\?/i })).not.toBeInTheDocument();
   });
 
   it('dismisses when clicking close button or pressing Escape', () => {
@@ -72,6 +106,6 @@ describe('<LucidCelebrationModal /> Component', () => {
     };
 
     render(<LucidCelebrationModal event={event} onDismiss={() => {}} />);
-    expect(screen.getByText(/Developer Test Mode · No records modified/i)).toBeInTheDocument();
+    expect(screen.getByText(/Developer Test Mode · No records altered/i)).toBeInTheDocument();
   });
 });
