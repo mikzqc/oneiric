@@ -57,6 +57,22 @@ export const tombstoneService = {
   },
 
   /**
+   * Removes a tombstone when a record is restored from trash
+   */
+  removeTombstone(id: string): void {
+    if (!id) return;
+    try {
+      const map = this.getTombstonesMap();
+      if (map[id]) {
+        delete map[id];
+        localStorage.setItem(TOMBSTONES_STORAGE_KEY, JSON.stringify(map));
+      }
+    } catch {
+      // ignore
+    }
+  },
+
+  /**
    * Returns list of currently tracked deleted IDs, pruning entries older than 60 days
    */
   getDeletedIds(): string[] {

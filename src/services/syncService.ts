@@ -13,6 +13,10 @@ const CREDENTIALS_STORAGE_KEY = 'oneiric_sync_vault';
 
 let autoSyncTimeout: ReturnType<typeof setTimeout> | null = null;
 let activeSyncPromise: Promise<SyncResult> | null = null;
+let autoSyncRetryCount = 0;
+let lastSyncError: string | null = null;
+const MAX_AUTO_SYNC_RETRIES = 3;
+const INITIAL_RETRY_BACKOFF_MS = 2000;
 
 export const CANONICAL_CLOUD_RELAY = 'https://oneiric-one.vercel.app/api/vault';
 
@@ -123,15 +127,18 @@ export const syncService = {
    */
   getSyncState(): SyncState {
     const creds = this.getCredentials();
+    const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
     return {
-      status: activeSyncPromise ? 'syncing' : 'idle',
+      status: activeSyncPromise ? 'syncing' : lastSyncError ? 'error' : 'idle',
       lastSyncedAt: creds?.lastSyncedAt || null,
-      error: null,
+      error: lastSyncError,
       isConfigured: Boolean(creds?.vaultId && creds?.passphrase),
       vaultId: creds?.vaultId || null,
       autoSync: creds?.autoSync ?? true,
       lastRemoteDevice: creds?.lastRemoteDevice || null,
       lastRemoteUpdate: creds?.lastRemoteUpdate || null,
+      isOnline,
+      retryAttempt: autoSyncRetryCount,
     };
   },
 
@@ -469,6 +476,9 @@ export const syncService = {
           creds.lastRemoteUpdate = remoteEnvelope.updatedAt;
         }
         this.saveCredentials(creds);
+        lastSyncError = null;
+        autoSyncRetryCount = 0;
+        this.notifyStatusChanged();
 
         return {
           success: true,
@@ -477,6 +487,10 @@ export const syncService = {
           pushedCount: fullLocalData.dreams.length,
           timestamp: nowStr,
         };
+      } catch (err: unknown) {
+        lastSyncError = err instanceof Error ? err.message : String(err);
+        this.notifyStatusChanged();
+        throw err;
       } finally {
         activeSyncPromise = null;
       }
@@ -503,6 +517,10 @@ export const syncService = {
     const creds = this.getCredentials();
     if (!creds || !creds.autoSync) return;
 
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return;
+    }
+
     if (autoSyncTimeout) {
       clearTimeout(autoSyncTimeout);
       autoSyncTimeout = null;
@@ -512,8 +530,16 @@ export const syncService = {
     autoSyncTimeout = setTimeout(async () => {
       try {
         await this.syncNow();
+        autoSyncRetryCount = 0;
       } catch (err) {
         console.warn('Background auto-sync failed:', err);
+        if (autoSyncRetryCount < MAX_AUTO_SYNC_RETRIES) {
+          autoSyncRetryCount++;
+          const backoff = INITIAL_RETRY_BACKOFF_MS * Math.pow(2, autoSyncRetryCount - 1);
+          autoSyncTimeout = setTimeout(() => {
+            this.triggerAutoSync({ immediate: true });
+          }, backoff);
+        }
       }
     }, delay);
   },
@@ -561,6 +587,15 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 
   window.addEventListener('focus', () => {
     syncService.triggerAutoSync({ immediate: true });
+  });
+
+  window.addEventListener('online', () => {
+    syncService.triggerAutoSync({ immediate: true });
+    syncService.notifyStatusChanged();
+  });
+
+  window.addEventListener('offline', () => {
+    syncService.notifyStatusChanged();
   });
 
   window.addEventListener('pagehide', () => {

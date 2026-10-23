@@ -6,6 +6,8 @@ import { Modal } from '../common/Modal';
 import { DreamEditor } from '../journal/DreamEditor';
 import { DreamEntry } from '../../types/dream';
 import { backupService } from '../../services/backupService';
+import { celebrationService, LucidCelebrationEvent } from '../../services/celebrationService';
+import { LucidCelebrationModal } from '../celebration/LucidCelebrationModal';
 import { X, Info } from 'lucide-react';
 
 export const AppLayout: React.FC = () => {
@@ -17,6 +19,15 @@ export const AppLayout: React.FC = () => {
   const [editingDream, setEditingDream] = useState<DreamEntry | undefined>(undefined);
   const [editorPrefillDate, setEditorPrefillDate] = useState<string | undefined>(undefined);
   const [isSamplePreview, setIsSamplePreview] = useState(false);
+  const [celebrationEvent, setCelebrationEvent] = useState<LucidCelebrationEvent | null>(null);
+
+  // Subscribe to Lucid Dream Celebration / Party Mode events
+  useEffect(() => {
+    const unsubscribe = celebrationService.subscribeToCelebration((event) => {
+      setCelebrationEvent(event);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Sync sample data status
   useEffect(() => {
@@ -191,6 +202,17 @@ export const AppLayout: React.FC = () => {
           isModal={true}
         />
       </Modal>
+
+      {/* Full-Screen Party Mode Lucid Dream Celebration */}
+      <LucidCelebrationModal
+        event={celebrationEvent}
+        onDismiss={() => {
+          setCelebrationEvent(null);
+          if (location.pathname !== '/journal') {
+            navigate('/journal');
+          }
+        }}
+      />
     </div>
   );
 };

@@ -33,6 +33,8 @@ export interface SyncState {
   autoSync: boolean;
   lastRemoteDevice?: string | null;
   lastRemoteUpdate?: string | null;
+  isOnline?: boolean;
+  retryAttempt?: number;
 }
 
 export interface SyncResult {

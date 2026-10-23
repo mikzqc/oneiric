@@ -40,6 +40,7 @@ export interface DreamEntry {
   realityChecksUseful?: string[];
   interpretationNotes?: string;
   scenes?: DreamScene[];
+  relatedDreamIds?: string[];
 
   isSample?: boolean;
   createdAt: number;

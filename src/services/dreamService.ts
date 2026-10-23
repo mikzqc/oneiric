@@ -4,6 +4,9 @@ import { calculateJournalingStreak, getLastNDays, getTodayDateString, parseLocal
 import { dreamSignService } from './dreamSignService';
 import { syncService } from './syncService';
 import { tombstoneService } from '../utils/tombstones';
+import { trashService, TrashedDream } from '../utils/trashService';
+
+export type { TrashedDream };
 
 export interface TimelineNightGroup {
   date: string;
@@ -169,7 +172,12 @@ export const dreamService = {
   },
 
   async deleteDream(id: string): Promise<void> {
-    tombstoneService.recordDeletion(id);
+    const dream = await db.dreams.get(id);
+    if (dream) {
+      trashService.moveToTrash(dream);
+    } else {
+      tombstoneService.recordDeletion(id);
+    }
     await db.dreams.delete(id);
     // Trigger dream signs update in background
     dreamSignService.scanAndDetectSigns().catch(() => {});
@@ -179,6 +187,44 @@ export const dreamService = {
 
     try {
       window.dispatchEvent(new CustomEvent('oneiric:dream-saved', { detail: { id, deleted: true } }));
+    } catch {
+      // ignore
+    }
+  },
+
+  async restoreFromTrash(id: string): Promise<DreamEntry | undefined> {
+    const dream = trashService.restoreDream(id);
+    if (!dream) return undefined;
+    await db.dreams.put(dream);
+    dreamSignService.scanAndDetectSigns().catch(() => {});
+    syncService.triggerAutoSync({ immediate: true });
+    try {
+      window.dispatchEvent(new CustomEvent('oneiric:dream-saved', { detail: dream }));
+    } catch {
+      // ignore
+    }
+    return dream;
+  },
+
+  getTrash(): TrashedDream[] {
+    return trashService.getTrash();
+  },
+
+  permanentlyDeleteFromTrash(id: string): void {
+    trashService.permanentlyDelete(id);
+    syncService.triggerAutoSync({ immediate: true });
+    try {
+      window.dispatchEvent(new CustomEvent('oneiric:dream-saved', { detail: { id, permanentlyDeleted: true } }));
+    } catch {
+      // ignore
+    }
+  },
+
+  emptyTrash(): void {
+    trashService.emptyTrash();
+    syncService.triggerAutoSync({ immediate: true });
+    try {
+      window.dispatchEvent(new CustomEvent('oneiric:dream-saved', { detail: { emptyTrash: true } }));
     } catch {
       // ignore
     }

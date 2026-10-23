@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { backupService } from '../services/backupService';
+import { celebrationService } from '../services/celebrationService';
 import { ImportValidationResult } from '../types/backup';
 import { Button } from '../components/common/Button';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
@@ -282,7 +283,42 @@ export const SettingsPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Section 3: Privacy & Local Storage Architecture */}
+      {/* Section 3: Celebration & Party Mode Diagnostics (Developer / QA Test Tools) */}
+      <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
+        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
+          <Sparkles className="w-5 h-5 text-amber-400" />
+          <div>
+            <h2 className="text-base font-bold text-slate-100">Party Mode & Celebration Diagnostics</h2>
+            <p className="text-xs text-slate-400">
+              Developer and QA testing suite for the Lucid Dream Celebration system
+            </p>
+          </div>
+        </div>
+
+        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+          Preview the celebratory particle explosion and milestone animations safely without altering your dream database or creating permanent fake achievements.
+        </p>
+
+        <div className="flex flex-wrap items-center gap-3 pt-2">
+          <Button
+            variant="secondary"
+            onClick={() => celebrationService.triggerDevPreview(true)}
+            icon={<Sparkles className="w-4 h-4 text-amber-400" />}
+          >
+            Preview First Lucid Dream (Full Explosion)
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => celebrationService.triggerDevPreview(false)}
+            icon={<CheckCircle2 className="w-4 h-4 text-blue-400" />}
+          >
+            Preview Subsequent Lucid Dream (Standard)
+          </Button>
+        </div>
+      </section>
+
+      {/* Section 4: Privacy & Local Storage Architecture */}
       <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
         <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
           <ShieldCheck className="w-5 h-5 text-emerald-400" />

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DreamDraft, DreamEntry, DreamScene, PREDEFINED_EMOTIONS, LucidityLevel, RecallQuality } from '../../types/dream';
 import { dreamService } from '../../services/dreamService';
+import { celebrationService } from '../../services/celebrationService';
 import { getTodayDateString } from '../../utils/dateUtils';
 import { Button } from '../common/Button';
 import {
@@ -20,6 +21,9 @@ import {
   Layers,
   Plus,
   Trash2,
+  Link2,
+  FileText,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface DreamEditorProps {
@@ -31,11 +35,16 @@ interface DreamEditorProps {
 }
 
 const DRAFT_STORAGE_KEY = 'oneiric_active_dream_draft';
+const getEditDraftKey = (id: string) => `oneiric_edit_draft_${id}`;
 
-function getInitialDraft(isEditing: boolean) {
-  if (isEditing) return null;
+interface SavedDraftPayload extends Partial<DreamDraft> {
+  savedAt?: number;
+}
+
+function getInitialDraft(isEditing: boolean, initialId?: string): SavedDraftPayload | null {
   try {
-    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+    const key = isEditing && initialId ? getEditDraftKey(initialId) : DRAFT_STORAGE_KEY;
+    const savedDraft = localStorage.getItem(key);
     if (savedDraft) {
       const parsed = JSON.parse(savedDraft);
       if (parsed.title || parsed.narrative) {
@@ -56,45 +65,64 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   isModal = false,
 }) => {
   const isEditing = !!initialDream;
-  const draft = getInitialDraft(isEditing);
+  const newDraft = getInitialDraft(false);
+  const recoveredEditDraft = isEditing && initialDream ? getInitialDraft(true, initialDream.id) : null;
 
   // Initial values
-  const [title, setTitle] = useState(initialDream?.title || draft?.title || '');
-  const [narrative, setNarrative] = useState(initialDream?.narrative || draft?.narrative || '');
-  const [date, setDate] = useState(initialDream?.date || draft?.date || getTodayDateString());
-  const [wakeUpTime, setWakeUpTime] = useState(initialDream?.wakeUpTime || draft?.wakeUpTime || '');
-  const [vividness, setVividness] = useState<number>(initialDream?.vividness || draft?.vividness || 3);
+  const [title, setTitle] = useState(initialDream?.title || newDraft?.title || '');
+  const [narrative, setNarrative] = useState(initialDream?.narrative || newDraft?.narrative || '');
+  const [date, setDate] = useState(initialDream?.date || newDraft?.date || getTodayDateString());
+  const [wakeUpTime, setWakeUpTime] = useState(initialDream?.wakeUpTime || newDraft?.wakeUpTime || '');
+  const [vividness, setVividness] = useState<number>(initialDream?.vividness || newDraft?.vividness || 3);
   const [recallQuality, setRecallQuality] = useState<RecallQuality>(
-    initialDream?.recallQuality || draft?.recallQuality || 'detailed'
+    initialDream?.recallQuality || newDraft?.recallQuality || 'detailed'
   );
   const [lucidity, setLucidity] = useState<LucidityLevel>(
-    initialDream?.lucidity || draft?.lucidity || 'non-lucid'
+    initialDream?.lucidity || newDraft?.lucidity || 'non-lucid'
   );
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>(
-    initialDream?.emotions || draft?.emotions || []
+    initialDream?.emotions || newDraft?.emotions || []
   );
-  const [tags, setTags] = useState<string[]>(initialDream?.tags || draft?.tags || []);
+  const [tags, setTags] = useState<string[]>(initialDream?.tags || newDraft?.tags || []);
   const [tagInput, setTagInput] = useState('');
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [dreamSignsNotes, setDreamSignsNotes] = useState(
-    initialDream?.dreamSignsNotes || draft?.dreamSignsNotes || ''
+    initialDream?.dreamSignsNotes || newDraft?.dreamSignsNotes || ''
   );
+
+  // Autosave and Draft Recovery States
+  const [hasRestoredDraft, setHasRestoredDraft] = useState(!isEditing && !!newDraft);
+  const [hasRestoredEditDraft, setHasRestoredEditDraft] = useState(Boolean(recoveredEditDraft));
+  const [autosaveTime, setAutosaveTime] = useState<string | null>(null);
+
+  // Related Dreams Linking
+  const [relatedDreamIds, setRelatedDreamIds] = useState<string[]>(initialDream?.relatedDreamIds || []);
+  const [availableDreamsForLinking, setAvailableDreamsForLinking] = useState<DreamEntry[]>([]);
 
   // Phase 2 Intelligence Fields
   const [scenes, setScenes] = useState<DreamScene[]>(() => {
     if (initialDream?.scenes && initialDream.scenes.length > 0) {
       return initialDream.scenes;
     }
-    const d = draft as (Partial<DreamDraft> & { scenes?: DreamScene[] }) | null;
+    const d = newDraft as (Partial<DreamDraft> & { scenes?: DreamScene[] }) | null;
     return d?.scenes || [];
   });
+
+  const isDirty = isEditing
+    ? title !== (initialDream?.title || '') ||
+      narrative !== (initialDream?.narrative || '') ||
+      dreamSignsNotes !== (initialDream?.dreamSignsNotes || '') ||
+      vividness !== (initialDream?.vividness || 3) ||
+      lucidity !== (initialDream?.lucidity || 'non-lucid')
+    : Boolean(title.trim() || narrative.trim() || dreamSignsNotes.trim() || scenes.length > 0);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(
     !!(
       initialDream?.falseAwakening ||
       (initialDream?.dreamControl && initialDream.dreamControl > 0) ||
       initialDream?.interpretationNotes ||
       (initialDream?.scenes && initialDream.scenes.length > 0) ||
-      ((draft as unknown as { scenes?: DreamScene[] })?.scenes && (draft as unknown as { scenes?: DreamScene[] }).scenes!.length > 0)
+      (initialDream?.relatedDreamIds && initialDream.relatedDreamIds.length > 0) ||
+      ((newDraft as unknown as { scenes?: DreamScene[] })?.scenes && (newDraft as unknown as { scenes?: DreamScene[] }).scenes!.length > 0)
     )
   );
   const [falseAwakening, setFalseAwakening] = useState<boolean>(initialDream?.falseAwakening || false);
@@ -113,7 +141,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
 
   const [dreamControl, setDreamControl] = useState<number>(initialDream?.dreamControl || 0);
   const [scenesCount, setScenesCount] = useState<number>(
-    initialDream?.scenes?.length || initialDream?.scenesCount || (draft as unknown as { scenes?: DreamScene[] })?.scenes?.length || 1
+    initialDream?.scenes?.length || initialDream?.scenesCount || (newDraft as unknown as { scenes?: DreamScene[] })?.scenes?.length || 1
   );
   const [interpretationNotes, setInterpretationNotes] = useState<string>(
     initialDream?.interpretationNotes || ''
@@ -125,7 +153,6 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
 
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [hasRestoredDraft, setHasRestoredDraft] = useState(!!draft);
 
   const handleAddScene = () => {
     const nextNumber = scenes.length + 1;
@@ -155,40 +182,57 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     setScenesCount(Math.max(1, renumbered.length));
   };
 
-  // Load distinct tags from DB
+  // Load distinct tags and existing dreams for linking from DB
   useEffect(() => {
     dreamService.getDistinctTags().then((t) => setAvailableTags(t));
-  }, []);
+    dreamService.getAllDreams().then((all) => {
+      setAvailableDreamsForLinking(all.filter((d) => d.id !== initialDream?.id));
+    });
+  }, [initialDream?.id]);
 
-  // Persist draft for unsaved work when creating
+  // Persist draft for unsaved work (both new dreams and edits)
   useEffect(() => {
-    if (!isEditing) {
-      if (title.trim() || narrative.trim() || dreamSignsNotes.trim() || scenes.length > 0) {
-        const draftObj = {
-          title,
-          narrative,
-          date,
-          wakeUpTime,
-          vividness,
-          recallQuality,
-          lucidity,
-          emotions: selectedEmotions,
-          tags,
-          dreamSignsNotes,
-          falseAwakening,
-          dreamControl,
-          scenesCount: scenes.length > 0 ? scenes.length : scenesCount,
-          scenes: scenes.length > 0 ? scenes : undefined,
-          interpretationNotes,
-          realityChecksUseful: usefulRealityChecks,
-        };
-        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftObj));
-      } else {
-        localStorage.removeItem(DRAFT_STORAGE_KEY);
+    const hasContent = Boolean(
+      title.trim() || narrative.trim() || dreamSignsNotes.trim() || scenes.length > 0
+    );
+
+    if (hasContent) {
+      const draftObj: SavedDraftPayload = {
+        title,
+        narrative,
+        date,
+        wakeUpTime,
+        vividness,
+        recallQuality,
+        lucidity,
+        emotions: selectedEmotions,
+        tags,
+        dreamSignsNotes,
+        falseAwakening,
+        dreamControl,
+        scenesCount: scenes.length > 0 ? scenes.length : scenesCount,
+        scenes: scenes.length > 0 ? scenes : undefined,
+        interpretationNotes,
+        realityChecksUseful: usefulRealityChecks,
+        relatedDreamIds: relatedDreamIds.length > 0 ? relatedDreamIds : undefined,
+        savedAt: Date.now(),
+      };
+
+      const key = isEditing && initialDream ? getEditDraftKey(initialDream.id) : DRAFT_STORAGE_KEY;
+      try {
+        localStorage.setItem(key, JSON.stringify(draftObj));
+        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        setTimeout(() => setAutosaveTime(timeStr), 0);
+      } catch {
+        // ignore storage errors
       }
+    } else if (!isEditing) {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      setTimeout(() => setAutosaveTime(null), 0);
     }
   }, [
     isEditing,
+    initialDream,
     title,
     narrative,
     date,
@@ -205,7 +249,32 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     scenes,
     interpretationNotes,
     usefulRealityChecks,
+    relatedDreamIds,
   ]);
+
+  const applyRecoveredEditDraft = () => {
+    if (!recoveredEditDraft) return;
+    if (recoveredEditDraft.title !== undefined) setTitle(recoveredEditDraft.title);
+    if (recoveredEditDraft.narrative !== undefined) setNarrative(recoveredEditDraft.narrative);
+    if (recoveredEditDraft.date !== undefined) setDate(recoveredEditDraft.date);
+    if (recoveredEditDraft.wakeUpTime !== undefined) setWakeUpTime(recoveredEditDraft.wakeUpTime);
+    if (recoveredEditDraft.vividness !== undefined) setVividness(recoveredEditDraft.vividness);
+    if (recoveredEditDraft.recallQuality !== undefined) setRecallQuality(recoveredEditDraft.recallQuality);
+    if (recoveredEditDraft.lucidity !== undefined) setLucidity(recoveredEditDraft.lucidity);
+    if (recoveredEditDraft.emotions !== undefined) setSelectedEmotions(recoveredEditDraft.emotions);
+    if (recoveredEditDraft.tags !== undefined) setTags(recoveredEditDraft.tags);
+    if (recoveredEditDraft.dreamSignsNotes !== undefined) setDreamSignsNotes(recoveredEditDraft.dreamSignsNotes);
+    if (recoveredEditDraft.scenes !== undefined) setScenes(recoveredEditDraft.scenes);
+    if (recoveredEditDraft.relatedDreamIds !== undefined) setRelatedDreamIds(recoveredEditDraft.relatedDreamIds);
+    setHasRestoredEditDraft(false);
+  };
+
+  const discardRecoveredEditDraft = () => {
+    if (initialDream) {
+      localStorage.removeItem(getEditDraftKey(initialDream.id));
+    }
+    setHasRestoredEditDraft(false);
+  };
 
   const toggleEmotion = (emotion: string) => {
     setSelectedEmotions((prev) =>
@@ -290,20 +359,38 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
           : undefined,
         realityChecksUseful: usefulRealityChecks.length > 0 ? usefulRealityChecks : undefined,
         interpretationNotes: interpretationNotes.trim() || undefined,
+        relatedDreamIds: relatedDreamIds.length > 0 ? relatedDreamIds : undefined,
       };
 
       let savedEntry: DreamEntry;
       if (isEditing && initialDream) {
         await dreamService.updateDream(initialDream.id, draftData);
+        localStorage.removeItem(getEditDraftKey(initialDream.id));
         savedEntry = {
           ...initialDream,
           ...draftData,
           updatedAt: Date.now(),
         };
       } else {
+        // Derive celebration eligibility before saving to accurately count existing entries
+        const eligibility = await celebrationService.checkCelebrationEligibility(
+          !isEditing,
+          draftData.lucidity
+        );
+
         savedEntry = await dreamService.createDream(draftData);
         // Clear local storage draft
         localStorage.removeItem(DRAFT_STORAGE_KEY);
+
+        // If newly saved entry is confirmed as lucid, trigger party celebration
+        if (eligibility.shouldCelebrate) {
+          celebrationService.triggerCelebration({
+            isFirstLucid: eligibility.isFirstLucid,
+            lucidCount: eligibility.lucidCount,
+            dreamTitle: savedEntry.title,
+            dreamId: savedEntry.id,
+          });
+        }
       }
 
       onSaved(savedEntry);
@@ -330,6 +417,8 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   };
 
   const wordCount = narrative.trim() ? narrative.trim().split(/\s+/).length : 0;
+  const charCount = narrative.length;
+  const readingTime = Math.max(1, Math.ceil(wordCount / 200));
 
   const vividnessLabels: Record<number, string> = {
     1: '1 - Faint & Ghostly',
@@ -350,7 +439,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
 
   return (
     <form onSubmit={handleSave} className="space-y-6">
-      {/* Draft Restored Banner */}
+      {/* Draft Restored Banner (New Dream) */}
       {hasRestoredDraft && (
         <div className="flex items-center justify-between p-3 rounded-lg bg-slate-900/80 border border-slate-800 text-xs text-slate-300">
           <div className="flex items-center gap-2">
@@ -366,6 +455,54 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
           </button>
         </div>
       )}
+
+      {/* Recovered Edit Draft Banner (Existing Dream) */}
+      {hasRestoredEditDraft && recoveredEditDraft && (
+        <div className="flex items-center justify-between p-3 rounded-lg bg-amber-950/40 border border-amber-800/60 text-xs text-amber-200">
+          <div className="flex items-center gap-2">
+            <Compass className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>Found unsaved edits for this entry from your last session ({recoveredEditDraft.savedAt ? new Date(recoveredEditDraft.savedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'earlier'}).</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={applyRecoveredEditDraft}
+              className="px-2.5 py-1 rounded bg-amber-600 hover:bg-amber-500 text-white font-medium text-xs cursor-pointer"
+            >
+              Restore Edits
+            </button>
+            <button
+              type="button"
+              onClick={discardRecoveredEditDraft}
+              className="text-xs text-amber-400 hover:text-amber-300 underline cursor-pointer"
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Live Autosave & Narrative Metrics Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs text-slate-400">
+        <div className="flex items-center gap-2">
+          {autosaveTime ? (
+            <span className="inline-flex items-center gap-1.5 text-emerald-400/90 font-mono text-[11px]">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+              Autosaved {autosaveTime}
+            </span>
+          ) : isDirty ? (
+            <span className="inline-flex items-center gap-1.5 text-amber-400/80 font-mono text-[11px]">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              Unsaved changes
+            </span>
+          ) : (
+            <span className="text-slate-500 text-[11px]">Local autosave & crash recovery active</span>
+          )}
+        </div>
+        <div className="text-[11px] text-slate-400 font-mono">
+          {wordCount} words · {charCount} chars · ~{readingTime} min read
+        </div>
+      </div>
 
       {/* Validation Error Banner */}
       {validationError && (
@@ -974,6 +1111,73 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
                 rows={3}
                 className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 text-xs leading-relaxed focus:outline-none focus:border-blue-500"
               />
+            </div>
+
+            {/* Connected Dreams (Continuations / Narrative Arcs) */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1.5">
+                <Link2 className="w-3.5 h-3.5 text-blue-400" />
+                <span>Connected Dreams (Continuations & Recurring Themes):</span>
+              </label>
+              <p className="text-[11px] text-slate-400 mb-2">
+                Link this dream to previous entries that share characters, narrative continuity, or identical settings.
+              </p>
+
+              {relatedDreamIds.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2.5">
+                  {relatedDreamIds.map((rId) => {
+                    const match = availableDreamsForLinking.find((d) => d.id === rId);
+                    return (
+                      <span
+                        key={rId}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-950/60 border border-blue-800/60 text-xs text-blue-200"
+                      >
+                        <FileText className="w-3 h-3 text-blue-400 shrink-0" />
+                        <span className="font-medium truncate max-w-[200px]">
+                          {match ? match.title : `Dream ${rId.slice(0, 8)}`}
+                        </span>
+                        {match && (
+                          <span className="text-[10px] text-blue-400 font-mono">({match.date})</span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setRelatedDreamIds((prev) => prev.filter((id) => id !== rId))}
+                          className="text-blue-300 hover:text-white cursor-pointer ml-1 font-bold"
+                          aria-label="Unlink dream"
+                        >
+                          &times;
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+
+              {availableDreamsForLinking.length > 0 ? (
+                <div className="max-w-md">
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      const selId = e.target.value;
+                      if (selId && !relatedDreamIds.includes(selId)) {
+                        setRelatedDreamIds((prev) => [...prev, selId]);
+                      }
+                    }}
+                    className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  >
+                    <option value="">+ Link another dream to this entry...</option>
+                    {availableDreamsForLinking
+                      .filter((d) => !relatedDreamIds.includes(d.id))
+                      .map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.date} — {d.title} ({d.lucidity})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              ) : (
+                <span className="text-[11px] text-slate-500 italic">No other dreams recorded yet to link.</span>
+              )}
             </div>
           </div>
         )}
