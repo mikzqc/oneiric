@@ -9,7 +9,7 @@ describe('<LucidCelebrationModal /> Pure Celebration UI', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it('renders enormous congratulatory headlines and lucid message without gamification or achievement badges', () => {
+  it('renders enormous congratulatory headlines and lucid message without gamification badges or return button', () => {
     const event: LucidCelebrationEvent = {
       isFirstLucid: true,
       lucidCount: 1,
@@ -24,6 +24,7 @@ describe('<LucidCelebrationModal /> Pure Celebration UI', () => {
     expect(screen.getByText('CONGRATULATIONS!')).toBeInTheDocument();
     expect(screen.getByText('You had a lucid dream!')).toBeInTheDocument();
     expect(screen.getByText(/The Celestial Lake/)).toBeInTheDocument();
+    expect(screen.getByText('Click anywhere to continue')).toBeInTheDocument();
 
     // Verify NO gamification / achievement text or badges exist
     expect(screen.queryByText(/FIRST LUCID DREAM UNLOCKED/i)).not.toBeInTheDocument();
@@ -31,15 +32,17 @@ describe('<LucidCelebrationModal /> Pure Celebration UI', () => {
     expect(screen.queryByText(/Milestone/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Achievement/i)).not.toBeInTheDocument();
 
-    // Return to Journal button works
-    const returnBtn = screen.getByRole('button', { name: /Return to Journal/i });
-    expect(returnBtn).toBeInTheDocument();
+    // Verify Return to Journal button and top-right close X button are removed
+    expect(screen.queryByRole('button', { name: /Return to Journal/i })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Dismiss celebration/i)).not.toBeInTheDocument();
 
-    fireEvent.click(returnBtn);
+    // Clicking anywhere on the screen dismisses
+    const dialog = screen.getByRole('dialog');
+    fireEvent.click(dialog);
     expect(handleDismiss).toHaveBeenCalledTimes(1);
   });
 
-  it('renders "Want to turn it off?" link on subsequent celebrations and navigates to settings', () => {
+  it('renders "Want to turn it off?" link and clicking it calls onGoToSettings without propagating dismiss', () => {
     const event: LucidCelebrationEvent = {
       isFirstLucid: false,
       lucidCount: 3,
@@ -56,30 +59,16 @@ describe('<LucidCelebrationModal /> Pure Celebration UI', () => {
       />
     );
 
-    // Headlines
-    expect(screen.getByText('YOU DID IT!')).toBeInTheDocument();
-    expect(screen.getByText('CONGRATULATIONS!')).toBeInTheDocument();
-    expect(screen.getByText('You had a lucid dream!')).toBeInTheDocument();
-
-    // Subsequent has the link to turn it off
+    // Has the link to turn it off
     const turnOffLink = screen.getByRole('button', { name: /Want to turn it off\?/i });
     expect(turnOffLink).toBeInTheDocument();
 
     fireEvent.click(turnOffLink);
     expect(handleGoToSettings).toHaveBeenCalledTimes(1);
+    expect(handleDismiss).not.toHaveBeenCalled();
   });
 
-  it('does NOT render "Want to turn it off?" link on the first lucid dream celebration', () => {
-    const event: LucidCelebrationEvent = {
-      isFirstLucid: true,
-      lucidCount: 1,
-    };
-
-    render(<LucidCelebrationModal event={event} onDismiss={() => {}} />);
-    expect(screen.queryByRole('button', { name: /Want to turn it off\?/i })).not.toBeInTheDocument();
-  });
-
-  it('dismisses when clicking close button or pressing Escape', () => {
+  it('dismisses when pressing Escape', () => {
     const event: LucidCelebrationEvent = {
       isFirstLucid: false,
       lucidCount: 2,
@@ -91,11 +80,6 @@ describe('<LucidCelebrationModal /> Pure Celebration UI', () => {
     // Dismiss with Escape key
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(handleDismiss).toHaveBeenCalledTimes(1);
-
-    // Dismiss with top-right X button
-    const closeBtn = screen.getByLabelText(/Dismiss celebration/i);
-    fireEvent.click(closeBtn);
-    expect(handleDismiss).toHaveBeenCalledTimes(2);
   });
 
   it('displays developer test mode indicator when isDevPreview is true', () => {

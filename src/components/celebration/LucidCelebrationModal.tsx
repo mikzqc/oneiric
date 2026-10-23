@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { LucidCelebrationEvent } from '../../services/celebrationService';
-import { Button } from '../common/Button';
-import { X } from 'lucide-react';
+import { celebrationAudio } from '../../utils/celebrationSound';
 
 interface LucidCelebrationModalProps {
   event: LucidCelebrationEvent | null;
@@ -43,8 +42,8 @@ export const LucidCelebrationModal: React.FC<LucidCelebrationModalProps> = ({
   onGoToSettings,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  const dismissBtnRef = useRef<HTMLButtonElement | null>(null);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
     if (typeof window !== 'undefined' && window.matchMedia) {
       return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -74,23 +73,31 @@ export const LucidCelebrationModal: React.FC<LucidCelebrationModalProps> = ({
     }
   }, [onGoToSettings, onDismiss]);
 
-  // Lock body scroll and handle Escape key
+  // Play celebratory sound effects, lock body scroll, and handle Escape / Enter keys
   useEffect(() => {
     if (!event) return;
+
+    // Play synthesized celebratory fanfare and pop sound effect
+    try {
+      celebrationAudio.playCelebrationSound(event.isFirstLucid);
+    } catch {
+      // Audio playback failsafe
+    }
 
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
         handleDismiss();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
 
+    // Focus container so key events are caught immediately
     const timer = setTimeout(() => {
-      dismissBtnRef.current?.focus();
-    }, 100);
+      containerRef.current?.focus();
+    }, 50);
 
     return () => {
       document.body.style.overflow = originalOverflow;
@@ -236,10 +243,13 @@ export const LucidCelebrationModal: React.FC<LucidCelebrationModalProps> = ({
 
   return (
     <div
+      ref={containerRef}
       role="dialog"
       aria-modal="true"
+      tabIndex={0}
       aria-labelledby="celebration-heading"
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-6 sm:p-12 overflow-hidden bg-[#0b132b]/95 backdrop-blur-xl animate-fadeIn select-none"
+      onClick={handleDismiss}
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-6 sm:p-12 overflow-hidden bg-[#0b132b]/95 backdrop-blur-xl animate-fadeIn select-none cursor-pointer focus:outline-none"
     >
       {/* Full-Screen Confetti Canvas */}
       {!prefersReducedMotion && (
@@ -260,18 +270,8 @@ export const LucidCelebrationModal: React.FC<LucidCelebrationModalProps> = ({
         aria-hidden="true"
       />
 
-      {/* Subtle Close Button (Top Right) */}
-      <button
-        type="button"
-        onClick={handleDismiss}
-        className="absolute top-6 right-6 text-slate-400 hover:text-white p-2 rounded-full hover:bg-slate-800/60 transition-colors cursor-pointer z-30 focus-visible:ring-2 focus-visible:ring-blue-500"
-        aria-label="Dismiss celebration"
-      >
-        <X className="w-6 h-6" />
-      </button>
-
       {/* Dominant Screen Content */}
-      <div className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto px-4">
+      <div className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto px-4 pointer-events-auto">
         {/* Giant Hero Headline */}
         <h1
           id="celebration-heading"
@@ -297,24 +297,21 @@ export const LucidCelebrationModal: React.FC<LucidCelebrationModalProps> = ({
           </p>
         )}
 
-        {/* Action Controls & Turn Off Link */}
-        <div className="mt-8 sm:mt-12 flex flex-col items-center gap-3">
-          <Button
-            ref={dismissBtnRef}
-            variant="primary"
-            size="lg"
-            className="px-8 py-3 text-base sm:text-lg font-semibold tracking-wide shadow-2xl shadow-blue-600/40 hover:shadow-blue-500/60 hover:scale-[1.02] active:scale-[0.98] transition-all rounded-xl cursor-pointer"
-            onClick={handleDismiss}
-          >
-            Return to Journal
-          </Button>
+        {/* Dismiss Instruction & Turn Off Link */}
+        <div className="mt-8 sm:mt-10 flex flex-col items-center gap-3">
+          <p className="text-xs sm:text-sm text-slate-400 tracking-wider uppercase font-medium">
+            Click anywhere to continue
+          </p>
 
-          {/* Subsequent celebration toggle shortcut */}
-          {!event.isFirstLucid && !event.isDevPreview && (
+          {/* Turn it off link (redirects to settings) */}
+          {onGoToSettings && (
             <button
               type="button"
-              onClick={handleGoToSettings}
-              className="text-xs text-slate-400 hover:text-slate-200 underline underline-offset-4 transition-colors cursor-pointer pt-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleGoToSettings();
+              }}
+              className="text-xs text-blue-400 hover:text-blue-300 underline underline-offset-4 transition-colors cursor-pointer pt-1"
             >
               Want to turn it off?
             </button>
