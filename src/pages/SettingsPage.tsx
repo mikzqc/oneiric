@@ -68,7 +68,7 @@ export const SettingsPage: React.FC = () => {
     try {
       const updated = await wakeTimeService.resetToAuto();
       setWakeConfig(updated);
-      showFeedback('success', `Wake-up time reset to auto default (${updated.wakeTime}) in ${updated.timeZone}.`);
+      showFeedback('success', `Wake-up time reset to current local time (${updated.wakeTime}) in ${updated.timeZone}.`);
     } finally {
       setIsRefreshingTz(false);
     }
@@ -602,11 +602,11 @@ export const SettingsPage: React.FC = () => {
                       : 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60'
                   }`}
                 >
-                  {wakeConfig.isManualOverride ? 'Manual Override' : 'Auto-Initialized'}
+                  {wakeConfig.isManualOverride ? 'Manual Override' : 'Current Clock Time'}
                 </span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed mb-3">
-                Automatically populates new dream drafts. You can edit this default here or modify individual entries directly in the dream editor.
+                Automatically initializes new entries with the actual current time in your local time zone upon waking. You can set a fixed preference here or adjust individual entries in the dream editor.
               </p>
             </div>
 
@@ -625,7 +625,7 @@ export const SettingsPage: React.FC = () => {
                   disabled={isRefreshingTz}
                   className="text-xs text-slate-400 hover:text-slate-200"
                 >
-                  Reset to Auto
+                  Reset to Current Time
                 </Button>
               )}
             </div>
@@ -655,7 +655,7 @@ export const SettingsPage: React.FC = () => {
               <strong>Are dreams sent anywhere in plaintext?</strong> No. Your dreams remain strictly on your device. If you use Multi-Device Sync, your entries are encrypted locally with your secret passphrase via AES-256-GCM before transmission. The relay server only ever receives opaque ciphertext. Zero analytics, telemetry, or external AI APIs are ever used.
             </li>
             <li>
-              <strong>Can I use Oneiric offline?</strong> Yes. Once loaded in your browser, Oneiric is fully functional without an internet connection.
+              <strong>Can I use Oneiric offline?</strong> Yes. Once loaded in your browser, Oneiric is fully functional without an internet connection (you can record, edit, browse, and analyze dreams completely offline). However, multi-device cloud sync requires an active internet connection to communicate with the encrypted relay, so syncing is unavailable while offline.
             </li>
           </ul>
         </div>

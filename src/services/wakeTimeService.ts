@@ -1,16 +1,13 @@
-import { db } from '../db/database';
-
 export interface WakeTimeConfig {
-  wakeTime: string; // HH:mm format, e.g. "07:00"
+  wakeTime: string; // HH:mm format, e.g. "07:30", "18:15"
   timeZone: string; // IANA identifier, e.g. "Asia/Kolkata", "America/New_York"
   isManualOverride: boolean; // true if user explicitly entered or modified their wake-up time
-  source: 'auto-detected' | 'manual' | 'default';
+  source: 'current-time' | 'manual';
   lastDetectedAt: number; // timestamp in ms
   city?: string;
   country?: string;
 }
 
-export const DEFAULT_WAKE_TIME = '07:00';
 export const WAKE_TIME_STORAGE_KEY = 'oneiric_wake_time_config';
 export const WAKE_TIME_CHANGED_EVENT = 'oneiric:wake-time-changed';
 export const TZ_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -41,6 +38,40 @@ export function getBrowserTimeZone(): string {
     // ignore
   }
   return 'UTC';
+}
+
+/**
+ * Gets the current clock time formatted as HH:mm in the specified IANA time zone.
+ * Uses actual current time, avoiding fixed hardcoded hours or inferred values.
+ */
+export function getCurrentTimeInTimeZone(timeZone?: string, date: Date = new Date()): string {
+  const tz = isValidTimeZone(timeZone) ? timeZone! : getBrowserTimeZone();
+  try {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+    const parts = formatter.formatToParts(date);
+    let hour = '';
+    let minute = '';
+    for (const part of parts) {
+      if (part.type === 'hour') hour = part.value;
+      if (part.type === 'minute') minute = part.value;
+    }
+    if (hour && minute) {
+      // In some locales/engines, 24:00 may be returned for midnight
+      if (hour === '24') hour = '00';
+      return `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`;
+    }
+  } catch {
+    // Fallback to local machine time if timeZone formatting fails
+  }
+
+  const h = String(date.getHours()).padStart(2, '0');
+  const m = String(date.getMinutes()).padStart(2, '0');
+  return `${h}:${m}`;
 }
 
 /**
@@ -104,15 +135,18 @@ export async function fetchIpTimeZone(
 export const wakeTimeService = {
   /**
    * Synchronously retrieves the current wake-up time configuration.
-   * On first use, automatically initializes with the local time zone and default wake-up time.
+   * If the user has not set a manual override, wakeTime is dynamically computed
+   * from the actual current clock time in their detected time zone.
    */
   getWakeTimeConfig(): WakeTimeConfig {
+    const browserTz = getBrowserTimeZone();
+
     if (typeof window === 'undefined' || !window.localStorage) {
       return {
-        wakeTime: DEFAULT_WAKE_TIME,
-        timeZone: getBrowserTimeZone(),
+        wakeTime: getCurrentTimeInTimeZone(browserTz),
+        timeZone: browserTz,
         isManualOverride: false,
-        source: 'default',
+        source: 'current-time',
         lastDetectedAt: Date.now(),
       };
     }
@@ -121,13 +155,21 @@ export const wakeTimeService = {
       const raw = localStorage.getItem(WAKE_TIME_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<WakeTimeConfig>;
-        if (parsed && typeof parsed === 'object' && typeof parsed.wakeTime === 'string') {
-          const timeZone = isValidTimeZone(parsed.timeZone) ? parsed.timeZone! : getBrowserTimeZone();
+        if (parsed && typeof parsed === 'object') {
+          const timeZone = isValidTimeZone(parsed.timeZone) ? parsed.timeZone! : browserTz;
+          const isManual = Boolean(parsed.isManualOverride);
+
+          // If manual override: use saved manual wakeTime.
+          // If auto: use the actual CURRENT clock time in that time zone!
+          const wakeTime = isManual && typeof parsed.wakeTime === 'string' && parsed.wakeTime.trim()
+            ? parsed.wakeTime.trim()
+            : getCurrentTimeInTimeZone(timeZone);
+
           return {
-            wakeTime: parsed.wakeTime || DEFAULT_WAKE_TIME,
+            wakeTime,
             timeZone,
-            isManualOverride: Boolean(parsed.isManualOverride),
-            source: parsed.isManualOverride ? 'manual' : (parsed.source || 'auto-detected'),
+            isManualOverride: isManual,
+            source: isManual ? 'manual' : 'current-time',
             lastDetectedAt: typeof parsed.lastDetectedAt === 'number' ? parsed.lastDetectedAt : Date.now(),
             city: parsed.city,
             country: parsed.country,
@@ -135,16 +177,15 @@ export const wakeTimeService = {
         }
       }
     } catch {
-      // Corrupt storage payload; re-initialize
+      // Corrupt storage payload; re-initialize below
     }
 
-    // First-use initialization: auto-detect from browser/OS
-    const browserTz = getBrowserTimeZone();
+    // First-use initialization: auto-detect from browser/OS with current clock time
     const initialConfig: WakeTimeConfig = {
-      wakeTime: DEFAULT_WAKE_TIME,
+      wakeTime: getCurrentTimeInTimeZone(browserTz),
       timeZone: browserTz,
       isManualOverride: false,
-      source: 'auto-detected',
+      source: 'current-time',
       lastDetectedAt: Date.now(),
     };
 
@@ -158,11 +199,17 @@ export const wakeTimeService = {
   },
 
   /**
+   * Returns the initial wake-up time to populate a new entry.
+   * Uses manual override if user configured one, otherwise actual current clock time.
+   */
+  getInitialWakeTime(): string {
+    return this.getWakeTimeConfig().wakeTime;
+  },
+
+  /**
    * Asynchronously refreshes time zone via IP/browser and updates configuration.
-   * If the user has NOT customized their wake time (isManualOverride is false),
-   * updates the time zone and maintains the default wake time.
-   * If the user HAS customized their wake time, updates the time zone for accurate context
-   * but strictly preserves their customized wake-up time.
+   * Preserves manual user overrides if set.
+   * For automatic users, updates the time zone and recalculates current time.
    */
   async refreshTimeZone(force = false): Promise<WakeTimeConfig> {
     const current = this.getWakeTimeConfig();
@@ -197,9 +244,10 @@ export const wakeTimeService = {
       city,
       country,
       lastDetectedAt: now,
-      // If manual override is active, keep manual source and wakeTime;
-      // if not, retain auto-detected source
-      source: current.isManualOverride ? 'manual' : 'auto-detected',
+      wakeTime: current.isManualOverride
+        ? current.wakeTime
+        : getCurrentTimeInTimeZone(detectedTz),
+      source: current.isManualOverride ? 'manual' : 'current-time',
     };
 
     this.saveConfig(updatedConfig);
@@ -216,7 +264,7 @@ export const wakeTimeService = {
 
     const updatedConfig: WakeTimeConfig = {
       ...current,
-      wakeTime: cleanTime || DEFAULT_WAKE_TIME,
+      wakeTime: cleanTime || getCurrentTimeInTimeZone(current.timeZone),
       isManualOverride: true,
       source: 'manual',
     };
@@ -226,59 +274,20 @@ export const wakeTimeService = {
   },
 
   /**
-   * Resets the wake-up time to the automatic default and re-detects the current time zone.
+   * Resets the wake-up time to automatic current clock time and re-detects the current time zone.
    */
   async resetToAuto(): Promise<WakeTimeConfig> {
     const browserTz = getBrowserTimeZone();
     const updatedConfig: WakeTimeConfig = {
-      wakeTime: DEFAULT_WAKE_TIME,
+      wakeTime: getCurrentTimeInTimeZone(browserTz),
       timeZone: browserTz,
       isManualOverride: false,
-      source: 'auto-detected',
+      source: 'current-time',
       lastDetectedAt: Date.now(),
     };
 
     this.saveConfig(updatedConfig);
-    // Refresh with network IP detection if available
     return this.refreshTimeZone(true);
-  },
-
-  /**
-   * Returns suggested wake-up time for a new dream entry.
-   * Prioritizes user's manual override, then recent dream history average/mode, then auto default.
-   */
-  async getSuggestedWakeTime(): Promise<string> {
-    const config = this.getWakeTimeConfig();
-    if (config.isManualOverride && config.wakeTime) {
-      return config.wakeTime;
-    }
-
-    // Inspect user's recent non-sample dream entries to see if they have an established pattern
-    try {
-      const recent = await db.dreams
-        .orderBy('createdAt')
-        .reverse()
-        .filter((d) => Boolean(d.wakeUpTime && !d.isSample))
-        .limit(10)
-        .toArray();
-
-      if (recent.length >= 3) {
-        const counts: Record<string, number> = {};
-        for (const dream of recent) {
-          if (dream.wakeUpTime) {
-            counts[dream.wakeUpTime] = (counts[dream.wakeUpTime] || 0) + 1;
-          }
-        }
-        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-        if (sorted.length > 0 && sorted[0][1] >= 2) {
-          return sorted[0][0];
-        }
-      }
-    } catch {
-      // Fallback to configured default
-    }
-
-    return config.wakeTime || DEFAULT_WAKE_TIME;
   },
 
   /**

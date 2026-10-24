@@ -38,6 +38,21 @@ export function getRelayUrl(customRelayUrl?: string, vaultId?: string): string {
   return vaultId ? `${CANONICAL_CLOUD_RELAY}?id=${encodeURIComponent(vaultId)}` : CANONICAL_CLOUD_RELAY;
 }
 
+function formatRelayNetworkError(err: unknown, action = 'connect to'): string {
+  const isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
+  const rawMsg = err instanceof Error ? err.message : '';
+  const isNetworkFailure =
+    isOffline ||
+    /networkerror|failed to fetch|fetch failed|network request failed|load failed|connection refused|timeout/i.test(
+      rawMsg
+    );
+
+  if (isNetworkFailure || isOffline) {
+    return 'Unable to sync: You are currently offline. Please reconnect to Wi-Fi or the internet and try again.';
+  }
+  return `Unable to ${action} cloud sync relay: ${rawMsg || 'Network error'}. Please check your connection.`;
+}
+
 export const syncService = {
   /**
    * Retrieves saved sync vault credentials from local storage
@@ -183,11 +198,7 @@ export const syncService = {
         cache: 'no-store',
       });
     } catch (networkErr: unknown) {
-      throw new Error(
-        `Could not connect to the sync relay: ${
-          networkErr instanceof Error ? networkErr.message : 'Network error'
-        }. Please check your internet connection.`
-      );
+      throw new Error(formatRelayNetworkError(networkErr, 'initialize'));
     }
 
     if (!res.ok) {
@@ -383,11 +394,7 @@ export const syncService = {
             cache: 'no-store',
           });
         } catch (networkErr: unknown) {
-          throw new Error(
-            `Failed to connect to cloud relay: ${
-              networkErr instanceof Error ? networkErr.message : 'Network error'
-            }.`
-          );
+          throw new Error(formatRelayNetworkError(networkErr, 'connect to'));
         }
 
         if (!getRes.ok) {
@@ -455,11 +462,7 @@ export const syncService = {
             cache: 'no-store',
           });
         } catch (networkErr: unknown) {
-          throw new Error(
-            `Failed to update cloud relay: ${
-              networkErr instanceof Error ? networkErr.message : 'Network error'
-            }.`
-          );
+          throw new Error(formatRelayNetworkError(networkErr, 'update'));
         }
 
         if (!putRes.ok) {

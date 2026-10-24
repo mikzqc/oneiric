@@ -363,4 +363,21 @@ describe('syncService - Multi-Device Cloud Sync', () => {
     expect(await db.dreams.count()).toBe(1);
     expect(await db.dreams.get(d2.id)).toBeDefined();
   });
+
+  it('returns clean, user-friendly error when offline or network fails during sync', async () => {
+    syncService.saveCredentials({
+      vaultId: 'offline-vault-test',
+      passphrase: 'test-passphrase-clean-error',
+      createdAt: '2026-10-24T12:00:00Z',
+      autoSync: true,
+    });
+
+    // Mock fetch throwing a browser NetworkError (e.g. Wi-Fi turned off)
+    const networkError = new TypeError('NetworkError when attempting to fetch resource.');
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(networkError));
+
+    await expect(syncService.syncNow()).rejects.toThrow(
+      'Unable to sync: You are currently offline. Please reconnect to Wi-Fi or the internet and try again.'
+    );
+  });
 });

@@ -23,7 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [isConfigured, setIsConfigured] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [justSynced, setJustSynced] = useState(false);
-  const [syncFeedback, setSyncFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [syncFeedback, setSyncFeedback] = useState<{ type: 'success' | 'error'; text: string; tooltip?: string } | null>(null);
 
   useEffect(() => {
     const updateSync = () => {
@@ -60,9 +60,17 @@ export const Header: React.FC<HeaderProps> = ({
         setSyncFeedback(null);
       }, 3500);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Sync failed';
-      setSyncFeedback({ type: 'error', text: msg });
-      setTimeout(() => setSyncFeedback(null), 5000);
+      const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+      const rawMsg = err instanceof Error ? err.message : 'Sync failed';
+      const isNetwork = isOffline || /offline|networkerror|failed to fetch|fetch failed/i.test(rawMsg);
+
+      const buttonText = isNetwork ? 'Offline (No Connection)' : 'Sync Failed';
+      const tooltipText = isNetwork
+        ? 'Unable to sync: You are currently offline. Please reconnect to Wi-Fi or the internet and try again.'
+        : rawMsg;
+
+      setSyncFeedback({ type: 'error', text: buttonText, tooltip: tooltipText });
+      setTimeout(() => setSyncFeedback(null), 6000);
     } finally {
       setIsSyncing(false);
     }
@@ -95,11 +103,11 @@ export const Header: React.FC<HeaderProps> = ({
           type="button"
           onClick={handleQuickSync}
           title={
-            syncFeedback
-              ? syncFeedback.text
-              : isConfigured
+            syncFeedback?.tooltip ||
+            syncFeedback?.text ||
+            (isConfigured
               ? 'Encrypted Sync Active (Click to sync now)'
-              : 'Configure Multi-Device Sync in Settings'
+              : 'Configure Multi-Device Sync in Settings')
           }
           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors cursor-pointer ${
             syncFeedback?.type === 'error'

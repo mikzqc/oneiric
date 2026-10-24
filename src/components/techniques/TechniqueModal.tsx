@@ -182,7 +182,7 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
               type="time"
               value={wakeTime}
               onChange={(e) => setWakeTime(e.target.value)}
-              placeholder="06:30"
+              placeholder="HH:mm"
               className="w-full px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700 text-slate-100 text-xs focus:ring-2 focus:ring-blue-500"
             />
           </div>

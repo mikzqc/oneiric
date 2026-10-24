@@ -645,13 +645,13 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
               title={
                 wakeConfig.isManualOverride
                   ? `Manually set wake-up time (${wakeConfig.timeZone})`
-                  : `Auto-detected from local time zone (${wakeConfig.timeZone})`
+                  : `Current local time (${wakeConfig.timeZone})`
               }
               className="text-[10px] text-slate-400 font-normal flex items-center gap-1"
             >
               <Globe className="w-3 h-3 text-slate-500" />
               <span className="truncate max-w-[120px]">
-                {wakeConfig.isManualOverride ? 'Manual' : 'Auto'} ({wakeConfig.timeZone.split('/').pop()?.replace(/_/g, ' ') || wakeConfig.timeZone})
+                {wakeConfig.isManualOverride ? 'Manual' : 'Current Time'} ({wakeConfig.timeZone.split('/').pop()?.replace(/_/g, ' ') || wakeConfig.timeZone})
               </span>
             </span>
           </div>
@@ -660,7 +660,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
             type="time"
             value={wakeUpTime}
             onChange={(e) => handleWakeUpTimeChange(e.target.value)}
-            placeholder="07:00"
+            placeholder="HH:mm"
             className="w-full px-3 py-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-blue-500 transition-colors"
           />
         </div>
