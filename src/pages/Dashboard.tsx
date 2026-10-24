@@ -19,7 +19,6 @@ import {
   Sparkles,
   Flame,
   Calendar,
-  Compass,
   ArrowRight,
   Plus,
   Trash2,
@@ -202,34 +201,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="space-y-6">
       {/* Dashboard Header */}
-      <div className="p-5 sm:p-6 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight">
-            Dashboard
-          </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Track nocturnal recall, inspect dream signs, and monitor practice consistency.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-          <Button
-            variant="primary"
-            size="md"
-            icon={<Plus className="w-4 h-4" />}
-            onClick={onOpenNewDream}
-          >
-            Record Dream
-          </Button>
-          <Button
-            variant="secondary"
-            size="md"
-            icon={<Compass className="w-4 h-4 text-slate-400" />}
-            onClick={() => navigate('/techniques')}
-          >
-            Techniques
-          </Button>
-        </div>
+      <div className="p-5 sm:p-6 rounded-xl bg-slate-900/60 border border-slate-800">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight">
+          Dashboard
+        </h1>
+        <p className="text-sm text-slate-400 mt-1">
+          Track nocturnal recall, inspect dream signs, and monitor practice consistency.
+        </p>
       </div>
 
       {/* Primary Metrics Grid (4 Stats derived from actual stored data) */}
