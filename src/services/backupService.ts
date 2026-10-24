@@ -1,15 +1,19 @@
 import { db } from '../db/database';
-import { BackupPayload, ImportValidationResult } from '../types/backup';
+import { BackupPayload, EncryptedBackupEnvelope, ImportValidationResult } from '../types/backup';
 import { DreamEntry } from '../types/dream';
 import { TechniqueLog } from '../types/technique';
 import { DreamSign } from '../types/dreamSign';
 import { generateSampleData } from '../db/sampleData';
 import { tombstoneService } from '../utils/tombstones';
+import { cryptoService } from './cryptoService';
 import { dreamSignService } from './dreamSignService';
 
 const SAMPLE_PREVIEW_SESSION_KEY = 'oneiric_sample_preview_active';
 
 export const backupService = {
+  /**
+   * Exports complete unencrypted JSON backup with full tombstones and metadata
+   */
   async exportData(): Promise<BackupPayload> {
     // Exclude any ephemeral sample preview data from export
     const dreams = (await db.dreams.toArray()).filter((d) => !d.isSample);
@@ -17,6 +21,7 @@ export const backupService = {
     const customTags = await db.customTags.toArray();
     const dreamSigns = (await db.dreamSigns.toArray()).filter((s) => !s.isSample);
     const deletedIds = tombstoneService.getDeletedIds();
+    const tombstones = tombstoneService.getTombstonesMap();
 
     return {
       version: 2,
@@ -27,10 +32,103 @@ export const backupService = {
       customTags,
       dreamSigns,
       deletedIds,
+      tombstones,
     };
   },
 
+  /**
+   * Exports full journal archive encrypted with AES-256-GCM + PBKDF2 (100k iterations).
+   * Secrets and passphrases are NEVER stored in the output.
+   */
+  async exportEncryptedBackup(passphrase: string): Promise<string> {
+    const cleanPass = passphrase.trim();
+    if (!cleanPass) {
+      throw new Error('An encryption passphrase is required to export an encrypted backup.');
+    }
+    const data = await this.exportData();
+    const encrypted = await cryptoService.encryptData(data, cleanPass);
+    const envelope: EncryptedBackupEnvelope = {
+      version: 2,
+      source: 'oneiric',
+      encrypted: true,
+      algorithm: 'AES-256-GCM',
+      kdf: 'PBKDF2-SHA256',
+      iterations: 100000,
+      exportedAt: new Date().toISOString(),
+      salt: encrypted.salt,
+      iv: encrypted.iv,
+      ciphertext: encrypted.ciphertext,
+    };
+    return JSON.stringify(envelope, null, 2);
+  },
+
+  /**
+   * Detects if an uploaded JSON string is a password-protected encrypted backup
+   */
+  isEncryptedBackup(jsonString: string): boolean {
+    try {
+      const parsed = JSON.parse(jsonString) as Partial<EncryptedBackupEnvelope>;
+      return Boolean(
+        parsed &&
+        typeof parsed === 'object' &&
+        parsed.encrypted === true &&
+        parsed.ciphertext &&
+        parsed.salt &&
+        parsed.iv
+      );
+    } catch {
+      return false;
+    }
+  },
+
+  /**
+   * Decrypts an encrypted backup and validates the inner archive payload
+   */
+  async decryptAndValidateEncryptedBackup(
+    jsonString: string,
+    passphrase: string
+  ): Promise<ImportValidationResult> {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(jsonString);
+    } catch {
+      return { valid: false, error: 'The uploaded file is not valid JSON.' };
+    }
+
+    const envelope = parsed as Partial<EncryptedBackupEnvelope>;
+    if (!envelope.ciphertext || !envelope.salt || !envelope.iv) {
+      return { valid: false, error: 'Malformed encrypted backup: missing cryptographic envelope parameters.' };
+    }
+
+    try {
+      const decrypted = await cryptoService.decryptData<BackupPayload>(
+        {
+          ciphertext: envelope.ciphertext,
+          salt: envelope.salt,
+          iv: envelope.iv,
+        },
+        passphrase.trim()
+      );
+      return this.validateImportData(JSON.stringify(decrypted));
+    } catch {
+      return {
+        valid: false,
+        error: 'Decryption failed: Incorrect passphrase or the backup file has been tampered with or corrupted.',
+      };
+    }
+  },
+
+  /**
+   * Validates plain JSON backup data according to the Oneiric specification
+   */
   validateImportData(jsonString: string): ImportValidationResult {
+    if (this.isEncryptedBackup(jsonString)) {
+      return {
+        valid: false,
+        error: 'ENCRYPTED_BACKUP: This file is password-protected with AES-256-GCM. Please enter your passphrase to unlock it.',
+      };
+    }
+
     let parsed: unknown;
     try {
       parsed = JSON.parse(jsonString);
@@ -135,6 +233,9 @@ export const backupService = {
     };
   },
 
+  /**
+   * Imports validated backup data with rock-solid conflict resolution and tombstone preservation
+   */
   async importData(
     payload: BackupPayload,
     mode: 'merge' | 'replace'
@@ -143,9 +244,20 @@ export const backupService = {
     let newDreamsCount = 0;
 
     if (mode === 'replace') {
-      if (payload.deletedIds && payload.deletedIds.length > 0) {
+      const currentCount = await db.dreams.count();
+      // Safety guard: never wipe a populated journal if the incoming replacement has 0 dreams
+      if (currentCount > 0 && payload.dreams.length === 0) {
+        throw new Error(
+          'Restoration aborted: Cannot replace a populated dream journal with an empty backup file. Use "Merge" or verify your backup file.'
+        );
+      }
+
+      if (payload.tombstones && typeof payload.tombstones === 'object') {
+        tombstoneService.mergeTombstones(payload.tombstones);
+      } else if (payload.deletedIds && payload.deletedIds.length > 0) {
         tombstoneService.recordDeletions(payload.deletedIds);
       }
+
       newDreamsCount = payload.dreams.length;
       await db.transaction('rw', [db.dreams, db.techniqueLogs, db.customTags, db.dreamSigns], async () => {
         await db.dreams.clear();
@@ -154,7 +266,18 @@ export const backupService = {
         await db.dreamSigns.clear();
 
         if (payload.dreams.length > 0) {
-          await db.dreams.bulkAdd(payload.dreams);
+          // Normalize dreams before insertion
+          const normalized = payload.dreams.map((d) => ({
+            ...d,
+            tags: Array.isArray(d.tags) ? d.tags : [],
+            emotions: Array.isArray(d.emotions) ? d.emotions : [],
+            falseAwakening: Boolean(d.falseAwakening),
+            scenesCount: d.scenesCount || (d.scenes?.length || 1),
+            scenes: Array.isArray(d.scenes) ? d.scenes : [],
+            createdAt: Number(d.createdAt) || Date.now(),
+            updatedAt: Number(d.updatedAt) || Number(d.createdAt) || Date.now(),
+          }));
+          await db.dreams.bulkAdd(normalized);
         }
         if (payload.techniqueLogs && payload.techniqueLogs.length > 0) {
           await db.techniqueLogs.bulkAdd(payload.techniqueLogs);
@@ -168,14 +291,53 @@ export const backupService = {
       });
     } else {
       // Merge mode:
-      // 1. Process any incoming tombstones (deleted IDs)
-      if (payload.deletedIds && payload.deletedIds.length > 0) {
-        tombstoneService.recordDeletions(payload.deletedIds);
+      // 1. Process incoming tombstones and handle deletion-versus-edit conflicts
+      const incomingTombstones: Record<string, number> = {};
+      if (payload.tombstones && typeof payload.tombstones === 'object') {
+        Object.assign(incomingTombstones, payload.tombstones);
+      }
+      if (payload.deletedIds && Array.isArray(payload.deletedIds)) {
+        for (const id of payload.deletedIds) {
+          if (id && !incomingTombstones[id]) {
+            incomingTombstones[id] = Date.now();
+          }
+        }
+      }
+
+      if (Object.keys(incomingTombstones).length > 0) {
+        tombstoneService.mergeTombstones(incomingTombstones);
         await db.transaction('rw', [db.dreams, db.techniqueLogs, db.dreamSigns], async () => {
-          for (const delId of payload.deletedIds!) {
-            await db.dreams.delete(delId);
-            await db.techniqueLogs.delete(delId);
-            await db.dreamSigns.delete(delId);
+          for (const [delId, delTs] of Object.entries(incomingTombstones)) {
+            const localDream = await db.dreams.get(delId);
+            if (localDream) {
+              const localUpdated = Number(localDream.updatedAt || localDream.createdAt || 0);
+              // If local edit occurred strictly AFTER remote deletion, retain the edit and un-delete
+              if (localUpdated > delTs) {
+                tombstoneService.removeTombstone(delId);
+              } else {
+                await db.dreams.delete(delId);
+              }
+            }
+
+            const localTech = await db.techniqueLogs.get(delId);
+            if (localTech) {
+              const localUpdated = Number(localTech.updatedAt || localTech.createdAt || 0);
+              if (localUpdated > delTs) {
+                tombstoneService.removeTombstone(delId);
+              } else {
+                await db.techniqueLogs.delete(delId);
+              }
+            }
+
+            const localSign = await db.dreamSigns.get(delId);
+            if (localSign) {
+              const localUpdated = Number(localSign.updatedAt || localSign.createdAt || 0);
+              if (localUpdated > delTs) {
+                tombstoneService.removeTombstone(delId);
+              } else {
+                await db.dreamSigns.delete(delId);
+              }
+            }
           }
         });
       }
@@ -187,20 +349,46 @@ export const backupService = {
         const existingMap = new Map(existingDreams.map((d) => [d.id, d]));
 
         for (const dream of payload.dreams) {
-          // Never re-insert a dream that has been marked as deleted
-          if (tombstoneService.isDeleted(dream.id)) {
-            continue;
+          const incomingUpdated = Number(dream.updatedAt || dream.createdAt || 0);
+          const delTimestamp = tombstoneService.getDeletionTimestamp(dream.id);
+
+          if (delTimestamp !== null) {
+            // If the incoming dream was edited strictly AFTER the deletion timestamp,
+            // the user revived or modified it on the remote device. Remove tombstone and accept dream.
+            if (incomingUpdated > delTimestamp) {
+              tombstoneService.removeTombstone(dream.id);
+            } else {
+              // Deletion happened at or after this dream version: do not resurrect!
+              continue;
+            }
           }
 
           const existing = existingMap.get(dream.id);
+          const normalizedDream: DreamEntry = {
+            ...dream,
+            tags: Array.isArray(dream.tags) ? dream.tags : [],
+            emotions: Array.isArray(dream.emotions) ? dream.emotions : [],
+            falseAwakening: Boolean(dream.falseAwakening),
+            scenesCount: dream.scenesCount || (dream.scenes?.length || 1),
+            scenes: Array.isArray(dream.scenes) ? dream.scenes : [],
+            createdAt: Number(dream.createdAt) || Date.now(),
+            updatedAt: incomingUpdated || Number(dream.createdAt) || Date.now(),
+          };
+
           if (!existing) {
             newDreamsCount++;
-            dreamsToPut.push(dream);
+            dreamsToPut.push(normalizedDream);
           } else {
-            const incomingUpdated = Number(dream.updatedAt || dream.createdAt || 0);
             const existingUpdated = Number(existing.updatedAt || existing.createdAt || 0);
-            if (incomingUpdated >= existingUpdated) {
-              dreamsToPut.push(dream);
+            if (incomingUpdated > existingUpdated) {
+              dreamsToPut.push(normalizedDream);
+            } else if (incomingUpdated === existingUpdated) {
+              // Deterministic tie-breaker for identical timestamps: keep richer narrative
+              if (JSON.stringify(normalizedDream) !== JSON.stringify(existing)) {
+                if ((normalizedDream.narrative?.length || 0) > (existing.narrative?.length || 0)) {
+                  dreamsToPut.push(normalizedDream);
+                }
+              }
             }
           }
         }
@@ -213,15 +401,21 @@ export const backupService = {
         const existingMap = new Map(existingLogs.map((t) => [t.id, t]));
 
         for (const log of payload.techniqueLogs) {
-          if (tombstoneService.isDeleted(log.id)) {
-            continue;
+          const incomingUpdated = Number(log.updatedAt || log.createdAt || 0);
+          const delTimestamp = tombstoneService.getDeletionTimestamp(log.id);
+
+          if (delTimestamp !== null) {
+            if (incomingUpdated > delTimestamp) {
+              tombstoneService.removeTombstone(log.id);
+            } else {
+              continue;
+            }
           }
 
           const existing = existingMap.get(log.id);
           if (!existing) {
             techniquesToPut.push(log);
           } else {
-            const incomingUpdated = Number(log.updatedAt || log.createdAt || 0);
             const existingUpdated = Number(existing.updatedAt || existing.createdAt || 0);
             if (incomingUpdated >= existingUpdated) {
               techniquesToPut.push(log);
@@ -240,8 +434,15 @@ export const backupService = {
         );
 
         for (const sign of signs) {
-          if (tombstoneService.isDeleted(sign.id)) {
-            continue;
+          const incomingUpdated = Number(sign.updatedAt || sign.createdAt || 0);
+          const delTimestamp = tombstoneService.getDeletionTimestamp(sign.id);
+
+          if (delTimestamp !== null) {
+            if (incomingUpdated > delTimestamp) {
+              tombstoneService.removeTombstone(sign.id);
+            } else {
+              continue;
+            }
           }
 
           const normName = sign.name.trim().toLowerCase();
@@ -252,7 +453,6 @@ export const backupService = {
             existingById.set(sign.id, sign);
             existingByName.set(normName, sign);
           } else {
-            const incomingUpdated = Number(sign.updatedAt || sign.createdAt || 0);
             const existingUpdated = Number(existing.updatedAt || existing.createdAt || 0);
 
             // Combine keywords & linked dreams
@@ -323,33 +523,38 @@ export const backupService = {
     };
   },
 
+  /**
+   * Securely wipes all local application data and clears tombstones
+   */
   async wipeAllData(): Promise<void> {
-    tombstoneService.clearTombstones();
     await db.transaction('rw', [db.dreams, db.techniqueLogs, db.customTags, db.dreamSigns], async () => {
       await db.dreams.clear();
       await db.techniqueLogs.clear();
       await db.customTags.clear();
       await db.dreamSigns.clear();
     });
+    tombstoneService.clearTombstones();
+
     try {
-      sessionStorage.removeItem(SAMPLE_PREVIEW_SESSION_KEY);
-      window.dispatchEvent(new CustomEvent('oneiric:sample-data-changed'));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('oneiric:dream-saved'));
+        window.dispatchEvent(new CustomEvent('oneiric:sample-data-changed'));
+      }
     } catch {
       // ignore
     }
   },
 
   /**
-   * Loads sample data for interactive preview in the current session.
-   * Disappears upon page refresh.
+   * Loads sample data for new user exploration
    */
   async loadSampleData(): Promise<{ dreamCount: number; techniqueCount: number; signCount: number }> {
     const { dreams, techniqueLogs, dreamSigns } = generateSampleData();
 
     await db.transaction('rw', [db.dreams, db.techniqueLogs, db.dreamSigns], async () => {
-      // Clean previous samples first to avoid duplicates
+      // Remove any prior sample items
       await db.dreams.filter((d) => !!d.isSample).delete();
-      await db.techniqueLogs.filter((l) => !!l.isSample).delete();
+      await db.techniqueLogs.filter((t) => !!t.isSample).delete();
       await db.dreamSigns.filter((s) => !!s.isSample).delete();
 
       await db.dreams.bulkAdd(dreams);
@@ -358,8 +563,12 @@ export const backupService = {
     });
 
     try {
-      sessionStorage.setItem(SAMPLE_PREVIEW_SESSION_KEY, 'true');
-      window.dispatchEvent(new CustomEvent('oneiric:sample-data-changed'));
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem(SAMPLE_PREVIEW_SESSION_KEY, 'true');
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('oneiric:sample-data-changed'));
+      }
     } catch {
       // ignore
     }
@@ -372,25 +581,31 @@ export const backupService = {
   },
 
   /**
-   * Cleans up any sample preview data immediately.
+   * Cleans up sample entries permanently from database
    */
-  async clearSampleData(): Promise<number> {
-    let removed = 0;
+  async clearSampleData(): Promise<{ removedDreams: number; removedTechniques: number; removedSigns: number }> {
+    let removedDreams = 0;
+    let removedTechniques = 0;
+    let removedSigns = 0;
+
     await db.transaction('rw', [db.dreams, db.techniqueLogs, db.dreamSigns], async () => {
-      const dreamCount = await db.dreams.filter((d) => !!d.isSample).delete();
-      const techCount = await db.techniqueLogs.filter((l) => !!l.isSample).delete();
-      const signCount = await db.dreamSigns.filter((s) => !!s.isSample).delete();
-      removed = dreamCount + techCount + signCount;
+      removedDreams = await db.dreams.filter((d) => !!d.isSample).delete();
+      removedTechniques = await db.techniqueLogs.filter((t) => !!t.isSample).delete();
+      removedSigns = await db.dreamSigns.filter((s) => !!s.isSample).delete();
     });
 
     try {
-      sessionStorage.removeItem(SAMPLE_PREVIEW_SESSION_KEY);
-      window.dispatchEvent(new CustomEvent('oneiric:sample-data-changed'));
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem(SAMPLE_PREVIEW_SESSION_KEY);
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('oneiric:sample-data-changed'));
+      }
     } catch {
       // ignore
     }
 
-    return removed;
+    return { removedDreams, removedTechniques, removedSigns };
   },
 
   /**
@@ -402,23 +617,26 @@ export const backupService = {
     try {
       await db.transaction('rw', [db.dreams, db.techniqueLogs, db.dreamSigns], async () => {
         const dreamCount = await db.dreams.filter((d) => !!d.isSample).delete();
-        const techCount = await db.techniqueLogs.filter((l) => !!l.isSample).delete();
+        const techCount = await db.techniqueLogs.filter((t) => !!t.isSample).delete();
         const signCount = await db.dreamSigns.filter((s) => !!s.isSample).delete();
         removed = dreamCount + techCount + signCount;
       });
-      sessionStorage.removeItem(SAMPLE_PREVIEW_SESSION_KEY);
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem(SAMPLE_PREVIEW_SESSION_KEY);
+      }
     } catch {
-      // ignore error during startup
+      // ignore in non-browser/test environments
     }
     return removed;
   },
 
+  /**
+   * Checks if sample data currently exists in the database
+   */
   async hasSampleData(): Promise<boolean> {
     const sampleDream = await db.dreams.filter((d) => !!d.isSample).first();
-    if (sampleDream) return true;
-    const sampleTech = await db.techniqueLogs.filter((l) => !!l.isSample).first();
-    if (sampleTech) return true;
+    const sampleTech = await db.techniqueLogs.filter((t) => !!t.isSample).first();
     const sampleSign = await db.dreamSigns.filter((s) => !!s.isSample).first();
-    return !!sampleSign;
+    return Boolean(sampleDream || sampleTech || sampleSign);
   },
 };

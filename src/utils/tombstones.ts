@@ -17,13 +17,15 @@ export const tombstoneService = {
   },
 
   /**
-   * Records a deleted record ID to prevent resurrection during sync
+   * Records a deleted record ID to prevent resurrection during sync.
+   * Optionally accepts a specific timestamp; defaults to Date.now().
    */
-  recordDeletion(id: string): void {
+  recordDeletion(id: string, timestamp?: number): void {
     if (!id) return;
     try {
       const map = this.getTombstonesMap();
-      map[id] = Date.now();
+      const ts = timestamp || Date.now();
+      map[id] = Math.max(map[id] || 0, ts);
       localStorage.setItem(TOMBSTONES_STORAGE_KEY, JSON.stringify(map));
     } catch {
       // ignore
@@ -33,18 +35,45 @@ export const tombstoneService = {
   /**
    * Records multiple deleted record IDs
    */
-  recordDeletions(ids: string[]): void {
+  recordDeletions(ids: string[], timestamp?: number): void {
     if (!ids || ids.length === 0) return;
     try {
       const map = this.getTombstonesMap();
-      const now = Date.now();
+      const now = timestamp || Date.now();
       for (const id of ids) {
-        if (id) map[id] = map[id] || now;
+        if (id) map[id] = Math.max(map[id] || 0, now);
       }
       localStorage.setItem(TOMBSTONES_STORAGE_KEY, JSON.stringify(map));
     } catch {
       // ignore
     }
+  },
+
+  /**
+   * Merges an incoming tombstone map with local tombstones, preserving the newest timestamps
+   */
+  mergeTombstones(incoming: Record<string, number>): void {
+    if (!incoming || typeof incoming !== 'object') return;
+    try {
+      const map = this.getTombstonesMap();
+      for (const [id, ts] of Object.entries(incoming)) {
+        if (id && typeof ts === 'number') {
+          map[id] = Math.max(map[id] || 0, ts);
+        }
+      }
+      localStorage.setItem(TOMBSTONES_STORAGE_KEY, JSON.stringify(map));
+    } catch {
+      // ignore
+    }
+  },
+
+  /**
+   * Returns the deletion timestamp for a given ID, or null if not deleted
+   */
+  getDeletionTimestamp(id: string): number | null {
+    if (!id) return null;
+    const map = this.getTombstonesMap();
+    return typeof map[id] === 'number' ? map[id] : null;
   },
 
   /**
@@ -57,7 +86,7 @@ export const tombstoneService = {
   },
 
   /**
-   * Removes a tombstone when a record is restored from trash
+   * Removes a tombstone when a record is restored from trash or updated after deletion
    */
   removeTombstone(id: string): void {
     if (!id) return;

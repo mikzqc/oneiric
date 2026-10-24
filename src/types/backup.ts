@@ -17,6 +17,20 @@ export interface BackupPayload {
   customTags?: CustomTag[];
   dreamSigns?: DreamSign[];
   deletedIds?: string[];
+  tombstones?: Record<string, number>; // ID -> deletion timestamp for deterministic conflict resolution
+}
+
+export interface EncryptedBackupEnvelope {
+  version: 1 | 2;
+  source: 'oneiric';
+  encrypted: true;
+  algorithm: 'AES-256-GCM';
+  kdf: 'PBKDF2-SHA256';
+  iterations: number;
+  exportedAt: string;
+  salt: string;
+  iv: string;
+  ciphertext: string;
 }
 
 export interface ImportValidationResult {

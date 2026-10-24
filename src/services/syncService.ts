@@ -531,8 +531,8 @@ export const syncService = {
       try {
         await this.syncNow();
         autoSyncRetryCount = 0;
-      } catch (err) {
-        console.warn('Background auto-sync failed:', err);
+      } catch {
+        console.warn('Background auto-sync failed. Retrying with exponential backoff...');
         if (autoSyncRetryCount < MAX_AUTO_SYNC_RETRIES) {
           autoSyncRetryCount++;
           const backoff = INITIAL_RETRY_BACKOFF_MS * Math.pow(2, autoSyncRetryCount - 1);
@@ -559,8 +559,24 @@ export const syncService = {
    * Imports an encrypted transfer package string
    */
   async importEncryptedTransferCode(code: string, passphrase: string): Promise<number> {
-    const jsonStr = atob(code.trim());
-    const envelope = JSON.parse(jsonStr) as { ciphertext: string; salt: string; iv: string };
+    if (!code || typeof code !== 'string') {
+      throw new Error('Invalid transfer code: code cannot be empty.');
+    }
+    let jsonStr: string;
+    try {
+      jsonStr = atob(code.trim());
+    } catch {
+      throw new Error('Invalid transfer code: not a valid base64 encoded package.');
+    }
+    let envelope: { ciphertext: string; salt: string; iv: string };
+    try {
+      envelope = JSON.parse(jsonStr);
+    } catch {
+      throw new Error('Invalid transfer code: payload is not valid JSON.');
+    }
+    if (!envelope || !envelope.ciphertext || !envelope.salt || !envelope.iv) {
+      throw new Error('Invalid transfer code: missing cryptographic envelope parameters.');
+    }
     const decrypted = await cryptoService.decryptData<BackupPayload>(envelope, passphrase.trim());
     const validation = backupService.validateImportData(JSON.stringify(decrypted));
     if (!validation.valid || !validation.data) {

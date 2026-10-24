@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { db } from '../db/database';
 import { backupService } from '../services/backupService';
+import { cryptoService } from '../services/cryptoService';
 import { celebrationService } from '../services/celebrationService';
 import { ImportValidationResult } from '../types/backup';
 import { Button } from '../components/common/Button';
@@ -15,6 +17,10 @@ import {
   CheckCircle2,
   AlertTriangle,
   FileText,
+  Lock,
+  Key,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { SyncSettingsCard } from '../components/sync/SyncSettingsCard';
 
@@ -35,6 +41,21 @@ export const SettingsPage: React.FC = () => {
   const [importCandidate, setImportCandidate] = useState<ImportValidationResult | null>(null);
   const [importMode, setImportMode] = useState<'merge' | 'replace'>('merge');
   const [isImporting, setIsImporting] = useState(false);
+  const [localDreamCount, setLocalDreamCount] = useState(0);
+  const [replaceConfirmed, setReplaceConfirmed] = useState(false);
+
+  // Encrypted backup export state
+  const [isExportEncryptedModalOpen, setIsExportEncryptedModalOpen] = useState(false);
+  const [exportPassphrase, setExportPassphrase] = useState('');
+  const [showExportPassphrase, setShowExportPassphrase] = useState(false);
+  const [isExportingEncrypted, setIsExportingEncrypted] = useState(false);
+
+  // Encrypted backup import state
+  const [rawEncryptedFile, setRawEncryptedFile] = useState<string | null>(null);
+  const [decryptPassphrase, setDecryptPassphrase] = useState('');
+  const [showDecryptPassphrase, setShowDecryptPassphrase] = useState(false);
+  const [isDecrypting, setIsDecrypting] = useState(false);
+  const [decryptError, setDecryptError] = useState<string | null>(null);
 
   // Delete all data flow state
   const [isWipeDialogOpen, setIsWipeDialogOpen] = useState(false);
@@ -77,8 +98,8 @@ export const SettingsPage: React.FC = () => {
     );
   };
 
-  // 1. Export Data
-  const handleExport = async () => {
+  // 1. Export Plain Data
+  const handleExportPlain = async () => {
     try {
       const data = await backupService.exportData();
       const jsonStr = JSON.stringify(data, null, 2);
@@ -98,29 +119,108 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
-  // 2. Select file for import
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 2. Export Encrypted Data
+  const handleExportEncrypted = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const pass = exportPassphrase.trim();
+    if (!pass) {
+      showFeedback('error', 'Please enter a passphrase to encrypt your backup.');
+      return;
+    }
+
+    try {
+      setIsExportingEncrypted(true);
+      const jsonStr = await backupService.exportEncryptedBackup(pass);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const nowStr = new Date().toISOString().split('T')[0];
+      link.href = url;
+      link.download = `oneiric-encrypted-backup-${nowStr}.enc.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      setIsExportEncryptedModalOpen(false);
+      setExportPassphrase('');
+      showFeedback('success', 'Encrypted backup (.enc.json) exported securely with AES-256-GCM.');
+    } catch (err: unknown) {
+      showFeedback('error', err instanceof Error ? err.message : 'Encrypted export failed.');
+    } finally {
+      setIsExportingEncrypted(false);
+    }
+  };
+
+  // 3. Select file for import
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const count = await db.dreams.count();
+    setLocalDreamCount(count);
+    setReplaceConfirmed(false);
+    setDecryptError(null);
+    setDecryptPassphrase('');
+
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const content = event.target?.result as string;
-      const validation = backupService.validateImportData(content);
-      setImportCandidate(validation);
+
+      if (backupService.isEncryptedBackup(content)) {
+        setRawEncryptedFile(content);
+        setImportCandidate(null);
+      } else {
+        setRawEncryptedFile(null);
+        const validation = backupService.validateImportData(content);
+        setImportCandidate(validation);
+      }
+
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
     reader.readAsText(file);
   };
 
-  // 3. Confirm Import
+  // 4. Decrypt encrypted import candidate
+  const handleDecryptEncryptedFile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rawEncryptedFile) return;
+    const pass = decryptPassphrase.trim();
+    if (!pass) {
+      setDecryptError('Please enter your backup passphrase.');
+      return;
+    }
+
+    try {
+      setIsDecrypting(true);
+      setDecryptError(null);
+      const validation = await backupService.decryptAndValidateEncryptedBackup(rawEncryptedFile, pass);
+      if (!validation.valid) {
+        setDecryptError(validation.error || 'Decryption failed.');
+      } else {
+        setImportCandidate(validation);
+        setRawEncryptedFile(null);
+      }
+    } catch (err: unknown) {
+      setDecryptError(err instanceof Error ? err.message : 'Decryption error.');
+    } finally {
+      setIsDecrypting(false);
+    }
+  };
+
+  // 5. Confirm Import
   const handleConfirmImport = async () => {
     if (!importCandidate || !importCandidate.data) return;
+
+    if (importMode === 'replace' && localDreamCount > 0 && !replaceConfirmed) {
+      showFeedback('error', 'Please confirm replacement by checking the confirmation box.');
+      return;
+    }
 
     try {
       setIsImporting(true);
       const res = await backupService.importData(importCandidate.data, importMode);
       setImportCandidate(null);
+      setReplaceConfirmed(false);
       await checkSampleStatus();
       showFeedback(
         'success',
@@ -133,7 +233,7 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
-  // 4. Wipe all data
+  // 6. Wipe all data
   const handleWipeAllConfirm = async () => {
     try {
       setIsWiping(true);
@@ -148,25 +248,28 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
-  // 5. Load sample exploration data
+  // 7. Load sample data
   const handleLoadSample = async () => {
     try {
-      await backupService.loadSampleData();
-      await checkSampleStatus();
-      showFeedback('success', 'Sample exploration entries loaded. They will disappear when you refresh.');
+      const res = await backupService.loadSampleData();
+      setHasSample(true);
+      showFeedback(
+        'success',
+        `Sample data active: ${res.dreamCount} dreams and ${res.techniqueCount} techniques loaded in preview.`
+      );
     } catch (err: unknown) {
       showFeedback('error', err instanceof Error ? err.message : 'Failed to load sample data.');
     }
   };
 
-  // 6. Clear sample data immediately
+  // 8. Clear sample data
   const handleClearSampleConfirm = async () => {
     try {
       setIsClearingSample(true);
       await backupService.clearSampleData();
-      await checkSampleStatus();
+      setHasSample(false);
       setIsClearSampleDialogOpen(false);
-      showFeedback('success', 'Sample exploration entries removed.');
+      showFeedback('success', 'Sample preview data removed.');
     } catch (err: unknown) {
       showFeedback('error', err instanceof Error ? err.message : 'Failed to clear sample data.');
     } finally {
@@ -175,94 +278,111 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn">
-      {/* Toast Feedback */}
-      {feedbackMessage && (
-        <div
-          role="status"
-          aria-live="polite"
-          className={`p-3.5 rounded-lg border text-xs sm:text-sm font-medium flex items-center justify-between transition-all ${
-            feedbackMessage.type === 'success'
-              ? 'bg-emerald-950/60 border-emerald-800 text-emerald-200'
-              : 'bg-red-950/60 border-red-800 text-red-200'
-          }`}
-        >
-          <span>{feedbackMessage.text}</span>
-          <button
-            type="button"
-            onClick={() => setFeedbackMessage(null)}
-            className="text-xs opacity-70 hover:opacity-100 cursor-pointer ml-3 font-semibold"
-          >
-            &times;
-          </button>
-        </div>
-      )}
-
-      {/* Header */}
+    <div className="space-y-6 max-w-4xl mx-auto pb-12">
+      {/* Page Header */}
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight">Settings & Storage</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight">Settings & Vault</h1>
         <p className="text-xs sm:text-sm text-slate-400 mt-1">
-          Manage local backups, multi-device synchronization, and celebration settings
+          Manage local backups, multi-device end-to-end sync, celebrations, and data privacy.
         </p>
       </div>
 
-      {/* Sync Card */}
+      {/* Global Feedback Banner */}
+      {feedbackMessage && (
+        <div
+          className={`p-3.5 rounded-xl text-xs sm:text-sm flex items-center gap-2.5 animate-fadeIn border ${
+            feedbackMessage.type === 'success'
+              ? 'bg-emerald-950/40 border-emerald-800 text-emerald-200'
+              : 'bg-red-950/40 border-red-800 text-red-200'
+          }`}
+        >
+          {feedbackMessage.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          ) : (
+            <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+          )}
+          <span>{feedbackMessage.text}</span>
+        </div>
+      )}
+
+      {/* Section 0: End-to-End Multi-Device Sync Card */}
       <SyncSettingsCard onFeedback={showFeedback} />
 
-      {/* Section 1: Backup & Restore */}
+      {/* Section 1: Backup & Restoration */}
       <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
         <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
           <Database className="w-5 h-5 text-blue-400" />
           <div>
-            <h2 className="text-base font-bold text-slate-100">Backup & Restore</h2>
-            <p className="text-xs text-slate-400">Offline-first JSON export and validated import</p>
+            <h2 className="text-base font-bold text-slate-100">Backup & Restoration</h2>
+            <p className="text-xs text-slate-400">Export your journal archive as plain or password-protected encrypted files</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Export Card */}
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
+          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between space-y-3">
             <div>
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-200 mb-1">
                 <Download className="w-4 h-4 text-blue-400" />
-                <span>Export Journal Backup</span>
+                <span>Export Journal Archive</span>
               </div>
-              <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                Download a clean, structured JSON file containing all dreams, lucidity notes, tags, and technique logs.
+              <p className="text-xs text-slate-400 leading-relaxed mb-3">
+                Download a complete, structured file containing all dreams, lucidity notes, tags, dream signs, and technique logs.
               </p>
             </div>
-            <Button variant="secondary" onClick={handleExport} icon={<Download className="w-4 h-4" />}>
-              Download JSON Backup
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleExportPlain}
+                icon={<Download className="w-4 h-4" />}
+                className="flex-1"
+              >
+                Plain JSON
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setExportPassphrase('');
+                  setIsExportEncryptedModalOpen(true);
+                }}
+                icon={<Lock className="w-4 h-4 text-amber-400" />}
+                className="flex-1"
+              >
+                Encrypted (.enc)
+              </Button>
+            </div>
           </div>
 
           {/* Import Card */}
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between">
+          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between space-y-3">
             <div>
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-200 mb-1">
                 <Upload className="w-4 h-4 text-cyan-400" />
                 <span>Restore from Backup</span>
               </div>
-              <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                Upload a verified Oneiric JSON backup file. All entries will be validated before database modification.
+              <p className="text-xs text-slate-400 leading-relaxed mb-3">
+                Upload a verified Oneiric backup (.json or password-protected .enc.json). All data is validated before storage.
               </p>
             </div>
             <div>
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".json,application/json"
+                accept=".json,.enc.json,application/json"
                 onChange={handleFileChange}
                 className="hidden"
                 id="import-file-input"
               />
               <Button
                 variant="outline"
+                size="sm"
                 className="w-full"
                 onClick={() => fileInputRef.current?.click()}
                 icon={<Upload className="w-4 h-4" />}
               >
-                Select Backup File
+                Select Backup File (.json / .enc)
               </Button>
             </div>
           </div>
@@ -276,7 +396,7 @@ export const SettingsPage: React.FC = () => {
           <div>
             <h2 className="text-base font-bold text-slate-100">Sample Exploration Preview</h2>
             <p className="text-xs text-slate-400">
-              Preview Oneiric features with realistic, fictional dream entries and technique records
+              Preview Oneiric features with realistic dream entries and technique records
             </p>
           </div>
         </div>
@@ -420,6 +540,153 @@ export const SettingsPage: React.FC = () => {
         </div>
       </section>
 
+      {/* Export Encrypted Backup Modal */}
+      {isExportEncryptedModalOpen && (
+        <Modal
+          isOpen={isExportEncryptedModalOpen}
+          onClose={() => setIsExportEncryptedModalOpen(false)}
+          title="Export Encrypted Backup (.enc.json)"
+          maxWidth="md"
+        >
+          <form onSubmit={handleExportEncrypted} className="space-y-4">
+            <div className="p-3.5 rounded-lg bg-amber-950/30 border border-amber-800/50 text-xs text-amber-200 space-y-1">
+              <div className="flex items-center gap-1.5 font-semibold text-amber-300">
+                <Lock className="w-4 h-4 text-amber-400" />
+                <span>Client-Side AES-256-GCM Encryption</span>
+              </div>
+              <p>
+                Your backup will be encrypted locally using PBKDF2 (100,000 SHA-256 iterations) and 256-bit AES-GCM.
+                <strong> Do not lose your passphrase:</strong> without it, this encrypted backup file cannot be recovered by anyone.
+              </p>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-slate-300">
+                  Encryption Passphrase
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setExportPassphrase(cryptoService.generatePassphrase())}
+                  className="text-[11px] text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                >
+                  <Key className="w-3 h-3" />
+                  <span>Generate strong phrase</span>
+                </button>
+              </div>
+
+              <div className="relative">
+                <input
+                  type={showExportPassphrase ? 'text' : 'password'}
+                  value={exportPassphrase}
+                  onChange={(e) => setExportPassphrase(e.target.value)}
+                  placeholder="e.g. astral-lucid-aurora-starlight-prism"
+                  className="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 pr-10 font-mono"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowExportPassphrase(!showExportPassphrase)}
+                  className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-200"
+                >
+                  {showExportPassphrase ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={() => setIsExportEncryptedModalOpen(false)}
+                disabled={isExportingEncrypted}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                type="submit"
+                isLoading={isExportingEncrypted}
+                icon={<Lock className="w-4 h-4" />}
+              >
+                Download Encrypted File
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Encrypted Backup Unlock Modal */}
+      {rawEncryptedFile && (
+        <Modal
+          isOpen={!!rawEncryptedFile}
+          onClose={() => setRawEncryptedFile(null)}
+          title="Encrypted Backup Detected"
+          maxWidth="md"
+        >
+          <form onSubmit={handleDecryptEncryptedFile} className="space-y-4">
+            <div className="p-3.5 rounded-lg bg-blue-950/40 border border-blue-800 text-xs text-blue-200 flex items-start gap-2.5">
+              <Lock className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <strong className="block text-sm mb-1 font-semibold text-blue-100">Password-Protected Archive</strong>
+                <p className="text-slate-300">
+                  This file is encrypted with client-side AES-256-GCM. Please enter your secret passphrase to decrypt and inspect the archive contents.
+                </p>
+              </div>
+            </div>
+
+            {decryptError && (
+              <div className="p-3 rounded-lg bg-red-950/40 border border-red-800 text-xs text-red-200 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                <span>{decryptError}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">
+                Decryption Passphrase
+              </label>
+              <div className="relative">
+                <input
+                  type={showDecryptPassphrase ? 'text' : 'password'}
+                  value={decryptPassphrase}
+                  onChange={(e) => setDecryptPassphrase(e.target.value)}
+                  placeholder="Enter the passphrase used when exporting..."
+                  className="w-full px-3 py-2 text-xs bg-slate-900 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500 pr-10 font-mono"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowDecryptPassphrase(!showDecryptPassphrase)}
+                  className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-200"
+                >
+                  {showDecryptPassphrase ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={() => setRawEncryptedFile(null)}
+                disabled={isDecrypting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                type="submit"
+                isLoading={isDecrypting}
+                icon={<Key className="w-4 h-4" />}
+              >
+                Unlock & Verify Archive
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
       {/* Import Validation & Confirmation Modal */}
       {importCandidate && (
         <Modal
@@ -437,6 +704,9 @@ export const SettingsPage: React.FC = () => {
                 </div>
                 <p>• {importCandidate.stats.dreamCount} dream entries ({importCandidate.stats.lucidCount} lucid)</p>
                 <p>• {importCandidate.stats.techniqueCount} technique logs</p>
+                {Boolean(importCandidate.stats.dreamSignCount) && (
+                  <p>• {importCandidate.stats.dreamSignCount} dream signs</p>
+                )}
               </div>
 
               <div>
@@ -456,7 +726,7 @@ export const SettingsPage: React.FC = () => {
                     <div>
                       <span className="font-semibold text-slate-200 block">Merge with existing data (Recommended)</span>
                       <span className="text-slate-400 leading-snug block">
-                        Adds new entries without erasing your existing journal records.
+                        Adds new entries without erasing your existing journal records. Resolves conflicts deterministically with timestamps.
                       </span>
                     </div>
                   </label>
@@ -480,6 +750,28 @@ export const SettingsPage: React.FC = () => {
                 </div>
               </div>
 
+              {/* Explicit confirmation warning when Replace is selected on a populated journal */}
+              {importMode === 'replace' && localDreamCount > 0 && (
+                <div className="p-3.5 rounded-lg bg-red-950/50 border border-red-800 text-xs text-red-200 space-y-2">
+                  <div className="flex items-center gap-2 font-semibold text-red-300">
+                    <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                    <span>Warning: Destructive Replacement</span>
+                  </div>
+                  <p className="leading-relaxed">
+                    You currently have <strong>{localDreamCount} dream entries</strong> stored locally. Replacing will permanently erase these entries before importing.
+                  </p>
+                  <label className="flex items-center gap-2 pt-1 font-medium cursor-pointer text-slate-200">
+                    <input
+                      type="checkbox"
+                      checked={replaceConfirmed}
+                      onChange={(e) => setReplaceConfirmed(e.target.checked)}
+                      className="w-4 h-4 rounded bg-slate-800 border-red-700 text-red-600 focus:ring-red-500"
+                    />
+                    <span>I understand this will permanently replace my existing {localDreamCount} dreams.</span>
+                  </label>
+                </div>
+              )}
+
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
                 <Button variant="secondary" onClick={() => setImportCandidate(null)} disabled={isImporting}>
                   Cancel
@@ -488,6 +780,7 @@ export const SettingsPage: React.FC = () => {
                   variant={importMode === 'replace' ? 'danger' : 'primary'}
                   onClick={handleConfirmImport}
                   isLoading={isImporting}
+                  disabled={importMode === 'replace' && localDreamCount > 0 && !replaceConfirmed}
                 >
                   Confirm Import
                 </Button>
