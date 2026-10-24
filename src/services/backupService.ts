@@ -5,6 +5,7 @@ import { TechniqueLog } from '../types/technique';
 import { DreamSign } from '../types/dreamSign';
 import { generateSampleData } from '../db/sampleData';
 import { tombstoneService } from '../utils/tombstones';
+import { dreamSignService } from './dreamSignService';
 
 const SAMPLE_PREVIEW_SESSION_KEY = 'oneiric_sample_preview_active';
 
@@ -233,22 +234,56 @@ export const backupService = {
       const signsToPut: DreamSign[] = [];
       if (signs.length > 0) {
         const existingSigns = await db.dreamSigns.toArray();
-        const existingMap = new Map(existingSigns.map((s) => [s.id, s]));
+        const existingById = new Map(existingSigns.map((s) => [s.id, s]));
+        const existingByName = new Map(
+          existingSigns.map((s) => [s.name.trim().toLowerCase(), s])
+        );
 
         for (const sign of signs) {
           if (tombstoneService.isDeleted(sign.id)) {
             continue;
           }
 
-          const existing = existingMap.get(sign.id);
+          const normName = sign.name.trim().toLowerCase();
+          const existing = existingById.get(sign.id) || existingByName.get(normName);
+
           if (!existing) {
             signsToPut.push(sign);
+            existingById.set(sign.id, sign);
+            existingByName.set(normName, sign);
           } else {
             const incomingUpdated = Number(sign.updatedAt || sign.createdAt || 0);
             const existingUpdated = Number(existing.updatedAt || existing.createdAt || 0);
-            if (incomingUpdated >= existingUpdated) {
-              signsToPut.push(sign);
-            }
+
+            // Combine keywords & linked dreams
+            const combinedKeywords = Array.from(
+              new Set([...(existing.keywords || []), ...(sign.keywords || [])])
+            );
+            const combinedLinked = Array.from(
+              new Set([...(existing.linkedDreamIds || []), ...(sign.linkedDreamIds || [])])
+            );
+
+            const mergedSign: DreamSign = {
+              ...existing,
+              ...sign,
+              id: existing.id, // Preserve existing ID to avoid duplicate rows
+              keywords: combinedKeywords,
+              linkedDreamIds: combinedLinked,
+              distinctDreamCount: combinedLinked.length,
+              status:
+                existing.status === 'confirmed' || sign.status === 'confirmed'
+                  ? 'confirmed'
+                  : existing.status === 'suggested' || sign.status === 'suggested'
+                  ? 'suggested'
+                  : existing.status,
+              isRealityCheckReminder:
+                existing.isRealityCheckReminder || Boolean(sign.isRealityCheckReminder),
+              updatedAt: Math.max(incomingUpdated, existingUpdated, Date.now()),
+            };
+
+            signsToPut.push(mergedSign);
+            existingById.set(existing.id, mergedSign);
+            existingByName.set(normName, mergedSign);
           }
         }
       }
@@ -267,6 +302,8 @@ export const backupService = {
           await db.dreamSigns.bulkPut(signsToPut);
         }
       });
+
+      await dreamSignService.consolidateDuplicateSigns();
     }
 
     try {

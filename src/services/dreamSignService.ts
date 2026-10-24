@@ -154,19 +154,128 @@ export function clearIgnoredSignNames(): void {
 let activeScanPromise: Promise<{ updatedSignsCount: number; newSuggestionsCount: number }> | null = null;
 
 export const dreamSignService = {
+  /**
+   * Scans and consolidates duplicate dream signs (signs sharing the same normalized name).
+   * Merges keywords, distinct linked dreams, userNotes, and chooses the highest status
+   * ('confirmed' > 'suggested' > 'dismissed'). Cleans up redundant entries and records tombstones.
+   * Returns the count of removed duplicate entries.
+   */
+  async consolidateDuplicateSigns(): Promise<number> {
+    const allSigns = await db.dreamSigns.toArray();
+    if (allSigns.length <= 1) return 0;
+
+    const grouped = new Map<string, DreamSign[]>();
+    for (const sign of allSigns) {
+      const normKey = sign.name.trim().toLowerCase();
+      const existingList = grouped.get(normKey);
+      if (existingList) {
+        existingList.push(sign);
+      } else {
+        grouped.set(normKey, [sign]);
+      }
+    }
+
+    let removedCount = 0;
+
+    for (const [, group] of grouped.entries()) {
+      if (group.length <= 1) continue;
+
+      const statusWeight = (s: DreamSignStatus) => {
+        if (s === 'confirmed') return 3;
+        if (s === 'suggested') return 2;
+        return 1;
+      };
+
+      // Sort: highest status first, then highest distinctDreamCount, then newest updatedAt
+      group.sort((a, b) => {
+        const weightDiff = statusWeight(b.status) - statusWeight(a.status);
+        if (weightDiff !== 0) return weightDiff;
+        const countDiff = (b.distinctDreamCount || 0) - (a.distinctDreamCount || 0);
+        if (countDiff !== 0) return countDiff;
+        return (b.updatedAt || 0) - (a.updatedAt || 0);
+      });
+
+      const primary = group[0];
+      const duplicates = group.slice(1);
+
+      const allKeywords = new Set<string>(
+        primary.keywords.map((k) => k.trim().toLowerCase()).filter(Boolean)
+      );
+      const allLinkedDreams = new Set<string>(primary.linkedDreamIds || []);
+      const allExcludedDreams = new Set<string>(primary.excludedDreamIds || []);
+      let reminder = Boolean(primary.isRealityCheckReminder);
+      const notesList: string[] = primary.userNotes ? [primary.userNotes.trim()] : [];
+      let latestOccurred = primary.lastOccurred;
+
+      for (const dup of duplicates) {
+        for (const kw of dup.keywords || []) {
+          const clean = kw.trim().toLowerCase();
+          if (clean) allKeywords.add(clean);
+        }
+        for (const dId of dup.linkedDreamIds || []) {
+          allLinkedDreams.add(dId);
+        }
+        for (const exId of dup.excludedDreamIds || []) {
+          allExcludedDreams.add(exId);
+        }
+        if (dup.isRealityCheckReminder) {
+          reminder = true;
+        }
+        if (dup.userNotes && !notesList.includes(dup.userNotes.trim())) {
+          notesList.push(dup.userNotes.trim());
+        }
+        if (dup.lastOccurred) {
+          if (!latestOccurred || dup.lastOccurred > latestOccurred) {
+            latestOccurred = dup.lastOccurred;
+          }
+        }
+      }
+
+      // Filter out excluded dreams
+      for (const exId of allExcludedDreams) {
+        allLinkedDreams.delete(exId);
+      }
+
+      const mergedLinkedArray = Array.from(allLinkedDreams);
+
+      await db.dreamSigns.update(primary.id, {
+        keywords: Array.from(allKeywords),
+        linkedDreamIds: mergedLinkedArray,
+        distinctDreamCount: mergedLinkedArray.length,
+        excludedDreamIds: Array.from(allExcludedDreams),
+        isRealityCheckReminder: reminder,
+        userNotes: notesList.join('\n---\n') || undefined,
+        lastOccurred: latestOccurred,
+        updatedAt: Date.now(),
+      });
+
+      for (const dup of duplicates) {
+        tombstoneService.recordDeletion(dup.id);
+        await db.dreamSigns.delete(dup.id);
+        removedCount++;
+      }
+    }
+
+    return removedCount;
+  },
+
   async getAllSigns(): Promise<DreamSign[]> {
+    await this.consolidateDuplicateSigns();
     return await db.dreamSigns.orderBy('distinctDreamCount').reverse().toArray();
   },
 
   async getSuggestedSigns(): Promise<DreamSign[]> {
+    await this.consolidateDuplicateSigns();
     return await db.dreamSigns.where('status').equals('suggested').toArray();
   },
 
   async getConfirmedSigns(): Promise<DreamSign[]> {
+    await this.consolidateDuplicateSigns();
     return await db.dreamSigns.where('status').equals('confirmed').toArray();
   },
 
   async getDismissedSigns(): Promise<DreamSign[]> {
+    await this.consolidateDuplicateSigns();
     return await db.dreamSigns.where('status').equals('dismissed').toArray();
   },
 
@@ -176,6 +285,7 @@ export const dreamSignService = {
 
   async createSign(draft: DreamSignDraft): Promise<DreamSign> {
     const now = Date.now();
+    const trimmedName = draft.name.trim();
     const cleanKeywords = Array.from(
       new Set(draft.keywords.map((k) => k.trim().toLowerCase()).filter(Boolean))
     );
@@ -183,10 +293,10 @@ export const dreamSignService = {
     // If it's a suggested candidate from auto-scan, avoid duplicate creation or resurrection if ignored
     if (draft.status === 'suggested') {
       const ignored = new Set(getIgnoredSignNames().map((n) => n.toLowerCase()));
-      if (ignored.has(draft.name.toLowerCase())) {
+      if (ignored.has(trimmedName.toLowerCase())) {
         return {
           id: 'ignored',
-          name: draft.name,
+          name: trimmedName,
           category: draft.category,
           keywords: cleanKeywords,
           status: 'dismissed',
@@ -196,14 +306,47 @@ export const dreamSignService = {
           updatedAt: now,
         };
       }
-      const existing = await db.dreamSigns.where('name').equalsIgnoreCase(draft.name).first();
-      if (existing) {
-        return existing;
-      }
+    }
+
+    // Defensive check: if a sign already exists with the same name, merge into it instead of creating a duplicate
+    const existing = await db.dreamSigns.where('name').equalsIgnoreCase(trimmedName).first();
+    if (existing) {
+      const combinedKeywords = Array.from(
+        new Set([...existing.keywords, ...cleanKeywords])
+      );
+      const combinedLinked = Array.from(
+        new Set([...(existing.linkedDreamIds || []), ...(draft.linkedDreamIds || [])])
+      );
+      const statusPriority =
+        draft.status === 'confirmed' || existing.status === 'confirmed'
+          ? 'confirmed'
+          : draft.status === 'suggested' || existing.status === 'suggested'
+          ? 'suggested'
+          : existing.status;
+
+      const mergedNotes = [existing.userNotes, draft.userNotes].filter(Boolean).join('\n---\n') || undefined;
+
+      await db.dreamSigns.update(existing.id, {
+        category: draft.category || existing.category,
+        keywords: combinedKeywords,
+        status: statusPriority,
+        isRealityCheckReminder: existing.isRealityCheckReminder || Boolean(draft.isRealityCheckReminder),
+        linkedDreamIds: combinedLinked,
+        distinctDreamCount: combinedLinked.length,
+        lastOccurred:
+          draft.lastOccurred && (!existing.lastOccurred || draft.lastOccurred > existing.lastOccurred)
+            ? draft.lastOccurred
+            : existing.lastOccurred,
+        userNotes: mergedNotes,
+        updatedAt: now,
+      });
+
+      return (await db.dreamSigns.get(existing.id))!;
     }
 
     const sign: DreamSign = {
       ...draft,
+      name: trimmedName,
       status: draft.status || 'confirmed',
       id: crypto.randomUUID ? crypto.randomUUID() : `sign-${now}-${Math.random().toString(36).substring(2, 8)}`,
       keywords: cleanKeywords,
@@ -491,6 +634,7 @@ export const dreamSignService = {
 
     activeScanPromise = (async () => {
       try {
+        await this.consolidateDuplicateSigns();
         const dreams = await db.dreams.toArray();
         const existingSigns = await db.dreamSigns.toArray();
 
@@ -582,6 +726,7 @@ export const dreamSignService = {
           lastOccurred: latestDate,
           isRealityCheckReminder: false,
         });
+        existingSignNames.add(lowerRuleName);
         newSuggestionsCount++;
       }
     }

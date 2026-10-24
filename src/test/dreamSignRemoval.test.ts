@@ -339,4 +339,177 @@ describe('AI-Vibecoded Dream Sign Removal & Management Suite', () => {
       expect(exportedSign?.excludedDreamIds).toContain('dream-sample-id-99');
     });
   });
+
+  describe('Dream Signs Deduplication & Automatic Consolidation', () => {
+    it('consolidates duplicate signs with the same name and merges dreams, status, and keywords', async () => {
+      // Replicate the exact issue from the user screenshot:
+      // Two "Family Members" entries with different IDs and different linked dreams
+      await db.dreamSigns.add({
+        id: 'dup-fam-1',
+        name: 'Family Members',
+        category: 'person',
+        keywords: ['mother', 'father', 'mom', 'dad'],
+        status: 'confirmed',
+        isRealityCheckReminder: true,
+        linkedDreamIds: ['d1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd8'],
+        distinctDreamCount: 8,
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
+
+      await db.dreamSigns.add({
+        id: 'dup-fam-2',
+        name: 'Family Members',
+        category: 'person',
+        keywords: ['brother', 'sister', 'mom'],
+        status: 'suggested',
+        isRealityCheckReminder: false,
+        linkedDreamIds: ['d1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd9'],
+        distinctDreamCount: 8,
+        createdAt: 2000,
+        updatedAt: 2000,
+      });
+
+      // Three "Elevators & Escalators" entries with different IDs
+      await db.dreamSigns.add({
+        id: 'dup-elev-1',
+        name: 'Elevators & Escalators',
+        category: 'object',
+        keywords: ['elevator'],
+        status: 'suggested',
+        linkedDreamIds: ['e1', 'e2'],
+        distinctDreamCount: 2,
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
+
+      await db.dreamSigns.add({
+        id: 'dup-elev-2',
+        name: 'Elevators & Escalators',
+        category: 'object',
+        keywords: ['escalator'],
+        status: 'suggested',
+        linkedDreamIds: ['e2', 'e3'],
+        distinctDreamCount: 2,
+        createdAt: 2000,
+        updatedAt: 2000,
+      });
+
+      await db.dreamSigns.add({
+        id: 'dup-elev-3',
+        name: 'Elevators & Escalators',
+        category: 'object',
+        keywords: ['falling elevator'],
+        status: 'confirmed',
+        linkedDreamIds: ['e3', 'e4'],
+        distinctDreamCount: 2,
+        createdAt: 3000,
+        updatedAt: 3000,
+      });
+
+      expect(await db.dreamSigns.count()).toBe(5);
+
+      // getAllSigns triggers consolidation automatically
+      const signs = await dreamSignService.getAllSigns();
+      expect(signs).toHaveLength(2);
+      expect(await db.dreamSigns.count()).toBe(2);
+
+      // Verify "Family Members" consolidation
+      const familySign = signs.find((s) => s.name === 'Family Members');
+      expect(familySign).toBeDefined();
+      expect(familySign?.status).toBe('confirmed');
+      expect(familySign?.isRealityCheckReminder).toBe(true);
+      // Keywords merged
+      expect(familySign?.keywords).toContain('brother');
+      expect(familySign?.keywords).toContain('sister');
+      expect(familySign?.keywords).toContain('mother');
+      // Unique linked dreams merged: d1-d9 = 9 dreams
+      expect(familySign?.linkedDreamIds).toHaveLength(9);
+      expect(familySign?.distinctDreamCount).toBe(9);
+
+      // Verify "Elevators & Escalators" consolidation
+      const elevSign = signs.find((s) => s.name === 'Elevators & Escalators');
+      expect(elevSign).toBeDefined();
+      expect(elevSign?.status).toBe('confirmed'); // took confirmed over suggested
+      expect(elevSign?.keywords).toContain('elevator');
+      expect(elevSign?.keywords).toContain('escalator');
+      expect(elevSign?.keywords).toContain('falling elevator');
+      // Unique dreams: e1, e2, e3, e4 = 4 dreams
+      expect(elevSign?.linkedDreamIds).toHaveLength(4);
+      expect(elevSign?.distinctDreamCount).toBe(4);
+    });
+
+    it('prevents createSign from creating duplicate records when a sign with the same name exists', async () => {
+      const first = await dreamSignService.createSign({
+        name: 'Custom Astral Mirror',
+        category: 'object',
+        keywords: ['mirror'],
+        status: 'suggested',
+        linkedDreamIds: ['d1'],
+        distinctDreamCount: 1,
+      });
+
+      // Calling createSign with the same name but confirmed status and extra keyword
+      const second = await dreamSignService.createSign({
+        name: 'Custom Astral Mirror ',
+        category: 'object',
+        keywords: ['glass', 'silver reflection'],
+        status: 'confirmed',
+        linkedDreamIds: ['d2'],
+        distinctDreamCount: 1,
+      });
+
+      expect(second.id).toBe(first.id);
+      expect(await db.dreamSigns.count()).toBe(1);
+
+      const saved = await dreamSignService.getSignById(first.id);
+      expect(saved?.status).toBe('confirmed');
+      expect(saved?.keywords).toEqual(expect.arrayContaining(['mirror', 'glass', 'silver reflection']));
+      expect(saved?.linkedDreamIds).toEqual(expect.arrayContaining(['d1', 'd2']));
+      expect(saved?.distinctDreamCount).toBe(2);
+    });
+
+    it('merges signs by name during backupService.importData in merge mode without duplicating', async () => {
+      await dreamSignService.createSign({
+        name: 'Flying / Levitation',
+        category: 'anomaly',
+        keywords: ['flight'],
+        status: 'confirmed',
+        linkedDreamIds: ['d-local-1'],
+        distinctDreamCount: 1,
+      });
+
+      // Import backup from another device with a different ID for the same sign
+      const incomingBackup = {
+        version: 2,
+        exportedAt: new Date().toISOString(),
+        source: 'oneiric',
+        dreams: [],
+        techniqueLogs: [],
+        customTags: [],
+        dreamSigns: [
+          {
+            id: 'sign-remote-999',
+            name: 'Flying / Levitation',
+            category: 'anomaly',
+            keywords: ['levitate', 'hovering'],
+            status: 'confirmed',
+            linkedDreamIds: ['d-remote-1'],
+            distinctDreamCount: 1,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          },
+        ],
+      };
+
+      await backupService.importData(incomingBackup, 'merge');
+
+      // Must remain exactly 1 sign in the database!
+      const allSigns = await dreamSignService.getAllSigns();
+      expect(allSigns).toHaveLength(1);
+      expect(allSigns[0].name).toBe('Flying / Levitation');
+      expect(allSigns[0].keywords).toEqual(expect.arrayContaining(['flight', 'levitate', 'hovering']));
+      expect(allSigns[0].linkedDreamIds).toEqual(expect.arrayContaining(['d-local-1', 'd-remote-1']));
+    });
+  });
 });

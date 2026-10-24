@@ -97,6 +97,18 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
 
   useEffect(() => {
     loadSigns();
+
+    const handleDataChanged = () => {
+      loadSigns();
+    };
+
+    window.addEventListener('oneiric:dream-saved', handleDataChanged);
+    window.addEventListener('oneiric:sample-data-changed', handleDataChanged);
+
+    return () => {
+      window.removeEventListener('oneiric:dream-saved', handleDataChanged);
+      window.removeEventListener('oneiric:sample-data-changed', handleDataChanged);
+    };
   }, []);
 
   // Auto-dismiss feedback banner after 6 seconds
