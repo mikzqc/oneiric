@@ -512,4 +512,86 @@ describe('AI-Vibecoded Dream Sign Removal & Management Suite', () => {
       expect(allSigns[0].linkedDreamIds).toEqual(expect.arrayContaining(['d-local-1', 'd-remote-1']));
     });
   });
+
+  describe('Keyword Analysis Quality & Strict Written-Content Matching', () => {
+    it('analyzes ONLY what is written in the dream narrative/scenes, ignoring tags and titles', async () => {
+      // Replicate the user's exact reported scenario:
+      // Dream 1 has "ghost demon child" written in narrative, with tags ['#Mansion', '#Ghost']
+      const d1 = await dreamService.createDream({
+        title: 'Mansion Syllabus',
+        narrative: 'I was in a creepy ass mansion with this small ghost demon child hunting me. And I was with my sister.',
+        date: '2026-09-27',
+        vividness: 3,
+        recallQuality: 'detailed',
+        lucidity: 'non-lucid',
+        emotions: ['Fear'],
+        tags: ['Mansion', 'Ghost'],
+      });
+
+      // Dream 2 has tags ['#Native House', '#Mansion', '#Ghost'], but the written narrative NEVER mentions ghosts!
+      const d2 = await dreamService.createDream({
+        title: '2 dreams first time remembering both',
+        narrative: 'So I was in my mom\'s native house, and I was with my sister, and she wanted my other iPad. Apparently I had 2.',
+        date: '2026-09-27',
+        vividness: 4,
+        recallQuality: 'detailed',
+        lucidity: 'non-lucid',
+        emotions: ['Confusion'],
+        tags: ['Native House', 'Mansion', 'Ghost', 'Teleportation'],
+      });
+
+      await dreamSignService.scanAndDetectSigns();
+
+      const suggested = await dreamSignService.getSuggestedSigns();
+
+      // 1. "Deceased Relatives" MUST NEVER be suggested!
+      const deceasedRel = suggested.find((s) => s.name.toLowerCase().includes('deceased relatives'));
+      expect(deceasedRel).toBeUndefined();
+
+      // 2. "Ghosts & Spirits" must NOT be suggested because "ghost" ONLY appeared in 1 dream's written text (Dream 1),
+      // even though Dream 2 had tag '#Ghost'!
+      const ghostSign = suggested.find((s) => s.name.toLowerCase().includes('ghost'));
+      expect(ghostSign).toBeUndefined();
+
+      // 3. "Family Members" WAS written in both dreams ("sister" in Dream 1, "sister" & "mom" in Dream 2),
+      // so Family Members MUST be suggested cleanly!
+      const familySign = suggested.find((s) => s.name.toLowerCase().includes('family members'));
+      expect(familySign).toBeDefined();
+      expect(familySign?.distinctDreamCount).toBe(2);
+      expect(familySign?.linkedDreamIds).toEqual(expect.arrayContaining([d1.id, d2.id]));
+    });
+
+    it('purges legacy invalid suggestions when their distinct written dream count drops to 0', async () => {
+      // User has a legacy suggested sign in database that only matched due to tag pollution
+      await db.dreamSigns.add({
+        id: 'legacy-bad-sign',
+        name: 'Deceased Relatives',
+        category: 'person',
+        keywords: ['grandfather', 'grandmother', 'passed away', 'ancestor', 'ghost'],
+        status: 'suggested',
+        linkedDreamIds: ['d1', 'd2'],
+        distinctDreamCount: 2,
+        createdAt: 1000,
+        updatedAt: 1000,
+      });
+
+      // Dream 1 and 2 mention nothing about deceased relatives
+      await dreamService.createDream({
+        title: 'Dream One',
+        narrative: 'I walked down the sunny street buying apples.',
+        date: '2026-10-01',
+        vividness: 3,
+        recallQuality: 'detailed',
+        lucidity: 'non-lucid',
+        emotions: [],
+        tags: [],
+      });
+
+      await dreamSignService.scanAndDetectSigns();
+
+      // The invalid suggested sign must have been deleted because written matches === 0!
+      const remainingSign = await dreamSignService.getSignById('legacy-bad-sign');
+      expect(remainingSign).toBeUndefined();
+    });
+  });
 });

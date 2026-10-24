@@ -14,7 +14,7 @@ import {
   ConfidenceRating,
 } from '../types/correlation';
 import { getTodayDateString, parseLocalDate } from '../utils/dateUtils';
-import { normalizeText, matchesKeyword } from './dreamSignService';
+import { normalizeText, matchesKeyword, getDreamWrittenText } from './dreamSignService';
 
 function calculateConfidence(sampleSize: number): ConfidenceRating {
   if (sampleSize >= 5) return 'high';
@@ -45,9 +45,8 @@ export const correlationService = {
       return true;
     }
 
-    const narrativeText = normalizeText(
-      `${dream.title} ${dream.narrative} ${dream.tags?.join(' ') || ''} ${dream.dreamSignsNotes || ''}`
-    );
+    const writtenContent = getDreamWrittenText(dream);
+    const narrativeText = normalizeText(writtenContent);
 
     // Check each keyword/alias defined for this sign
     if (sign.keywords && sign.keywords.length > 0) {

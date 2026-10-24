@@ -41,42 +41,65 @@ export const DEFAULT_PATTERN_RULES: {
   category: DreamSignCategory;
   keywords: string[];
 }[] = [
-  // Anomalies & Superhuman
+  // Anomalies & Supernatural
   { name: 'Flying / Levitation', category: 'anomaly', keywords: ['flying', 'fly', 'flight', 'levitate', 'levitating', 'hovering', 'gliding'] },
   { name: 'Breathing Underwater', category: 'anomaly', keywords: ['underwater breathing', 'breathe underwater', 'breathing underwater', 'submerged breathing'] },
   { name: 'Impossible Physics', category: 'anomaly', keywords: ['gravity', 'floating', 'impossible physics', 'upside down', 'teleport', 'teleporting', 'telekinesis'] },
-  { name: 'Metamorphosis / Shapeshifting', category: 'anomaly', keywords: ['morphing', 'shapeshift', 'shapeshifting', 'transforming', 'transformed'] },
+  { name: 'Shapeshifting & Transforming', category: 'anomaly', keywords: ['morphing', 'shapeshift', 'shapeshifting', 'transforming', 'transformed'] },
   { name: 'Time Distortions', category: 'anomaly', keywords: ['time travel', 'frozen time', 'looping time', 'clock running backward'] },
+  { name: 'Ghosts & Spirits', category: 'anomaly', keywords: ['ghost', 'ghosts', 'spirit', 'spirits', 'haunted', 'phantom', 'poltergeist', 'apparition'] },
+  { name: 'Demons & Monsters', category: 'anomaly', keywords: ['demon', 'demons', 'monster', 'monsters', 'creature', 'beast'] },
 
   // Objects
   { name: 'Mirrors & Reflections', category: 'object', keywords: ['mirror', 'mirrors', 'reflection', 'reflections', 'glass reflection'] },
   { name: 'Clocks & Timepieces', category: 'object', keywords: ['clock', 'clocks', 'watch', 'watches', 'digital clock', 'hourglass'] },
-  { name: 'Malfunctioning Technology', category: 'object', keywords: ['phone', 'smartphone', 'dialing', 'screen glitch', 'computer', 'lights won\'t turn on', 'switch'] },
+  { name: 'Phones & Devices', category: 'object', keywords: ['phone', 'smartphone', 'ipad', 'tablet', 'computer', 'laptop', 'screen', 'dialing'] },
   { name: 'Elevators & Escalators', category: 'object', keywords: ['elevator', 'elevators', 'escalator', 'falling elevator', 'runaway elevator'] },
-  { name: 'Vehicles & Driving', category: 'object', keywords: ['car', 'driving', 'brakes failed', 'brakes', 'train', 'airplane', 'bus'] },
+  { name: 'Vehicles & Driving', category: 'object', keywords: ['car', 'driving', 'drove', 'brakes failed', 'train', 'airplane', 'bus', 'vehicle'] },
   { name: 'Keys & Locked Doors', category: 'object', keywords: ['key', 'keys', 'locked door', 'locking', 'lockbox', 'padlock'] },
 
   // Locations
-  { name: 'Bioluminescent / Deep Ocean', category: 'location', keywords: ['ocean', 'sea', 'coast', 'waves', 'shore', 'deep water'] },
-  { name: 'Forests & Nature Canopies', category: 'location', keywords: ['forest', 'woods', 'trees', 'jungle', 'grove', 'rainforest'] },
-  { name: 'Labyrinths & Endless Corridors', category: 'location', keywords: ['labyrinth', 'maze', 'hallway', 'corridor', 'tunnels', 'basement'] },
-  { name: 'Academic Buildings & Classrooms', category: 'location', keywords: ['school', 'classroom', 'university', 'college', 'exam', 'campus'] },
-  { name: 'Celestial / Cosmic Space', category: 'location', keywords: ['space', 'stars', 'cosmos', 'galaxy', 'planet', 'moon', 'nebula', 'spire'] },
-  { name: 'Childhood Home', category: 'location', keywords: ['childhood home', 'old house', 'childhood bedroom', 'parent\'s house'] },
+  { name: 'Ocean & Coast', category: 'location', keywords: ['ocean', 'sea', 'coast', 'waves', 'shore', 'deep water', 'beach'] },
+  { name: 'Forests & Woods', category: 'location', keywords: ['forest', 'woods', 'trees', 'jungle', 'grove', 'rainforest'] },
+  { name: 'Hallways & Corridors', category: 'location', keywords: ['hallway', 'corridor', 'tunnels', 'basement', 'maze', 'labyrinth'] },
+  { name: 'Mansions & Estates', category: 'location', keywords: ['mansion', 'mansions', 'estate', 'castle', 'manor'] },
+  { name: 'School & Classrooms', category: 'location', keywords: ['school', 'classroom', 'university', 'college', 'exam', 'campus'] },
+  { name: 'Space & Stars', category: 'location', keywords: ['space', 'stars', 'cosmos', 'galaxy', 'planet', 'moon', 'nebula'] },
+  { name: 'Childhood Home', category: 'location', keywords: ['childhood home', 'old house', 'childhood bedroom', 'parent\'s house', 'parents house'] },
 
   // People
   { name: 'Shadow Figures & Strangers', category: 'person', keywords: ['shadow figure', 'shadowy figure', 'faceless stranger', 'stranger', 'intruder'] },
-  { name: 'Deceased Relatives', category: 'person', keywords: ['grandfather', 'grandmother', 'passed away', 'ancestor', 'ghost'] },
-  { name: 'Family Members', category: 'person', keywords: ['mother', 'father', 'brother', 'sister', 'mom', 'dad'] },
-  { name: 'Celebrities & Fictional Characters', category: 'person', keywords: ['celebrity', 'actor', 'fictional character', 'superhero'] },
+  { name: 'Grandparents & Ancestors', category: 'person', keywords: ['grandfather', 'grandmother', 'grandpa', 'grandma', 'ancestor', 'ancestors'] },
+  { name: 'Deceased Relatives', category: 'person', keywords: ['passed away', 'late grandfather', 'late grandmother', 'deceased relative', 'dead relative'] },
+  { name: 'Family Members', category: 'person', keywords: ['mother', 'father', 'brother', 'sister', 'mom', 'dad', 'sibling', 'parent'] },
+  { name: 'Celebrities & Characters', category: 'person', keywords: ['celebrity', 'actor', 'fictional character', 'superhero'] },
 
   // Actions & Situations
   { name: 'Falling Sensation', category: 'action', keywords: ['falling', 'free fall', 'plunging', 'fell from', 'cliff edge'] },
-  { name: 'Pursuit / Being Chased', category: 'action', keywords: ['chased', 'being chased', 'pursued', 'running away', 'escaping', 'hiding'] },
-  { name: 'Lost / Disoriented', category: 'action', keywords: ['lost', 'can\'t find way', 'wandering', 'stranded', 'seeking exit'] },
-  { name: 'Teeth Falling Out', category: 'action', keywords: ['teeth', 'tooth', 'teeth falling', 'loose teeth', 'crumbling teeth'] },
-  { name: 'Unprepared for Exam / Public', category: 'action', keywords: ['unprepared', 'test', 'exam', 'naked in public', 'forgot clothes'] },
+  { name: 'Being Chased', category: 'action', keywords: ['chased', 'being chased', 'pursued', 'running away', 'escaping', 'hiding'] },
+  { name: 'Lost & Disoriented', category: 'action', keywords: ['lost', 'can\'t find way', 'wandering', 'stranded', 'seeking exit'] },
+  { name: 'Teeth Falling Out', category: 'action', keywords: ['teeth falling', 'tooth falling', 'loose teeth', 'crumbling teeth', 'teeth fell out'] },
+  { name: 'Exams & Tests', category: 'action', keywords: ['exam', 'test', 'unprepared for exam', 'quiz'] },
 ];
+
+/**
+ * Extracts strictly the user-written dream content (narrative and scene narratives).
+ * Excludes arbitrary metadata, tags, notes, and titles to prevent false keyword matches.
+ */
+export function getDreamWrittenText(dream: DreamEntry): string {
+  const parts: string[] = [];
+  if (dream.narrative && dream.narrative.trim()) {
+    parts.push(dream.narrative.trim());
+  }
+  if (dream.scenes && dream.scenes.length > 0) {
+    for (const scene of dream.scenes) {
+      if (scene.narrative && scene.narrative.trim()) {
+        parts.push(scene.narrative.trim());
+      }
+    }
+  }
+  return parts.join('\n\n');
+}
 
 /**
  * Normalizes text for keyword matching: removes punctuation, lowercases, cleans whitespace.
@@ -162,6 +185,29 @@ export const dreamSignService = {
    */
   async consolidateDuplicateSigns(): Promise<number> {
     const allSigns = await db.dreamSigns.toArray();
+    if (allSigns.length === 0) return 0;
+
+    // Self-healing migration for legacy mismatched keywords (e.g. 'ghost' on 'Deceased Relatives')
+    for (const sign of allSigns) {
+      if (sign.name.toLowerCase().includes('deceased relatives')) {
+        if (sign.status === 'suggested') {
+          // The old rule generated "Deceased Relatives" when matching "ghost"
+          // Clean up this false suggestion
+          tombstoneService.recordDeletion(sign.id);
+          await db.dreamSigns.delete(sign.id);
+          continue;
+        }
+        if (sign.keywords.some((k) => k.toLowerCase() === 'ghost')) {
+          const cleaned = sign.keywords.filter((k) => k.toLowerCase() !== 'ghost');
+          await db.dreamSigns.update(sign.id, {
+            keywords: cleaned,
+            updatedAt: Date.now(),
+          });
+          sign.keywords = cleaned;
+        }
+      }
+    }
+
     if (allSigns.length <= 1) return 0;
 
     const grouped = new Map<string, DreamSign[]>();
@@ -638,98 +684,112 @@ export const dreamSignService = {
         const dreams = await db.dreams.toArray();
         const existingSigns = await db.dreamSigns.toArray();
 
-        // Map dream ID -> combined normalized searchable text
+        // Map dream ID -> strictly written content text (narrative & scenes only)
         const dreamTextMap = new Map<string, { date: string; text: string }>();
         for (const dream of dreams) {
-      const fullText = [
-        dream.title,
-        dream.narrative,
-        dream.dreamSignsNotes || '',
-        ...(dream.tags || []),
-      ].join(' ');
-      dreamTextMap.set(dream.id, {
-        date: dream.date,
-        text: normalizeText(fullText),
-      });
-    }
-
-    // 1. Update existing confirmed/suggested/dismissed signs
-    let updatedSignsCount = 0;
-    for (const sign of existingSigns) {
-      const matchedDreamIds = new Set<string>();
-      let latestDate: string | undefined = undefined;
-
-      const allSearchTerms = [sign.name.toLowerCase(), ...sign.keywords];
-
-      for (const [dreamId, dreamData] of dreamTextMap.entries()) {
-        // Skip dream if explicitly unlinked/excluded by user from this sign
-        if (sign.excludedDreamIds && sign.excludedDreamIds.includes(dreamId)) {
-          continue;
+          const writtenContent = getDreamWrittenText(dream);
+          dreamTextMap.set(dream.id, {
+            date: dream.date,
+            text: normalizeText(writtenContent),
+          });
         }
 
-        const matchesAny = allSearchTerms.some((term) => matchesKeyword(dreamData.text, term));
-        if (matchesAny) {
-          matchedDreamIds.add(dreamId);
-          if (!latestDate || dreamData.date > latestDate) {
-            latestDate = dreamData.date;
+        // 1. Update existing confirmed/suggested/dismissed signs
+        let updatedSignsCount = 0;
+        for (const sign of existingSigns) {
+          const matchedDreamIds = new Set<string>();
+          let latestDate: string | undefined = undefined;
+
+          // Exclude 'ghost' from search terms if legacy 'Deceased Relatives' sign
+          const searchKeywords = sign.name.toLowerCase().includes('deceased relatives')
+            ? sign.keywords.filter((k) => k.toLowerCase() !== 'ghost')
+            : sign.keywords;
+          const allSearchTerms = [sign.name.toLowerCase(), ...searchKeywords];
+
+          for (const [dreamId, dreamData] of dreamTextMap.entries()) {
+            // Skip dream if explicitly unlinked/excluded by user from this sign
+            if (sign.excludedDreamIds && sign.excludedDreamIds.includes(dreamId)) {
+              continue;
+            }
+
+            const matchesAny = allSearchTerms.some((term) => matchesKeyword(dreamData.text, term));
+            if (matchesAny) {
+              matchedDreamIds.add(dreamId);
+              if (!latestDate || dreamData.date > latestDate) {
+                latestDate = dreamData.date;
+              }
+            }
+          }
+
+          const distinctCount = matchedDreamIds.size;
+
+          // If a candidate suggestion has 0 matching dreams, remove it automatically
+          if (sign.status === 'suggested' && distinctCount === 0) {
+            tombstoneService.recordDeletion(sign.id);
+            await db.dreamSigns.delete(sign.id);
+            continue;
+          }
+
+          const idsArray = Array.from(matchedDreamIds);
+
+          // Persist updated occurrences
+          await db.dreamSigns.update(sign.id, {
+            linkedDreamIds: idsArray,
+            distinctDreamCount: distinctCount,
+            lastOccurred: distinctCount === 0 ? undefined : (latestDate || sign.lastOccurred),
+            updatedAt: Date.now(),
+          });
+          updatedSignsCount++;
+        }
+
+        // 2. Discover new recurring candidate signs from DEFAULT_PATTERN_RULES
+        const existingSignNames = new Set(existingSigns.map((s) => s.name.toLowerCase()));
+        const ignoredNames = new Set(getIgnoredSignNames().map((n) => n.toLowerCase()));
+        let newSuggestionsCount = 0;
+
+        for (const rule of DEFAULT_PATTERN_RULES) {
+          const lowerRuleName = rule.name.toLowerCase();
+          if (existingSignNames.has(lowerRuleName) || ignoredNames.has(lowerRuleName)) {
+            continue;
+          }
+
+          const matchedDreamIds = new Set<string>();
+          const matchedKeywords = new Set<string>();
+          let latestDate: string | undefined = undefined;
+
+          for (const [dreamId, dreamData] of dreamTextMap.entries()) {
+            let dreamMatched = false;
+            for (const term of rule.keywords) {
+              if (matchesKeyword(dreamData.text, term)) {
+                matchedKeywords.add(term);
+                dreamMatched = true;
+              }
+            }
+            if (dreamMatched) {
+              matchedDreamIds.add(dreamId);
+              if (!latestDate || dreamData.date > latestDate) {
+                latestDate = dreamData.date;
+              }
+            }
+          }
+
+          // STRICT RULE: Only label pattern recurring if it appears across >= 2 distinct dreams in written content!
+          if (matchedDreamIds.size >= 2) {
+            const idsArray = Array.from(matchedDreamIds);
+            await this.createSign({
+              name: rule.name,
+              category: rule.category,
+              keywords: rule.keywords,
+              status: 'suggested', // requires user confirmation
+              linkedDreamIds: idsArray,
+              distinctDreamCount: idsArray.length,
+              lastOccurred: latestDate,
+              isRealityCheckReminder: false,
+            });
+            existingSignNames.add(lowerRuleName);
+            newSuggestionsCount++;
           }
         }
-      }
-
-      const distinctCount = matchedDreamIds.size;
-      const idsArray = Array.from(matchedDreamIds);
-
-      // Persist updated occurrences
-      await db.dreamSigns.update(sign.id, {
-        linkedDreamIds: idsArray,
-        distinctDreamCount: distinctCount,
-        lastOccurred: distinctCount === 0 ? undefined : (latestDate || sign.lastOccurred),
-        updatedAt: Date.now(),
-      });
-      updatedSignsCount++;
-    }
-
-    // 2. Discover new recurring candidate signs from DEFAULT_PATTERN_RULES
-    const existingSignNames = new Set(existingSigns.map((s) => s.name.toLowerCase()));
-    const ignoredNames = new Set(getIgnoredSignNames().map((n) => n.toLowerCase()));
-    let newSuggestionsCount = 0;
-
-    for (const rule of DEFAULT_PATTERN_RULES) {
-      const lowerRuleName = rule.name.toLowerCase();
-      if (existingSignNames.has(lowerRuleName) || ignoredNames.has(lowerRuleName)) {
-        continue;
-      }
-
-      const matchedDreamIds = new Set<string>();
-      let latestDate: string | undefined = undefined;
-
-      for (const [dreamId, dreamData] of dreamTextMap.entries()) {
-        const matchesAny = rule.keywords.some((term) => matchesKeyword(dreamData.text, term));
-        if (matchesAny) {
-          matchedDreamIds.add(dreamId);
-          if (!latestDate || dreamData.date > latestDate) {
-            latestDate = dreamData.date;
-          }
-        }
-      }
-
-      // STRICT RULE: Only label pattern recurring if it appears across >= 2 distinct dreams!
-      if (matchedDreamIds.size >= 2) {
-        const idsArray = Array.from(matchedDreamIds);
-        await this.createSign({
-          name: rule.name,
-          category: rule.category,
-          keywords: rule.keywords,
-          status: 'suggested', // requires user confirmation
-          linkedDreamIds: idsArray,
-          distinctDreamCount: idsArray.length,
-          lastOccurred: latestDate,
-          isRealityCheckReminder: false,
-        });
-        existingSignNames.add(lowerRuleName);
-        newSuggestionsCount++;
-      }
-    }
 
     return { updatedSignsCount, newSuggestionsCount };
   } finally {
