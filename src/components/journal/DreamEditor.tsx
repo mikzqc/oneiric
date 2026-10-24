@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DreamDraft, DreamEntry, DreamScene, PREDEFINED_EMOTIONS, LucidityLevel, RecallQuality } from '../../types/dream';
 import { dreamService } from '../../services/dreamService';
 import { celebrationService } from '../../services/celebrationService';
+import { wakeTimeService, WakeTimeConfig, WAKE_TIME_CHANGED_EVENT } from '../../services/wakeTimeService';
 import { getTodayDateString } from '../../utils/dateUtils';
 import { Button } from '../common/Button';
 import {
@@ -24,6 +25,7 @@ import {
   Link2,
   FileText,
   CheckCircle2,
+  Globe,
 } from 'lucide-react';
 
 interface DreamEditorProps {
@@ -72,7 +74,14 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   const [title, setTitle] = useState(initialDream?.title || newDraft?.title || '');
   const [narrative, setNarrative] = useState(initialDream?.narrative || newDraft?.narrative || '');
   const [date, setDate] = useState(initialDream?.date || newDraft?.date || getTodayDateString());
-  const [wakeUpTime, setWakeUpTime] = useState(initialDream?.wakeUpTime || newDraft?.wakeUpTime || '');
+  const [wakeConfig, setWakeConfig] = useState<WakeTimeConfig>(() =>
+    wakeTimeService.getWakeTimeConfig()
+  );
+  const [wakeUpTime, setWakeUpTime] = useState(() => {
+    if (initialDream?.wakeUpTime !== undefined) return initialDream.wakeUpTime;
+    if (newDraft?.wakeUpTime !== undefined) return newDraft.wakeUpTime;
+    return wakeTimeService.getWakeTimeConfig().wakeTime;
+  });
   const [vividness, setVividness] = useState<number>(initialDream?.vividness || newDraft?.vividness || 3);
   const [recallQuality, setRecallQuality] = useState<RecallQuality>(
     initialDream?.recallQuality || newDraft?.recallQuality || 'detailed'
@@ -94,6 +103,28 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   const [hasRestoredDraft, setHasRestoredDraft] = useState(!isEditing && !!newDraft);
   const [hasRestoredEditDraft, setHasRestoredEditDraft] = useState(Boolean(recoveredEditDraft));
   const [autosaveTime, setAutosaveTime] = useState<string | null>(null);
+
+  // Sync auto-detected wake time changes
+  useEffect(() => {
+    const handleWakeChange = (e: Event) => {
+      const custom = e as CustomEvent<WakeTimeConfig>;
+      if (custom.detail) {
+        setWakeConfig(custom.detail);
+        if (!isEditing && !newDraft?.wakeUpTime && !custom.detail.isManualOverride) {
+          setWakeUpTime(custom.detail.wakeTime);
+        }
+      }
+    };
+    window.addEventListener(WAKE_TIME_CHANGED_EVENT, handleWakeChange);
+    return () => window.removeEventListener(WAKE_TIME_CHANGED_EVENT, handleWakeChange);
+  }, [isEditing, newDraft]);
+
+  const handleWakeUpTimeChange = (val: string) => {
+    setWakeUpTime(val);
+    if (!isEditing && val) {
+      wakeTimeService.setManualWakeTime(val);
+    }
+  };
 
   // Related Dreams Linking
   const [relatedDreamIds, setRelatedDreamIds] = useState<string[]>(initialDream?.relatedDreamIds || []);
@@ -605,15 +636,30 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
 
         {/* Wake-up Time */}
         <div>
-          <label htmlFor="dream-time" className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-blue-400" />
-            Approx. Wake-up Time
-          </label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label htmlFor="dream-time" className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-blue-400" />
+              Approx. Wake-up Time
+            </label>
+            <span
+              title={
+                wakeConfig.isManualOverride
+                  ? `Manually set wake-up time (${wakeConfig.timeZone})`
+                  : `Auto-detected from local time zone (${wakeConfig.timeZone})`
+              }
+              className="text-[10px] text-slate-400 font-normal flex items-center gap-1"
+            >
+              <Globe className="w-3 h-3 text-slate-500" />
+              <span className="truncate max-w-[120px]">
+                {wakeConfig.isManualOverride ? 'Manual' : 'Auto'} ({wakeConfig.timeZone.split('/').pop()?.replace(/_/g, ' ') || wakeConfig.timeZone})
+              </span>
+            </span>
+          </div>
           <input
             id="dream-time"
             type="time"
             value={wakeUpTime}
-            onChange={(e) => setWakeUpTime(e.target.value)}
+            onChange={(e) => handleWakeUpTimeChange(e.target.value)}
             placeholder="07:00"
             className="w-full px-3 py-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-blue-500 transition-colors"
           />

@@ -8,6 +8,7 @@ import {
   TechniqueType,
 } from '../../types/technique';
 import { techniqueService } from '../../services/techniqueService';
+import { wakeTimeService } from '../../services/wakeTimeService';
 import { getTodayDateString } from '../../utils/dateUtils';
 import { Calendar, BookOpen, AlertCircle, Clock, Star, Layers } from 'lucide-react';
 
@@ -38,7 +39,7 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
   const [customTechniqueName, setCustomTechniqueName] = useState('');
   const [date, setDate] = useState(getTodayDateString());
   const [bedTime, setBedTime] = useState('');
-  const [wakeTime, setWakeTime] = useState('');
+  const [wakeTime, setWakeTime] = useState(() => wakeTimeService.getWakeTimeConfig().wakeTime);
   const [confidenceRating, setConfidenceRating] = useState<number>(3);
   const [secondaryTechniques, setSecondaryTechniques] = useState<TechniqueType[]>([]);
   const [notes, setNotes] = useState('');
@@ -83,7 +84,7 @@ export const TechniqueModal: React.FC<TechniqueModalProps> = ({
       setNotes('');
       setCustomTechniqueName('');
       setBedTime('');
-      setWakeTime('');
+      setWakeTime(wakeTimeService.getWakeTimeConfig().wakeTime);
       setSecondaryTechniques([]);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to save technique log.');

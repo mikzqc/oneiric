@@ -3,6 +3,7 @@ import { db } from '../db/database';
 import { backupService } from '../services/backupService';
 import { cryptoService } from '../services/cryptoService';
 import { celebrationService } from '../services/celebrationService';
+import { wakeTimeService, WakeTimeConfig, WAKE_TIME_CHANGED_EVENT } from '../services/wakeTimeService';
 import { ImportValidationResult } from '../types/backup';
 import { Button } from '../components/common/Button';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
@@ -21,6 +22,8 @@ import {
   Key,
   Eye,
   EyeOff,
+  Clock,
+  Globe,
 } from 'lucide-react';
 import { SyncSettingsCard } from '../components/sync/SyncSettingsCard';
 
@@ -31,10 +34,56 @@ export const SettingsPage: React.FC = () => {
     text: string;
   } | null>(null);
 
+  // Local Time Zone & Wake-Up Schedule State
+  const [wakeConfig, setWakeConfig] = useState<WakeTimeConfig>(() =>
+    wakeTimeService.getWakeTimeConfig()
+  );
+  const [isRefreshingTz, setIsRefreshingTz] = useState(false);
+
   // Subsequent lucid dream celebrations toggle
   const [subsequentCelebrationEnabled, setSubsequentCelebrationEnabled] = useState(() =>
     celebrationService.isSubsequentCelebrationEnabled()
   );
+
+  useEffect(() => {
+    const handleWakeChange = (e: Event) => {
+      const custom = e as CustomEvent<WakeTimeConfig>;
+      if (custom.detail) {
+        setWakeConfig(custom.detail);
+      }
+    };
+    window.addEventListener(WAKE_TIME_CHANGED_EVENT, handleWakeChange);
+    return () => window.removeEventListener(WAKE_TIME_CHANGED_EVENT, handleWakeChange);
+  }, []);
+
+  const handleWakeTimeChange = (newTime: string) => {
+    if (!newTime) return;
+    const updated = wakeTimeService.setManualWakeTime(newTime);
+    setWakeConfig(updated);
+    showFeedback('success', `Default wake-up time updated to ${newTime}.`);
+  };
+
+  const handleResetWakeTime = async () => {
+    setIsRefreshingTz(true);
+    try {
+      const updated = await wakeTimeService.resetToAuto();
+      setWakeConfig(updated);
+      showFeedback('success', `Wake-up time reset to auto default (${updated.wakeTime}) in ${updated.timeZone}.`);
+    } finally {
+      setIsRefreshingTz(false);
+    }
+  };
+
+  const handleRefreshTz = async () => {
+    setIsRefreshingTz(true);
+    try {
+      const updated = await wakeTimeService.refreshTimeZone(true);
+      setWakeConfig(updated);
+      showFeedback('success', `Time zone verified: ${updated.timeZone}.`);
+    } finally {
+      setIsRefreshingTz(false);
+    }
+  };
 
   // Import flow state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -487,7 +536,104 @@ export const SettingsPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Section 4: Privacy & Local Storage Architecture */}
+      {/* Section 4: Local Time Zone & Wake-Up Schedule */}
+      <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
+        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
+          <Clock className="w-5 h-5 text-blue-400" />
+          <div>
+            <h2 className="text-base font-bold text-slate-100">Wake-up Time & Time Zone</h2>
+            <p className="text-xs text-slate-400">
+              Automatic time zone detection and default wake-up schedule for journal entries
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Detected Time Zone */}
+          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+                  <Globe className="w-4 h-4 text-cyan-400" />
+                  <span>Detected Time Zone</span>
+                </div>
+                <span className="text-[10px] px-2 py-0.5 rounded font-mono bg-blue-950/60 text-blue-300 border border-blue-800/60">
+                  IANA
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed mb-3">
+                Resolved from your system environment with IP geolocation fallback. Ensures DST transitions and nocturnal dates match your physical location.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-slate-800/60">
+              <div className="font-mono text-sm text-slate-200">
+                {wakeConfig.timeZone}
+                {wakeConfig.city && (
+                  <span className="text-xs text-slate-400 block font-sans">
+                    Approx. {wakeConfig.city}{wakeConfig.country ? `, ${wakeConfig.country}` : ''}
+                  </span>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                size="xs"
+                onClick={handleRefreshTz}
+                disabled={isRefreshingTz}
+                icon={<Globe className="w-3.5 h-3.5 text-slate-400" />}
+              >
+                {isRefreshingTz ? 'Checking...' : 'Re-check'}
+              </Button>
+            </div>
+          </div>
+
+          {/* Default Wake-up Time */}
+          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+                  <Clock className="w-4 h-4 text-blue-400" />
+                  <span>Default Wake-up Time</span>
+                </div>
+                <span
+                  className={`text-[10px] px-2 py-0.5 rounded font-mono border ${
+                    wakeConfig.isManualOverride
+                      ? 'bg-amber-950/60 text-amber-300 border-amber-800/60'
+                      : 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60'
+                  }`}
+                >
+                  {wakeConfig.isManualOverride ? 'Manual Override' : 'Auto-Initialized'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed mb-3">
+                Automatically populates new dream drafts. You can edit this default here or modify individual entries directly in the dream editor.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2 border-t border-slate-800/60">
+              <input
+                type="time"
+                value={wakeConfig.wakeTime}
+                onChange={(e) => handleWakeTimeChange(e.target.value)}
+                className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-sm font-mono focus:outline-none focus:border-blue-500 transition-colors"
+              />
+              {wakeConfig.isManualOverride && (
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={handleResetWakeTime}
+                  disabled={isRefreshingTz}
+                  className="text-xs text-slate-400 hover:text-slate-200"
+                >
+                  Reset to Auto
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 5: Privacy & Local Storage Architecture */}
       <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
         <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
           <ShieldCheck className="w-5 h-5 text-emerald-400" />
@@ -515,7 +661,7 @@ export const SettingsPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Section 5: Danger Zone (Factory Reset) */}
+      {/* Section 6: Danger Zone (Factory Reset) */}
       <section className="p-6 rounded-xl bg-red-950/20 border border-red-900/40 space-y-4">
         <div className="flex items-center gap-2.5 pb-4 border-b border-red-900/40">
           <Trash2 className="w-5 h-5 text-red-400" />
