@@ -88,6 +88,7 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
   const loadSigns = async () => {
     try {
       setIsLoading(true);
+      dreamSignService.clearIgnoredSigns();
       const list = await dreamSignService.getAllSigns();
       setSigns(list);
     } finally {
@@ -237,7 +238,7 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
 
     try {
       if (bulkActionType === 'delete') {
-        const res = await dreamSignService.deleteMultipleSigns(ids, true);
+        const res = await dreamSignService.deleteMultipleSigns(ids, false);
         if (activeSignDetail && ids.includes(activeSignDetail.id)) {
           setActiveSignDetail(null);
         }
@@ -408,7 +409,7 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
   const handleDeleteConfirm = async () => {
     if (!signToDelete) return;
     try {
-      await dreamSignService.deleteSign(signToDelete.id, true);
+      await dreamSignService.deleteSign(signToDelete.id, false);
       setFeedback({
         type: 'success',
         message: `Dream sign "${signToDelete.name}" removed from library. Original dream records remain untouched.`,
@@ -1195,9 +1196,9 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
 
             {bulkActionType === 'delete' ? (
               <div className="p-3 rounded-xl bg-red-950/40 border border-red-800/60 text-red-200 space-y-1">
-                <p className="font-semibold">Permanent Library Removal</p>
+                <p className="font-semibold">Library Removal</p>
                 <p className="text-[11px] text-red-300/80">
-                  These signs will be deleted from your Dream Sign Library and ignored in future automated pattern scans. Original dream records and narratives will remain 100% untouched.
+                  These signs will be deleted from your Dream Sign Library. If they recur across your dreams, they can be re-detected in future scans. Original dream records and narratives will remain 100% untouched.
                 </p>
               </div>
             ) : bulkActionType === 'dismiss' ? (
@@ -1387,7 +1388,7 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
         onClose={() => setSignToDelete(null)}
         onConfirm={handleDeleteConfirm}
         title={`Delete "${signToDelete?.name}" from Library`}
-        message={`Delete "${signToDelete?.name}" (${signToDelete?.distinctDreamCount || 0} dream occurrences)? This will remove the sign from your library and prevent automatic re-detection. Original dream entries and narratives will remain 100% untouched.`}
+        message={`Delete "${signToDelete?.name}" (${signToDelete?.distinctDreamCount || 0} dream occurrences)? This will remove the sign from your library. If it recurs across your dreams, it can be re-detected in future scans. Original dream entries and narratives will remain 100% untouched.`}
         confirmText="Delete from Library"
         isDestructive={true}
       />

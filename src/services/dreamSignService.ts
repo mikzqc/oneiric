@@ -425,11 +425,12 @@ export const dreamSignService = {
   },
 
   /**
-   * Permanently deletes a sign. When preventRecreation is true (default), records its name
-   * in the ignored list so automated pattern scans will not resurrect it as a suggestion.
+   * Deletes a sign from the library. By default (preventRecreation = false), it removes
+   * the sign from your library but does not permanently blacklist the name, allowing it
+   * to be cleanly re-detected if you run a pattern scan across recurring dreams.
    * Also safely removes any matching duplicates by name.
    */
-  async deleteSign(id: string, preventRecreation = true): Promise<void> {
+  async deleteSign(id: string, preventRecreation = false): Promise<void> {
     tombstoneService.recordDeletion(id);
     const sign = await db.dreamSigns.get(id);
     if (sign && preventRecreation) {
@@ -455,7 +456,7 @@ export const dreamSignService = {
    */
   async deleteMultipleSigns(
     ids: string[],
-    preventRecreation = true
+    preventRecreation = false
   ): Promise<{ succeeded: string[]; failed: string[] }> {
     const succeeded: string[] = [];
     const failed: string[] = [];
@@ -471,6 +472,10 @@ export const dreamSignService = {
     }
 
     return { succeeded, failed };
+  },
+
+  clearIgnoredSigns(): void {
+    clearIgnoredSignNames();
   },
 
   /**

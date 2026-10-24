@@ -75,6 +75,53 @@ describe('AI-Vibecoded Dream Sign Removal & Management Suite', () => {
       expect(resurrected).toBeUndefined();
     });
 
+    it('deletes a single sign without preventing re-detection by default, allowing it to re-appear on scan', async () => {
+      // 1. Create two dreams containing "teleport" ("Impossible Physics")
+      await dreamService.createDream({
+        title: 'Teleporting in hallway',
+        narrative: 'I was suddenly teleporting through the long hallway.',
+        date: '2026-10-15',
+        vividness: 4,
+        recallQuality: 'detailed',
+        lucidity: 'non-lucid',
+        emotions: ['Wonder'],
+        tags: [],
+      });
+
+      await dreamService.createDream({
+        title: 'Floating and teleporting',
+        narrative: 'I began floating weightlessly and then started teleporting across the sky.',
+        date: '2026-10-16',
+        vividness: 4,
+        recallQuality: 'detailed',
+        lucidity: 'lucid',
+        emotions: ['Joy'],
+        tags: [],
+      });
+
+      // 2. Scan to detect sign
+      await dreamSignService.scanAndDetectSigns();
+      const detected = await dreamSignService.getAllSigns();
+      const physicsSign = detected.find((s) => s.name.toLowerCase().includes('impossible physics'));
+      expect(physicsSign).toBeDefined();
+
+      // 3. User deletes the sign with default settings (preventRecreation = false)
+      await dreamSignService.deleteSign(physicsSign!.id);
+
+      // Verify sign is removed from database
+      expect(await dreamSignService.getSignById(physicsSign!.id)).toBeUndefined();
+
+      // Verify sign name is NOT recorded in ignored list
+      expect(getIgnoredSignNames().some((n) => n.toLowerCase().includes('impossible physics'))).toBe(false);
+
+      // 4. Run automatic pattern detection scan again — sign SHOULD re-appear!
+      await dreamSignService.scanAndDetectSigns();
+      const afterRescan = await dreamSignService.getAllSigns();
+      const redetected = afterRescan.find((s) => s.name.toLowerCase().includes('impossible physics'));
+      expect(redetected).toBeDefined();
+      expect(redetected!.distinctDreamCount).toBe(2);
+    });
+
     it('bulk deletes multiple signs and reports succeeded operations', async () => {
       const s1 = await dreamSignService.createSign({
         name: 'Sign Alpha',
