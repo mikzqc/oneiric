@@ -13,6 +13,8 @@ import { BackupPayload } from '../types/backup';
 import { tombstoneService } from '../utils/tombstones';
 
 const CREDENTIALS_STORAGE_KEY = 'oneiric_sync_vault';
+export const PERSISTENT_DEVICE_ID_KEY = 'oneiric_device_id';
+export const PERSISTENT_DEVICE_NAME_KEY = 'oneiric_device_name';
 
 let autoSyncTimeout: ReturnType<typeof setTimeout> | null = null;
 let activeSyncPromise: Promise<SyncResult> | null = null;
@@ -28,12 +30,69 @@ export const NO_CACHE_HEADERS: HeadersInit = {
   Pragma: 'no-cache',
 };
 
-export function detectDeviceType(): DeviceType {
-  if (typeof navigator === 'undefined') return 'desktop';
+/**
+ * Accurately detects hardware type and friendly name, including iPadOS desktop-Safari mode
+ */
+export function detectDeviceDetails(): { name: string; type: DeviceType } {
+  if (typeof navigator === 'undefined') {
+    return { name: 'Primary Device', type: 'desktop' };
+  }
+
   const ua = (navigator.userAgent || '').toLowerCase();
-  if (/ipad|tablet|(android(?!.*mobile))/i.test(ua)) return 'tablet';
-  if (/mobile|iphone|ipod|android|blackberry|opera mini|iemobile/i.test(ua)) return 'mobile';
-  return 'desktop';
+  const platform = (navigator.platform || '').toLowerCase();
+  const maxTouchPoints = navigator.maxTouchPoints || 0;
+
+  // 1. iPad Detection (including modern iPadOS 13+ desktop Safari mode where UA says Macintosh)
+  const isIPad =
+    /ipad/i.test(ua) ||
+    (platform.includes('mac') && maxTouchPoints > 1) ||
+    (/macintosh/i.test(ua) && maxTouchPoints > 1);
+
+  if (isIPad) {
+    return { name: 'iPad', type: 'tablet' };
+  }
+
+  // 2. iPhone / iPod
+  if (/iphone|ipod/i.test(ua)) {
+    return { name: 'iPhone', type: 'mobile' };
+  }
+
+  // 3. Android Tablet vs Phone
+  if (/android/i.test(ua)) {
+    if (/mobile/i.test(ua)) {
+      return { name: 'Android Phone', type: 'mobile' };
+    }
+    return { name: 'Android Tablet', type: 'tablet' };
+  }
+
+  // 4. Other Tablets
+  if (/tablet|playbook|silk/i.test(ua)) {
+    return { name: 'Tablet', type: 'tablet' };
+  }
+
+  // 5. Windows PC
+  if (/windows|win32|win64/i.test(ua)) {
+    return { name: 'Windows PC', type: 'desktop' };
+  }
+
+  // 6. Mac
+  if (/macintosh|macintel|mac os x/i.test(ua)) {
+    return { name: 'Mac', type: 'desktop' };
+  }
+
+  // 7. Linux / ChromeOS
+  if (/cros/i.test(ua)) {
+    return { name: 'Chromebook', type: 'desktop' };
+  }
+  if (/linux/i.test(ua)) {
+    return { name: 'Linux PC', type: 'desktop' };
+  }
+
+  return { name: 'Desktop Device', type: 'desktop' };
+}
+
+export function detectDeviceType(): DeviceType {
+  return detectDeviceDetails().type;
 }
 
 export function generateDeviceId(): string {
@@ -41,6 +100,44 @@ export function generateDeviceId(): string {
     return `dev_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
   }
   return `dev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/**
+ * Returns or creates a persistent stable device ID that survives vault disconnects
+ */
+export function getOrCreateDeviceId(): string {
+  try {
+    const existing = localStorage.getItem(PERSISTENT_DEVICE_ID_KEY);
+    if (existing && existing.startsWith('dev_')) {
+      return existing;
+    }
+    const newId = generateDeviceId();
+    localStorage.setItem(PERSISTENT_DEVICE_ID_KEY, newId);
+    return newId;
+  } catch {
+    return generateDeviceId();
+  }
+}
+
+/**
+ * Returns or creates a persistent device name that survives vault disconnects
+ */
+export function getOrCreateDeviceName(customName?: string): string {
+  try {
+    if (customName && customName.trim()) {
+      localStorage.setItem(PERSISTENT_DEVICE_NAME_KEY, customName.trim());
+      return customName.trim();
+    }
+    const existing = localStorage.getItem(PERSISTENT_DEVICE_NAME_KEY);
+    if (existing && existing.trim()) {
+      return existing.trim();
+    }
+    const detected = detectDeviceDetails().name;
+    localStorage.setItem(PERSISTENT_DEVICE_NAME_KEY, detected);
+    return detected;
+  } catch {
+    return customName?.trim() || detectDeviceDetails().name;
+  }
 }
 
 export function buildHeaders(deviceId?: string): HeadersInit {
@@ -84,6 +181,13 @@ function formatRelayNetworkError(err: unknown, action = 'connect to'): string {
 
 export const syncService = {
   /**
+   * Helper to get user-friendly detected or saved device name
+   */
+  getDeviceName(): string {
+    return getOrCreateDeviceName();
+  },
+
+  /**
    * Retrieves saved sync vault credentials from local storage with automatic migration for device registry
    */
   getCredentials(): SyncVaultCredentials | null {
@@ -93,7 +197,11 @@ export const syncService = {
       const creds = JSON.parse(raw) as SyncVaultCredentials;
       let dirty = false;
       if (!creds.deviceId) {
-        creds.deviceId = generateDeviceId();
+        creds.deviceId = getOrCreateDeviceId();
+        dirty = true;
+      }
+      if (!creds.deviceName) {
+        creds.deviceName = getOrCreateDeviceName();
         dirty = true;
       }
       if (!creds.deviceType) {
@@ -108,7 +216,7 @@ export const syncService = {
         creds.devices = [
           {
             id: creds.deviceId,
-            name: creds.deviceName || 'Primary Device',
+            name: creds.deviceName,
             type: creds.deviceType,
             pairedAt: creds.createdAt || new Date().toISOString(),
             lastSyncAt: creds.lastSyncedAt || creds.createdAt || new Date().toISOString(),
@@ -117,6 +225,33 @@ export const syncService = {
         ];
         dirty = true;
       }
+
+      // Automatically ingest legacy remote device (e.g. iPad) if already known in lastRemoteDevice
+      if (creds.lastRemoteDevice && creds.lastRemoteDevice.trim()) {
+        const remoteName = creds.lastRemoteDevice.trim();
+        const alreadyInList = creds.devices.some(
+          (d) =>
+            d.name.toLowerCase() === remoteName.toLowerCase() ||
+            d.id.toLowerCase().includes(remoteName.toLowerCase().replace(/\s+/g, '_'))
+        );
+        if (!alreadyInList) {
+          const remoteType: DeviceType = /ipad|tablet/i.test(remoteName)
+            ? 'tablet'
+            : /phone|mobile/i.test(remoteName)
+            ? 'mobile'
+            : 'desktop';
+          creds.devices.push({
+            id: `dev_legacy_${remoteName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+            name: remoteName,
+            type: remoteType,
+            pairedAt: creds.createdAt || new Date().toISOString(),
+            lastSyncAt: creds.lastRemoteUpdate || creds.lastSyncedAt || creds.createdAt || new Date().toISOString(),
+            status: 'active',
+          });
+          dirty = true;
+        }
+      }
+
       if (dirty) {
         localStorage.setItem(CREDENTIALS_STORAGE_KEY, JSON.stringify(creds));
       }
@@ -135,7 +270,7 @@ export const syncService = {
   },
 
   /**
-   * Clears saved sync vault credentials (disconnects vault, retains local dreams)
+   * Clears saved sync vault credentials (disconnects vault, retains local dreams and persistent device ID)
    */
   clearCredentials(): void {
     localStorage.removeItem(CREDENTIALS_STORAGE_KEY);
@@ -235,9 +370,10 @@ export const syncService = {
   }): Promise<{ vaultId: string; passphrase: string; unifiedKey: string }> {
     const passphrase = options?.passphrase?.trim() || cryptoService.generatePassphrase();
     const relayUrl = options?.relayUrl?.trim();
-    const deviceName = options?.deviceName?.trim() || 'Primary Device';
-    const deviceId = generateDeviceId();
-    const deviceType = detectDeviceType();
+    const detected = detectDeviceDetails();
+    const deviceName = getOrCreateDeviceName(options?.deviceName) || detected.name;
+    const deviceId = getOrCreateDeviceId();
+    const deviceType = detected.type;
     const nowStr = new Date().toISOString();
 
     const initialDevice: SyncedDevice = {
@@ -334,7 +470,7 @@ export const syncService = {
   async connectVault(
     vaultIdOrUnifiedKey: string,
     passphraseInput?: string,
-    deviceName = 'Secondary Device'
+    deviceNameInput?: string
   ): Promise<SyncResult> {
     let vaultId = '';
     let passphrase = '';
@@ -355,9 +491,11 @@ export const syncService = {
       throw new Error('Please enter your secret Encryption Passphrase.');
     }
 
-    const myDeviceId = generateDeviceId();
-    const myDeviceType = detectDeviceType();
-    const cleanDeviceName = deviceName.trim() || 'Secondary Device';
+    const detected = detectDeviceDetails();
+    const cleanDeviceName =
+      getOrCreateDeviceName(deviceNameInput) || detected.name;
+    const myDeviceId = getOrCreateDeviceId();
+    const myDeviceType = detected.type;
 
     const getUrl = buildFreshUrl(getRelayUrl(undefined, vaultId));
 
@@ -414,19 +552,35 @@ export const syncService = {
     // 4. Merge remote records into local IndexedDB
     const importRes = await backupService.importData(validation.data, 'merge');
 
-    // 5. Update device registry with this new device
+    // 5. Update device registry with this device (reconnecting device retains its identity)
     const nowStr = new Date().toISOString();
     const existingDevices: SyncedDevice[] = remoteData.devices || envelope.devices || [];
+
+    // Check if an existing device matches our deviceId OR deviceName
+    const existingMatch = existingDevices.find(
+      (d) =>
+        d.id === myDeviceId ||
+        (d.name.toLowerCase() === cleanDeviceName.toLowerCase() && d.status !== 'revoked')
+    );
+
+    const effectiveDeviceId = existingMatch ? existingMatch.id : myDeviceId;
+    try {
+      localStorage.setItem(PERSISTENT_DEVICE_ID_KEY, effectiveDeviceId);
+      localStorage.setItem(PERSISTENT_DEVICE_NAME_KEY, cleanDeviceName);
+    } catch {
+      // ignore
+    }
+
     const thisDeviceRecord: SyncedDevice = {
-      id: myDeviceId,
+      id: effectiveDeviceId,
       name: cleanDeviceName,
       type: myDeviceType,
-      pairedAt: nowStr,
+      pairedAt: existingMatch?.pairedAt || nowStr,
       lastSyncAt: nowStr,
       status: 'active',
     };
     const updatedDevices: SyncedDevice[] = [
-      ...existingDevices.filter((d) => d.id !== myDeviceId),
+      ...existingDevices.filter((d) => d.id !== effectiveDeviceId),
       thisDeviceRecord,
     ];
     const combinedRevokedIds = Array.from(
@@ -450,7 +604,7 @@ export const syncService = {
       ciphertext: updatedEncrypted.ciphertext,
       updatedAt: nowStr,
       sourceDevice: cleanDeviceName,
-      sourceDeviceId: myDeviceId,
+      sourceDeviceId: effectiveDeviceId,
       devices: updatedDevices,
       revokedDeviceIds: combinedRevokedIds,
     };
@@ -462,7 +616,7 @@ export const syncService = {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          ...buildHeaders(myDeviceId),
+          ...buildHeaders(effectiveDeviceId),
         },
         body: JSON.stringify(updatedEnvelope),
         cache: 'no-store',
@@ -485,7 +639,7 @@ export const syncService = {
       createdAt: nowStr,
       lastSyncedAt: nowStr,
       autoSync: true,
-      deviceId: myDeviceId,
+      deviceId: effectiveDeviceId,
       deviceName: cleanDeviceName,
       deviceType: myDeviceType,
       lastRemoteDevice: envelope.sourceDevice,
@@ -523,7 +677,7 @@ export const syncService = {
           throw new Error('No sync vault configured on this device.');
         }
 
-        const myDeviceId = creds.deviceId || generateDeviceId();
+        const myDeviceId = creds.deviceId || getOrCreateDeviceId();
         if (creds.revokedDeviceIds?.includes(myDeviceId)) {
           throw new Error('Sync Access Revoked: This device has been removed from the sync vault.');
         }
@@ -648,10 +802,38 @@ export const syncService = {
           }
         });
 
+        // Auto-discover any legacy remote device recorded in envelope
+        if (remoteEnvelope?.sourceDevice && remoteEnvelope.sourceDevice !== creds.deviceName) {
+          const remoteName = remoteEnvelope.sourceDevice.trim();
+          const hasRemoteMatch = Array.from(localDevicesMap.values()).some(
+            (d) =>
+              d.name.toLowerCase() === remoteName.toLowerCase() ||
+              (remoteEnvelope.sourceDeviceId && d.id === remoteEnvelope.sourceDeviceId)
+          );
+          if (!hasRemoteMatch) {
+            const remoteId =
+              remoteEnvelope.sourceDeviceId ||
+              `dev_discovered_${remoteName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+            const remoteType: DeviceType = /ipad|tablet/i.test(remoteName)
+              ? 'tablet'
+              : /phone|mobile/i.test(remoteName)
+              ? 'mobile'
+              : 'desktop';
+            localDevicesMap.set(remoteId, {
+              id: remoteId,
+              name: remoteName,
+              type: remoteType,
+              pairedAt: remoteEnvelope.updatedAt || creds.createdAt || nowStr,
+              lastSyncAt: remoteEnvelope.updatedAt || nowStr,
+              status: 'active',
+            });
+          }
+        }
+
         // Update current device's heartbeat
         const currentDev = localDevicesMap.get(myDeviceId) || {
           id: myDeviceId,
-          name: creds.deviceName || 'Primary Device',
+          name: creds.deviceName || getOrCreateDeviceName(),
           type: creds.deviceType || detectDeviceType(),
           pairedAt: creds.createdAt || nowStr,
           lastSyncAt: nowStr,
@@ -826,7 +1008,7 @@ export const syncService = {
     }
 
     const newPassphrase = options?.newPassphrase?.trim() || cryptoService.generatePassphrase();
-    const deviceName = creds.deviceName || 'Primary Device';
+    const deviceName = creds.deviceName || getOrCreateDeviceName();
     const relayUrl = creds.relayUrl;
 
     // Create fresh vault with new key, carrying over dreams but leaving revoked devices behind

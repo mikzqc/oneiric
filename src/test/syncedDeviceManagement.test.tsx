@@ -96,6 +96,141 @@ describe('Synced Device Management & Credential Security Warnings', () => {
       expect(secondary?.name).toBe('Nightstand iPhone');
       expect(secondary?.type).toBe('mobile');
     });
+
+    it('accurately detects modern iPadOS devices as an iPad tablet even in desktop Safari mode', () => {
+      // Modern iPadOS 13+ userAgent says Macintosh, but platform is MacIntel and maxTouchPoints > 1
+      const originalUserAgent = navigator.userAgent;
+      const originalPlatform = navigator.platform;
+      const originalTouch = navigator.maxTouchPoints;
+
+      Object.defineProperty(navigator, 'userAgent', {
+        value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
+        configurable: true,
+      });
+      Object.defineProperty(navigator, 'platform', {
+        value: 'MacIntel',
+        configurable: true,
+      });
+      Object.defineProperty(navigator, 'maxTouchPoints', {
+        value: 5,
+        configurable: true,
+      });
+
+      const detected = syncService.getDeviceName();
+      expect(detected).toBe('iPad');
+
+      // Cleanup
+      Object.defineProperty(navigator, 'userAgent', { value: originalUserAgent, configurable: true });
+      Object.defineProperty(navigator, 'platform', { value: originalPlatform, configurable: true });
+      Object.defineProperty(navigator, 'maxTouchPoints', { value: originalTouch, configurable: true });
+    });
+
+    it('auto-discovers existing devices from lastRemoteDevice so Oneiric already knows what is connected', () => {
+      const nowStr = new Date().toISOString();
+
+      // Simulate a user who had already synced an iPad in a previous version of Oneiric
+      localStorage.setItem(
+        'oneiric_sync_vault',
+        JSON.stringify({
+          vaultId: 'vault-legacy-test',
+          passphrase: 'astral-lucid-starlight-nebula-aurora-velvet',
+          createdAt: nowStr,
+          lastSyncedAt: nowStr,
+          autoSync: true,
+          deviceName: 'Workstation PC',
+          lastRemoteDevice: 'iPad',
+          lastRemoteUpdate: nowStr,
+        })
+      );
+
+      const creds = syncService.getCredentials();
+      expect(creds?.devices).toBeDefined();
+      // Should contain both this device and the known remote iPad
+      expect(creds?.devices?.length).toBe(2);
+
+      const iPad = creds?.devices?.find((d) => d.name === 'iPad');
+      expect(iPad).toBeDefined();
+      expect(iPad?.type).toBe('tablet');
+      expect(iPad?.status).toBe('active');
+    });
+
+    it('preserves device identity and updates existing record when a device disconnects and reconnects', async () => {
+      const nowStr = new Date().toISOString();
+      let cloudStore: any = null;
+
+      globalThis.fetch = vi.fn().mockImplementation(async (url: string, options?: RequestInit) => {
+        const method = options?.method || 'GET';
+        if (method === 'GET') {
+          return {
+            ok: true,
+            status: 200,
+            json: async () => cloudStore,
+          };
+        }
+        if (method === 'PUT') {
+          cloudStore = JSON.parse(options?.body as string);
+          return { ok: true, status: 200, json: async () => ({ success: true }) };
+        }
+        return { ok: true, status: 201, json: async () => ({ id: 'vault-recon' }) };
+      });
+
+      // 1. Vault is created with initial PC and iPad
+      const initialBackup = await backupService.exportData();
+      const initialPayload = {
+        ...initialBackup,
+        devices: [
+          {
+            id: 'dev_pc_1',
+            name: 'PC Desktop',
+            type: 'desktop' as const,
+            pairedAt: nowStr,
+            lastSyncAt: nowStr,
+            status: 'active' as const,
+          },
+          {
+            id: 'dev_ipad_stable',
+            name: 'iPad',
+            type: 'tablet' as const,
+            pairedAt: nowStr,
+            lastSyncAt: nowStr,
+            status: 'active' as const,
+          },
+        ],
+        revokedDeviceIds: [],
+      };
+      const enc = await cryptoService.encryptData(initialPayload, 'astral-lucid-starlight-nebula-aurora-velvet');
+      cloudStore = {
+        version: 2,
+        vaultId: 'vault-recon',
+        salt: enc.salt,
+        iv: enc.iv,
+        ciphertext: enc.ciphertext,
+        updatedAt: nowStr,
+        devices: initialPayload.devices,
+        revokedDeviceIds: [],
+      };
+
+      // 2. Simulate iPad connecting with deviceName 'iPad'
+      localStorage.setItem('oneiric_device_name', 'iPad');
+      await syncService.connectVault('vault-recon', 'astral-lucid-starlight-nebula-aurora-velvet', 'iPad');
+
+      const creds1 = syncService.getCredentials();
+      expect(creds1?.devices?.filter((d) => d.name === 'iPad').length).toBe(1);
+
+      // 3. iPad disconnects
+      syncService.clearCredentials();
+      expect(syncService.isConfigured()).toBe(false);
+
+      // 4. iPad reconnects
+      await syncService.connectVault('vault-recon', 'astral-lucid-starlight-nebula-aurora-velvet', 'iPad');
+
+      const creds2 = syncService.getCredentials();
+      // Should STILL have exactly 2 devices (PC and iPad), not a duplicated 3rd device!
+      expect(creds2?.devices?.length).toBe(2);
+      expect(creds2?.devices?.filter((d) => d.name === 'iPad').length).toBe(1);
+      const reconnectedIpad = creds2?.devices?.find((d) => d.name === 'iPad');
+      expect(reconnectedIpad?.status).toBe('active');
+    });
   });
 
   describe('Device Revocation & Security Enforcement', () => {

@@ -49,14 +49,14 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
   const [activeTab, setActiveTab] = useState<'create' | 'connect'>('create');
 
   // Creation form state
-  const [createDeviceName, setCreateDeviceName] = useState('Primary Device');
+  const [createDeviceName, setCreateDeviceName] = useState(() => syncService.getDeviceName());
   const [createPassphrase, setCreatePassphrase] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
   // Connection form state
   const [connectSyncKey, setConnectSyncKey] = useState('');
   const [connectPassphrase, setConnectPassphrase] = useState('');
-  const [connectDeviceName, setConnectDeviceName] = useState('Mobile Device');
+  const [connectDeviceName, setConnectDeviceName] = useState(() => syncService.getDeviceName());
   const [showSeparateInputs, setShowSeparateInputs] = useState(false);
   const [showConnectPassphrase, setShowConnectPassphrase] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -93,10 +93,23 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
       loadCredentials();
     };
     window.addEventListener('oneiric:sync-status-changed', handleStatusChange);
+
+    // If connected, sync once immediately and poll every 12 seconds so device list stays fresh
+    let interval: ReturnType<typeof setInterval> | null = null;
+    if (credentials?.vaultId && credentials?.passphrase) {
+      syncService.syncNow().catch(() => {});
+      interval = setInterval(() => {
+        if (typeof navigator !== 'undefined' && navigator.onLine) {
+          syncService.syncNow().catch(() => {});
+        }
+      }, 12000);
+    }
+
     return () => {
       window.removeEventListener('oneiric:sync-status-changed', handleStatusChange);
+      if (interval) clearInterval(interval);
     };
-  }, []);
+  }, [credentials?.vaultId, credentials?.passphrase]);
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -469,9 +482,21 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                   Connected Devices ({devices.filter((d) => d.status !== 'revoked').length})
                 </h3>
               </div>
-              <span className="text-[11px] text-slate-400">
-                Manage devices authorized to synchronize with this vault
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-slate-400 hidden sm:inline">
+                  Manage devices authorized to synchronize with this vault
+                </span>
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  onClick={handleSyncNow}
+                  disabled={isSyncing}
+                  icon={<RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />}
+                  className="text-xs text-slate-400 hover:text-slate-200"
+                >
+                  {isSyncing ? 'Syncing...' : 'Refresh'}
+                </Button>
+              </div>
             </div>
 
             {/* Device List */}
