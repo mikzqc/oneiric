@@ -165,14 +165,16 @@ export const AppLayout: React.FC = () => {
           subtitle={subtitle}
         />
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7 max-w-7xl mx-auto w-full">
-          <Outlet
-            context={{
-              onOpenNewDream: handleOpenNewDream,
-              onEditDream: handleEditDream,
-            }}
-          />
-        </main>
+        <div className="flex-1 overflow-y-auto w-full">
+          <main className="p-4 sm:p-6 lg:p-7 max-w-7xl mx-auto w-full">
+            <Outlet
+              context={{
+                onOpenNewDream: handleOpenNewDream,
+                onEditDream: handleEditDream,
+              }}
+            />
+          </main>
+        </div>
       </div>
 
       {/* Global Quick Record / Edit Dream Modal */}
