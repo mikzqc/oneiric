@@ -309,6 +309,16 @@ A task is complete only when:
 - Avoid giant headings that push actual dream records below the fold.
 - Maintain high-density table and list views with clear typographic hierarchy.
 
+### 5. Execution Efficiency and Git Pushes
+
+- **Act immediately.** When given a clear task, implement it rather than repeatedly announcing plans or asking for unnecessary confirmation.
+- **Avoid redundant verification.** Run relevant tests and builds when appropriate, but do not repeatedly rerun checks that have already passed without a specific reason.
+- **Respect explicit push requests.** When I say "push," prioritize committing the intended changes and pushing them to the configured Git remote.
+- **Do not launch unnecessary test suites or builds before pushing** unless I explicitly request verification or a known issue makes them necessary.
+- **Handle Git safely.** Inspect the current branch, working tree, and remote configuration. Never overwrite unrelated changes, force-push, or commit unrelated files without authorization.
+- **Report actual results.** Clearly state whether the commit and push succeeded. If blocked by authentication, conflicts, missing upstream configuration, or another issue, report the specific blocker instead of repeatedly attempting unrelated checks.
+- **No performative progress updates.** Avoid repeatedly announcing that you are starting, waiting, or checking something. Focus on completing the task and reporting the outcome.
+
 **Final rule:** Working software is more important than impressive-looking progress reports. Verify first, report second.
 
 
