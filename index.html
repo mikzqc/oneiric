@@ -37,13 +37,44 @@
       content="Track nocturnal recall, inspect dream signs, and monitor lucid dreaming practice consistency with local IndexedDB privacy and optional cloud sync."
     />
     <meta name="twitter:image" content="https://oneiric-one.vercel.app/logo.png" />
+
+    <!-- Structured Data (JSON-LD) for Search Engines & AI Browsing Tools -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Oneiric",
+        "url": "https://oneiric-one.vercel.app/",
+        "applicationCategory": "HealthApplication",
+        "operatingSystem": "All",
+        "description": "Track nocturnal recall, inspect dream signs, and monitor lucid dreaming practice consistency with local IndexedDB privacy and optional cloud sync.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "featureList": [
+          "Nocturnal Dream Journal with Deep Content Search",
+          "Rapid Morning Voice Dictation",
+          "Dream Signs & Heuristic Detection",
+          "Cross-Dream Statistical Correlation Engine",
+          "False Awakenings Pattern Archive",
+          "Scientific Lucid Dreaming Techniques Guide (MILD, WILD, WBTB, SSILD)",
+          "Local-first IndexedDB zero-telemetry privacy",
+          "End-to-End Client-Side Encrypted Multi-Device Sync"
+        ]
+      }
+    </script>
   </head>
   <body
     style="margin: 0; background-color: #060913; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;"
     class="bg-[#0b132b] text-slate-100 antialiased selection:bg-indigo-600/30 selection:text-indigo-200"
   >
-    <div id="root">
-      <!-- Semantic Static Fallback for Web Crawlers, AI Browsers & Non-JS Clients -->
+    <!-- Interactive App Mount Target -->
+    <div id="root"></div>
+
+    <!-- Semantic Static Fallback for Web Crawlers, AI Browsers & Non-JS Clients -->
+    <noscript>
       <div style="min-height: 100vh; background-color: #060913; color: #f8fafc; padding: 2.5rem 1.5rem; max-width: 56rem; margin: 0 auto; line-height: 1.6;">
         <header style="border-bottom: 1px solid #1e293b; padding-bottom: 1.5rem; margin-bottom: 2rem;">
           <h1 style="font-size: 1.75rem; font-weight: 700; margin: 0 0 0.5rem 0; color: #f8fafc; letter-spacing: -0.025em;">
@@ -54,11 +85,9 @@
           </p>
         </header>
 
-        <noscript>
-          <div style="background-color: #1e1b4b; border: 1px solid #3730a3; padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; color: #e0e7ff; font-size: 0.875rem;">
-            <strong>JavaScript Required for Interactive Workbench:</strong> Oneiric stores your nocturnal dream journal locally on your device inside IndexedDB. Please enable JavaScript in your browser to record dreams, inspect analytics, and use voice dictation.
-          </div>
-        </noscript>
+        <div style="background-color: #1e1b4b; border: 1px solid #3730a3; padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; color: #e0e7ff; font-size: 0.875rem;">
+          <strong>JavaScript Required for Interactive Workbench:</strong> Oneiric stores your nocturnal dream journal locally on your device inside IndexedDB. Please enable JavaScript in your browser to record dreams, inspect analytics, and use voice dictation.
+        </div>
 
         <main style="display: flex; flex-direction: column; gap: 2rem;">
           <!-- Journal & Recall Tracking -->
@@ -107,7 +136,7 @@
           Oneiric — Nocturnal Journal & Lucid Dreaming Research Workbench. Local-first, private, and distraction-free.
         </footer>
       </div>
-    </div>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
