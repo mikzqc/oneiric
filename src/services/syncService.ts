@@ -5,6 +5,9 @@ import {
   EncryptedSyncEnvelope,
   SyncResult,
   SyncState,
+  SyncedDevice,
+  DeviceType,
+  DecryptedSyncPayload,
 } from '../types/sync';
 import { BackupPayload } from '../types/backup';
 import { tombstoneService } from '../utils/tombstones';
@@ -24,6 +27,32 @@ export const NO_CACHE_HEADERS: HeadersInit = {
   'Cache-Control': 'no-cache, no-store, must-revalidate',
   Pragma: 'no-cache',
 };
+
+export function detectDeviceType(): DeviceType {
+  if (typeof navigator === 'undefined') return 'desktop';
+  const ua = (navigator.userAgent || '').toLowerCase();
+  if (/ipad|tablet|(android(?!.*mobile))/i.test(ua)) return 'tablet';
+  if (/mobile|iphone|ipod|android|blackberry|opera mini|iemobile/i.test(ua)) return 'mobile';
+  return 'desktop';
+}
+
+export function generateDeviceId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `dev_${crypto.randomUUID().replace(/-/g, '').slice(0, 16)}`;
+  }
+  return `dev_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export function buildHeaders(deviceId?: string): HeadersInit {
+  const headers: Record<string, string> = {
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    Pragma: 'no-cache',
+  };
+  if (deviceId) {
+    headers['x-device-id'] = deviceId;
+  }
+  return headers;
+}
 
 export function buildFreshUrl(url: string): string {
   const separator = url.includes('?') ? '&' : '?';
@@ -55,13 +84,43 @@ function formatRelayNetworkError(err: unknown, action = 'connect to'): string {
 
 export const syncService = {
   /**
-   * Retrieves saved sync vault credentials from local storage
+   * Retrieves saved sync vault credentials from local storage with automatic migration for device registry
    */
   getCredentials(): SyncVaultCredentials | null {
     try {
       const raw = localStorage.getItem(CREDENTIALS_STORAGE_KEY);
       if (!raw) return null;
-      return JSON.parse(raw) as SyncVaultCredentials;
+      const creds = JSON.parse(raw) as SyncVaultCredentials;
+      let dirty = false;
+      if (!creds.deviceId) {
+        creds.deviceId = generateDeviceId();
+        dirty = true;
+      }
+      if (!creds.deviceType) {
+        creds.deviceType = detectDeviceType();
+        dirty = true;
+      }
+      if (!Array.isArray(creds.revokedDeviceIds)) {
+        creds.revokedDeviceIds = [];
+        dirty = true;
+      }
+      if (!Array.isArray(creds.devices) || creds.devices.length === 0) {
+        creds.devices = [
+          {
+            id: creds.deviceId,
+            name: creds.deviceName || 'Primary Device',
+            type: creds.deviceType,
+            pairedAt: creds.createdAt || new Date().toISOString(),
+            lastSyncAt: creds.lastSyncedAt || creds.createdAt || new Date().toISOString(),
+            status: 'active',
+          },
+        ];
+        dirty = true;
+      }
+      if (dirty) {
+        localStorage.setItem(CREDENTIALS_STORAGE_KEY, JSON.stringify(creds));
+      }
+      return creds;
     } catch {
       return null;
     }
@@ -81,6 +140,15 @@ export const syncService = {
   clearCredentials(): void {
     localStorage.removeItem(CREDENTIALS_STORAGE_KEY);
     this.notifyStatusChanged();
+  },
+
+  /**
+   * Returns registered devices for this vault
+   */
+  getConnectedDevices(): SyncedDevice[] {
+    const creds = this.getCredentials();
+    if (!creds || !creds.devices) return [];
+    return creds.devices;
   },
 
   /**
@@ -167,13 +235,32 @@ export const syncService = {
   }): Promise<{ vaultId: string; passphrase: string; unifiedKey: string }> {
     const passphrase = options?.passphrase?.trim() || cryptoService.generatePassphrase();
     const relayUrl = options?.relayUrl?.trim();
-    const deviceName = options?.deviceName || 'Primary Device';
+    const deviceName = options?.deviceName?.trim() || 'Primary Device';
+    const deviceId = generateDeviceId();
+    const deviceType = detectDeviceType();
+    const nowStr = new Date().toISOString();
+
+    const initialDevice: SyncedDevice = {
+      id: deviceId,
+      name: deviceName,
+      type: deviceType,
+      pairedAt: nowStr,
+      lastSyncAt: nowStr,
+      status: 'active',
+    };
+    const devices: SyncedDevice[] = [initialDevice];
+    const revokedDeviceIds: string[] = [];
 
     // 1. Export local journal data
     const localData = await backupService.exportData();
 
     // 2. Encrypt locally using client-side Web Crypto (AES-GCM-256)
-    const encrypted = await cryptoService.encryptData(localData, passphrase);
+    const payloadToEncrypt: DecryptedSyncPayload = {
+      ...localData,
+      devices,
+      revokedDeviceIds,
+    };
+    const encrypted = await cryptoService.encryptData(payloadToEncrypt, passphrase);
 
     // 3. Post encrypted payload to cloud relay
     const envelope: Partial<EncryptedSyncEnvelope> = {
@@ -181,8 +268,11 @@ export const syncService = {
       salt: encrypted.salt,
       iv: encrypted.iv,
       ciphertext: encrypted.ciphertext,
-      updatedAt: new Date().toISOString(),
+      updatedAt: nowStr,
       sourceDevice: deviceName,
+      sourceDeviceId: deviceId,
+      devices,
+      revokedDeviceIds,
     };
 
     const targetUrl = getRelayUrl(relayUrl);
@@ -192,7 +282,7 @@ export const syncService = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...NO_CACHE_HEADERS,
+          ...buildHeaders(deviceId),
         },
         body: JSON.stringify(envelope),
         cache: 'no-store',
@@ -219,7 +309,6 @@ export const syncService = {
     }
 
     // 4. Save credentials locally
-    const nowStr = new Date().toISOString();
     const creds: SyncVaultCredentials = {
       vaultId,
       passphrase,
@@ -227,7 +316,11 @@ export const syncService = {
       lastSyncedAt: nowStr,
       relayUrl,
       autoSync: true,
+      deviceId,
       deviceName,
+      deviceType,
+      devices,
+      revokedDeviceIds,
     };
     this.saveCredentials(creds);
 
@@ -262,6 +355,10 @@ export const syncService = {
       throw new Error('Please enter your secret Encryption Passphrase.');
     }
 
+    const myDeviceId = generateDeviceId();
+    const myDeviceType = detectDeviceType();
+    const cleanDeviceName = deviceName.trim() || 'Secondary Device';
+
     const getUrl = buildFreshUrl(getRelayUrl(undefined, vaultId));
 
     // 1. Pull encrypted envelope from cloud relay
@@ -269,7 +366,7 @@ export const syncService = {
     try {
       res = await fetch(getUrl, {
         method: 'GET',
-        headers: NO_CACHE_HEADERS,
+        headers: buildHeaders(myDeviceId),
         cache: 'no-store',
       });
     } catch (networkErr: unknown) {
@@ -281,6 +378,9 @@ export const syncService = {
     }
 
     if (!res.ok) {
+      if (res.status === 403) {
+        throw new Error('Sync Access Revoked: This device is not authorized to connect to this vault.');
+      }
       if (res.status === 404) {
         throw new Error('Sync vault not found. Please verify the Vault ID.');
       }
@@ -292,8 +392,18 @@ export const syncService = {
       throw new Error('The cloud vault contains malformed encrypted data.');
     }
 
+    // Outer envelope check
+    if (Array.isArray(envelope.revokedDeviceIds) && envelope.revokedDeviceIds.includes(myDeviceId)) {
+      throw new Error('Sync Access Revoked: This device has been revoked from this sync vault.');
+    }
+
     // 2. Decrypt envelope using passphrase (validates authentication tag)
-    const remoteData = await cryptoService.decryptData<BackupPayload>(envelope, passphrase);
+    const remoteData = await cryptoService.decryptData<DecryptedSyncPayload>(envelope, passphrase);
+
+    // Inner payload check
+    if (Array.isArray(remoteData.revokedDeviceIds) && remoteData.revokedDeviceIds.includes(myDeviceId)) {
+      throw new Error('Sync Access Revoked: This device has been revoked from this sync vault.');
+    }
 
     // 3. Validate decrypted backup schema
     const validation = backupService.validateImportData(JSON.stringify(remoteData));
@@ -304,9 +414,33 @@ export const syncService = {
     // 4. Merge remote records into local IndexedDB
     const importRes = await backupService.importData(validation.data, 'merge');
 
-    // 5. Re-export merged dataset, encrypt, and push back to vault to ensure complete bidirectional sync
+    // 5. Update device registry with this new device
+    const nowStr = new Date().toISOString();
+    const existingDevices: SyncedDevice[] = remoteData.devices || envelope.devices || [];
+    const thisDeviceRecord: SyncedDevice = {
+      id: myDeviceId,
+      name: cleanDeviceName,
+      type: myDeviceType,
+      pairedAt: nowStr,
+      lastSyncAt: nowStr,
+      status: 'active',
+    };
+    const updatedDevices: SyncedDevice[] = [
+      ...existingDevices.filter((d) => d.id !== myDeviceId),
+      thisDeviceRecord,
+    ];
+    const combinedRevokedIds = Array.from(
+      new Set([...(remoteData.revokedDeviceIds || []), ...(envelope.revokedDeviceIds || [])])
+    );
+
+    // 6. Re-export merged dataset, encrypt, and push back to vault to ensure complete bidirectional sync
     const mergedData = await backupService.exportData();
-    const updatedEncrypted = await cryptoService.encryptData(mergedData, passphrase);
+    const payloadToEncrypt: DecryptedSyncPayload = {
+      ...mergedData,
+      devices: updatedDevices,
+      revokedDeviceIds: combinedRevokedIds,
+    };
+    const updatedEncrypted = await cryptoService.encryptData(payloadToEncrypt, passphrase);
 
     const updatedEnvelope: EncryptedSyncEnvelope = {
       version: 2,
@@ -314,8 +448,11 @@ export const syncService = {
       salt: updatedEncrypted.salt,
       iv: updatedEncrypted.iv,
       ciphertext: updatedEncrypted.ciphertext,
-      updatedAt: new Date().toISOString(),
-      sourceDevice: deviceName,
+      updatedAt: nowStr,
+      sourceDevice: cleanDeviceName,
+      sourceDeviceId: myDeviceId,
+      devices: updatedDevices,
+      revokedDeviceIds: combinedRevokedIds,
     };
 
     const putUrl = getRelayUrl(undefined, vaultId);
@@ -325,7 +462,7 @@ export const syncService = {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          ...NO_CACHE_HEADERS,
+          ...buildHeaders(myDeviceId),
         },
         body: JSON.stringify(updatedEnvelope),
         cache: 'no-store',
@@ -342,16 +479,19 @@ export const syncService = {
       throw new Error(`Failed to update cloud vault (HTTP ${putRes.status}).`);
     }
 
-    const nowStr = new Date().toISOString();
     const creds: SyncVaultCredentials = {
       vaultId,
       passphrase,
       createdAt: nowStr,
       lastSyncedAt: nowStr,
       autoSync: true,
-      deviceName,
+      deviceId: myDeviceId,
+      deviceName: cleanDeviceName,
+      deviceType: myDeviceType,
       lastRemoteDevice: envelope.sourceDevice,
       lastRemoteUpdate: envelope.updatedAt,
+      devices: updatedDevices,
+      revokedDeviceIds: combinedRevokedIds,
     };
     this.saveCredentials(creds);
 
@@ -383,6 +523,11 @@ export const syncService = {
           throw new Error('No sync vault configured on this device.');
         }
 
+        const myDeviceId = creds.deviceId || generateDeviceId();
+        if (creds.revokedDeviceIds?.includes(myDeviceId)) {
+          throw new Error('Sync Access Revoked: This device has been removed from the sync vault.');
+        }
+
         const getUrl = buildFreshUrl(getRelayUrl(creds.relayUrl, creds.vaultId));
 
         // 1. Pull remote envelope
@@ -390,7 +535,7 @@ export const syncService = {
         try {
           getRes = await fetch(getUrl, {
             method: 'GET',
-            headers: NO_CACHE_HEADERS,
+            headers: buildHeaders(myDeviceId),
             cache: 'no-store',
           });
         } catch (networkErr: unknown) {
@@ -398,6 +543,17 @@ export const syncService = {
         }
 
         if (!getRes.ok) {
+          if (getRes.status === 403) {
+            if (creds.devices) {
+              const d = creds.devices.find((x) => x.id === myDeviceId);
+              if (d) d.status = 'revoked';
+            }
+            if (!creds.revokedDeviceIds?.includes(myDeviceId)) {
+              creds.revokedDeviceIds = [...(creds.revokedDeviceIds || []), myDeviceId];
+            }
+            this.saveCredentials(creds);
+            throw new Error('Sync Access Revoked: This device has been removed from the sync vault.');
+          }
           if (getRes.status === 404) {
             throw new Error(`Sync vault not found (${creds.vaultId}). Please check your Vault ID.`);
           }
@@ -408,17 +564,53 @@ export const syncService = {
         let pulledCount = 0;
         let newDreamsCount = 0;
 
+        // Check envelope revokedDeviceIds
+        if (
+          Array.isArray(remoteEnvelope?.revokedDeviceIds) &&
+          remoteEnvelope.revokedDeviceIds.includes(myDeviceId)
+        ) {
+          if (creds.devices) {
+            const d = creds.devices.find((x) => x.id === myDeviceId);
+            if (d) d.status = 'revoked';
+          }
+          if (!creds.revokedDeviceIds?.includes(myDeviceId)) {
+            creds.revokedDeviceIds = [...(creds.revokedDeviceIds || []), myDeviceId];
+          }
+          this.saveCredentials(creds);
+          throw new Error('Sync Access Revoked: This device has been removed from the sync vault.');
+        }
+
+        let remoteDevices: SyncedDevice[] = remoteEnvelope?.devices || [];
+        let remoteRevokedIds: string[] = remoteEnvelope?.revokedDeviceIds || [];
+
         // 2. Decrypt remote data if present
         if (remoteEnvelope && remoteEnvelope.ciphertext && remoteEnvelope.salt && remoteEnvelope.iv) {
-          let decrypted: BackupPayload;
+          let decrypted: DecryptedSyncPayload;
           try {
-            decrypted = await cryptoService.decryptData<BackupPayload>(
+            decrypted = await cryptoService.decryptData<DecryptedSyncPayload>(
               remoteEnvelope,
               creds.passphrase
             );
           } catch {
-            throw new Error('Encryption Passphrase does not match this vault. Please check your credentials in Settings.');
+            throw new Error(
+              'Encryption Passphrase does not match this vault. Please check your credentials in Settings.'
+            );
           }
+
+          if (Array.isArray(decrypted.revokedDeviceIds) && decrypted.revokedDeviceIds.includes(myDeviceId)) {
+            if (creds.devices) {
+              const d = creds.devices.find((x) => x.id === myDeviceId);
+              if (d) d.status = 'revoked';
+            }
+            if (!creds.revokedDeviceIds?.includes(myDeviceId)) {
+              creds.revokedDeviceIds = [...(creds.revokedDeviceIds || []), myDeviceId];
+            }
+            this.saveCredentials(creds);
+            throw new Error('Sync Access Revoked: This device has been removed from the sync vault.');
+          }
+
+          if (decrypted.devices) remoteDevices = decrypted.devices;
+          if (decrypted.revokedDeviceIds) remoteRevokedIds = decrypted.revokedDeviceIds;
 
           const validation = backupService.validateImportData(JSON.stringify(decrypted));
           if (!validation.valid || !validation.data) {
@@ -432,11 +624,55 @@ export const syncService = {
           throw new Error('Cloud vault returned an empty or malformed encrypted payload.');
         }
 
-        // 3. Export complete union of local dreams
+        // 3. Merge devices and revocation lists
+        const nowStr = new Date().toISOString();
+        const mergedRevokedIds = Array.from(
+          new Set([...(creds.revokedDeviceIds || []), ...remoteRevokedIds])
+        );
+
+        const localDevicesMap = new Map<string, SyncedDevice>();
+        (creds.devices || []).forEach((d) => localDevicesMap.set(d.id, { ...d }));
+        remoteDevices.forEach((rd) => {
+          const existing = localDevicesMap.get(rd.id);
+          if (!existing) {
+            localDevicesMap.set(rd.id, { ...rd });
+          } else {
+            const isRevoked = existing.status === 'revoked' || rd.status === 'revoked' || mergedRevokedIds.includes(rd.id);
+            const latestSync = rd.lastSyncAt > existing.lastSyncAt ? rd.lastSyncAt : existing.lastSyncAt;
+            localDevicesMap.set(rd.id, {
+              ...existing,
+              ...rd,
+              status: isRevoked ? 'revoked' : 'active',
+              lastSyncAt: latestSync,
+            });
+          }
+        });
+
+        // Update current device's heartbeat
+        const currentDev = localDevicesMap.get(myDeviceId) || {
+          id: myDeviceId,
+          name: creds.deviceName || 'Primary Device',
+          type: creds.deviceType || detectDeviceType(),
+          pairedAt: creds.createdAt || nowStr,
+          lastSyncAt: nowStr,
+          status: 'active' as const,
+        };
+        currentDev.lastSyncAt = nowStr;
+        currentDev.status = 'active';
+        localDevicesMap.set(myDeviceId, currentDev);
+
+        const mergedDevices = Array.from(localDevicesMap.values());
+
+        // 4. Export complete union of local dreams
         const fullLocalData = await backupService.exportData();
 
-        // 4. Encrypt full dataset with client-side Web Crypto
-        const reEncrypted = await cryptoService.encryptData(fullLocalData, creds.passphrase);
+        // 5. Encrypt full dataset with client-side Web Crypto
+        const payloadToEncrypt: DecryptedSyncPayload = {
+          ...fullLocalData,
+          devices: mergedDevices,
+          revokedDeviceIds: mergedRevokedIds,
+        };
+        const reEncrypted = await cryptoService.encryptData(payloadToEncrypt, creds.passphrase);
 
         const newEnvelope: EncryptedSyncEnvelope = {
           version: 2,
@@ -444,11 +680,14 @@ export const syncService = {
           salt: reEncrypted.salt,
           iv: reEncrypted.iv,
           ciphertext: reEncrypted.ciphertext,
-          updatedAt: new Date().toISOString(),
+          updatedAt: nowStr,
           sourceDevice: creds.deviceName || 'Oneiric App',
+          sourceDeviceId: myDeviceId,
+          devices: mergedDevices,
+          revokedDeviceIds: mergedRevokedIds,
         };
 
-        // 5. Push back to relay
+        // 6. Push back to relay
         const putUrl = getRelayUrl(creds.relayUrl, creds.vaultId);
         let putRes: Response;
         try {
@@ -456,7 +695,7 @@ export const syncService = {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
-              ...NO_CACHE_HEADERS,
+              ...buildHeaders(myDeviceId),
             },
             body: JSON.stringify(newEnvelope),
             cache: 'no-store',
@@ -466,12 +705,16 @@ export const syncService = {
         }
 
         if (!putRes.ok) {
+          if (putRes.status === 403) {
+            throw new Error('Sync Access Revoked: This device has been removed from the sync vault.');
+          }
           throw new Error(`Failed to update cloud relay (HTTP ${putRes.status}).`);
         }
 
-        // 6. Update local credentials timestamp & remote device metadata
-        const nowStr = new Date().toISOString();
+        // 7. Update local credentials timestamp & remote device metadata
         creds.lastSyncedAt = nowStr;
+        creds.devices = mergedDevices;
+        creds.revokedDeviceIds = mergedRevokedIds;
         if (remoteEnvelope?.sourceDevice) {
           creds.lastRemoteDevice = remoteEnvelope.sourceDevice;
         }
@@ -500,6 +743,100 @@ export const syncService = {
     })();
 
     return activeSyncPromise;
+  },
+
+  /**
+   * Revokes a paired device's access to this sync vault
+   */
+  async revokeDevice(targetDeviceId: string): Promise<void> {
+    const creds = this.getCredentials();
+    if (!creds || !creds.vaultId || !creds.passphrase) {
+      throw new Error('No sync vault configured on this device.');
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      throw new Error(
+        'Unable to revoke device while offline. Please connect to the internet so the revocation can be published to the sync vault.'
+      );
+    }
+
+    if (!targetDeviceId || typeof targetDeviceId !== 'string') {
+      throw new Error('Invalid device ID specified for revocation.');
+    }
+
+    if (targetDeviceId === creds.deviceId) {
+      throw new Error(
+        'Cannot remove the current device from the device list. To disconnect this device, use Disconnect Vault below.'
+      );
+    }
+
+    // Check if caller device is revoked
+    if (creds.revokedDeviceIds?.includes(creds.deviceId || '')) {
+      throw new Error('Unauthorized: This device has been revoked and cannot modify vault permissions.');
+    }
+
+    const nowStr = new Date().toISOString();
+    const updatedDevices: SyncedDevice[] = (creds.devices || []).map((dev) => {
+      if (dev.id === targetDeviceId) {
+        return {
+          ...dev,
+          status: 'revoked' as const,
+          revokedAt: nowStr,
+        };
+      }
+      return dev;
+    });
+
+    const updatedRevokedIds = Array.from(
+      new Set([...(creds.revokedDeviceIds || []), targetDeviceId])
+    );
+
+    // Save locally first
+    creds.devices = updatedDevices;
+    creds.revokedDeviceIds = updatedRevokedIds;
+    this.saveCredentials(creds);
+
+    // Immediately push to cloud relay so the relay updates revokedDeviceIds and denies future access
+    try {
+      await this.syncNow();
+    } catch (syncErr: unknown) {
+      throw new Error(
+        `Device revocation was recorded locally, but failed to publish to the cloud vault: ${
+          syncErr instanceof Error ? syncErr.message : 'Network error'
+        }. Please verify your connection.`
+      );
+    }
+  },
+
+  /**
+   * Re-keys the sync vault to provide 100% cryptographic forward secrecy against revoked devices
+   */
+  async rotateVaultKey(options?: {
+    newPassphrase?: string;
+  }): Promise<{ vaultId: string; passphrase: string; unifiedKey: string }> {
+    const creds = this.getCredentials();
+    if (!creds || !creds.vaultId) {
+      throw new Error('No sync vault configured to re-key.');
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      throw new Error(
+        'Unable to rotate vault key while offline. Please connect to the internet and try again.'
+      );
+    }
+
+    const newPassphrase = options?.newPassphrase?.trim() || cryptoService.generatePassphrase();
+    const deviceName = creds.deviceName || 'Primary Device';
+    const relayUrl = creds.relayUrl;
+
+    // Create fresh vault with new key, carrying over dreams but leaving revoked devices behind
+    const result = await this.createVault({
+      passphrase: newPassphrase,
+      deviceName,
+      relayUrl,
+    });
+
+    return result;
   },
 
   /**

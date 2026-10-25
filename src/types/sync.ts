@@ -1,5 +1,17 @@
 import { BackupPayload } from './backup';
 
+export type DeviceType = 'desktop' | 'mobile' | 'tablet' | 'unknown';
+
+export interface SyncedDevice {
+  id: string;
+  name: string;
+  type: DeviceType;
+  pairedAt: string;
+  lastSyncAt: string;
+  status: 'active' | 'revoked';
+  revokedAt?: string;
+}
+
 export interface SyncVaultCredentials {
   vaultId: string;
   passphrase: string;
@@ -7,9 +19,13 @@ export interface SyncVaultCredentials {
   lastSyncedAt?: string;
   relayUrl?: string;
   autoSync: boolean;
+  deviceId?: string;
   deviceName?: string;
+  deviceType?: DeviceType;
   lastRemoteDevice?: string;
   lastRemoteUpdate?: string;
+  devices?: SyncedDevice[];
+  revokedDeviceIds?: string[];
 }
 
 export interface EncryptedSyncEnvelope {
@@ -20,6 +36,9 @@ export interface EncryptedSyncEnvelope {
   ciphertext: string;
   updatedAt: string;
   sourceDevice?: string;
+  sourceDeviceId?: string;
+  revokedDeviceIds?: string[];
+  devices?: SyncedDevice[];
 }
 
 export type SyncStatusState = 'idle' | 'syncing' | 'success' | 'error';
@@ -48,4 +67,6 @@ export interface SyncResult {
 
 export interface DecryptedSyncPayload extends BackupPayload {
   lastModified?: string;
+  devices?: SyncedDevice[];
+  revokedDeviceIds?: string[];
 }

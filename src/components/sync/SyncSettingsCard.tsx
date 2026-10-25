@@ -11,15 +11,35 @@ import {
   Share2,
   Unlink,
   ShieldCheck,
+  ShieldAlert,
+  Laptop,
+  Smartphone,
+  Tablet,
+  UserX,
+  KeyRound,
 } from 'lucide-react';
 import { syncService } from '../../services/syncService';
 import { cryptoService } from '../../services/cryptoService';
-import { SyncVaultCredentials } from '../../types/sync';
+import { SyncVaultCredentials, SyncedDevice } from '../../types/sync';
 import { Button } from '../common/Button';
 import { ConfirmDialog } from '../common/ConfirmDialog';
 
 interface SyncSettingsCardProps {
   onFeedback: (type: 'success' | 'error', text: string) => void;
+}
+
+function formatSyncRelativeTime(isoString?: string): string {
+  if (!isoString) return 'Never';
+  const time = new Date(isoString).getTime();
+  if (isNaN(time)) return 'Never';
+  const diffSec = Math.floor((Date.now() - time) / 1000);
+  if (diffSec < 60) return 'Just now';
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+  return new Date(isoString).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }) => {
@@ -47,6 +67,12 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
   const [showPassphrase, setShowPassphrase] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [isDisconnectDialogOpen, setIsDisconnectDialogOpen] = useState(false);
+
+  // Device management state
+  const [deviceToRevoke, setDeviceToRevoke] = useState<SyncedDevice | null>(null);
+  const [isRevoking, setIsRevoking] = useState(false);
+  const [isReKeyDialogOpen, setIsReKeyDialogOpen] = useState(false);
+  const [isReKeying, setIsReKeying] = useState(false);
 
   // Direct transfer state
   const [showDirectTransfer, setShowDirectTransfer] = useState(false);
@@ -121,12 +147,10 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
       loadCredentials();
       onFeedback(
         'success',
-        `Connected and synced ${res.pulledCount} dreams from your vault!`
+        `Connected to Sync Vault! Merged ${res.newDreamsCount} new dreams into this device.`
       );
-      setConnectSyncKey('');
-      setConnectPassphrase('');
     } catch (err: unknown) {
-      onFeedback('error', err instanceof Error ? err.message : 'Could not connect to vault.');
+      onFeedback('error', err instanceof Error ? err.message : 'Failed to connect to Sync Vault.');
     } finally {
       setIsConnecting(false);
     }
@@ -137,37 +161,64 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
       setIsSyncing(true);
       const res = await syncService.syncNow();
       loadCredentials();
-      if (res.newDreamsCount > 0) {
-        onFeedback(
-          'success',
-          `Vault synced cleanly: +${res.newDreamsCount} new dream(s) downloaded and merged! (${res.pushedCount} total dreams active).`
-        );
-      } else {
-        onFeedback(
-          'success',
-          `Vault synced cleanly: No new remote dreams found. All ${res.pushedCount} local dreams are up to date with cloud vault.`
-        );
-      }
+      onFeedback(
+        'success',
+        `Sync completed: ${res.newDreamsCount} new dreams received, ${res.pushedCount} total uploaded.`
+      );
     } catch (err: unknown) {
-      onFeedback('error', err instanceof Error ? err.message : 'Sync failed.');
+      onFeedback('error', err instanceof Error ? err.message : 'Sync operation failed.');
     } finally {
       setIsSyncing(false);
     }
   };
 
-  const handleToggleAutoSync = () => {
-    if (!credentials) return;
-    const nextState = !credentials.autoSync;
-    syncService.setAutoSync(nextState);
+  const handleToggleAutoSync = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const enabled = e.target.checked;
+    syncService.setAutoSync(enabled);
     loadCredentials();
-    onFeedback('success', `Auto-sync on dream save is now ${nextState ? 'enabled' : 'disabled'}.`);
+    onFeedback('success', enabled ? 'Auto-sync enabled.' : 'Auto-sync disabled.');
   };
 
   const handleDisconnectConfirm = () => {
     syncService.clearCredentials();
     loadCredentials();
     setIsDisconnectDialogOpen(false);
-    onFeedback('success', 'Disconnected from sync vault. All your dreams remain safely on this device.');
+    onFeedback('success', 'Disconnected from sync vault. Local dreams remain intact.');
+  };
+
+  const handleConfirmRevoke = async () => {
+    if (!deviceToRevoke) return;
+    try {
+      setIsRevoking(true);
+      await syncService.revokeDevice(deviceToRevoke.id);
+      loadCredentials();
+      onFeedback(
+        'success',
+        `"${deviceToRevoke.name}" has been revoked and blocked from syncing with this vault.`
+      );
+    } catch (err: unknown) {
+      onFeedback('error', err instanceof Error ? err.message : 'Failed to revoke device access.');
+    } finally {
+      setIsRevoking(false);
+      setDeviceToRevoke(null);
+    }
+  };
+
+  const handleConfirmReKey = async () => {
+    try {
+      setIsReKeying(true);
+      await syncService.rotateVaultKey();
+      loadCredentials();
+      onFeedback(
+        'success',
+        'Vault re-keyed successfully! A fresh encryption key was generated. All revoked devices are completely excluded.'
+      );
+    } catch (err: unknown) {
+      onFeedback('error', err instanceof Error ? err.message : 'Failed to rotate vault key.');
+    } finally {
+      setIsReKeying(false);
+      setIsReKeyDialogOpen(false);
+    }
   };
 
   const handleGenerateDirectTransfer = async () => {
@@ -176,9 +227,9 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
       const { code, passphrase } = await syncService.exportEncryptedTransferCode();
       setDirectCode(code);
       setDirectPassphrase(passphrase);
-      onFeedback('success', 'Generated encrypted transfer code.');
+      onFeedback('success', 'Direct transfer package encrypted successfully.');
     } catch (err: unknown) {
-      onFeedback('error', err instanceof Error ? err.message : 'Failed to generate transfer code.');
+      onFeedback('error', err instanceof Error ? err.message : 'Failed to generate transfer package.');
     } finally {
       setIsExportingDirect(false);
     }
@@ -186,14 +237,18 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
 
   const handleImportDirectTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!importCodeInput.trim() || !importPassInput.trim()) {
-      onFeedback('error', 'Please provide both the transfer code and the decryption passphrase.');
+    if (!importCodeInput.trim()) {
+      onFeedback('error', 'Please enter the encrypted transfer code.');
+      return;
+    }
+    if (!importPassInput.trim()) {
+      onFeedback('error', 'Please enter the decryption passphrase.');
       return;
     }
     try {
       setIsImportingDirect(true);
       const count = await syncService.importEncryptedTransferCode(importCodeInput, importPassInput);
-      onFeedback('success', `Imported ${count} dreams from direct transfer package.`);
+      onFeedback('success', `Direct transfer successful: merged ${count} dreams into your journal.`);
       setImportCodeInput('');
       setImportPassInput('');
     } catch (err: unknown) {
@@ -206,6 +261,28 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
   const unifiedKey = credentials
     ? cryptoService.formatUnifiedSyncKey(credentials.vaultId, credentials.passphrase)
     : '';
+
+  const devices: SyncedDevice[] = React.useMemo(() => {
+    if (credentials?.devices && credentials.devices.length > 0) {
+      return credentials.devices;
+    }
+    if (credentials?.deviceId) {
+      const fallbackDate = credentials.createdAt || '2026-01-01T00:00:00.000Z';
+      return [
+        {
+          id: credentials.deviceId,
+          name: credentials.deviceName || 'Primary Device',
+          type: credentials.deviceType || 'desktop',
+          pairedAt: fallbackDate,
+          lastSyncAt: credentials.lastSyncedAt || fallbackDate,
+          status: 'active',
+        },
+      ];
+    }
+    return [];
+  }, [credentials]);
+
+  const otherDevices = devices.filter((d) => d.id !== credentials?.deviceId);
 
   return (
     <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-5">
@@ -301,6 +378,17 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                   {copiedKey === 'Sync Key' ? 'Copied' : 'Copy Key'}
                 </Button>
               </div>
+
+              {/* Sensitive Credential Disclaimer A: Device Sync Key */}
+              <div className="p-2.5 rounded-lg bg-amber-950/25 border border-amber-800/40 text-[11px] text-amber-200/90 flex items-start gap-2.5 mt-2">
+                <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-0.5 leading-relaxed">
+                  <strong className="text-amber-300 block font-semibold">Keep your Device Sync Key private.</strong>
+                  <p className="text-amber-200/80">
+                    Anyone who obtains this key may be able to pair another device with your sync vault, depending on the authentication and pairing design. Only share it through a trusted, intentional pairing process. Never post it publicly, send it to strangers, or include it in screenshots or support requests.
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Passphrase & Vault Details Card */}
@@ -343,6 +431,17 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                 </Button>
               </div>
 
+              {/* Sensitive Credential Disclaimer B: Secret Passphrase */}
+              <div className="p-2.5 rounded-lg bg-red-950/25 border border-red-800/40 text-[11px] text-red-200/90 flex items-start gap-2.5 mt-2">
+                <ShieldAlert className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                <div className="space-y-0.5 leading-relaxed">
+                  <strong className="text-red-300 block font-semibold">Never share your Secret Passphrase.</strong>
+                  <p className="text-red-200/80">
+                    Your dream journal may contain deeply personal experiences, private thoughts, and sensitive information. Keep your passphrase to yourself. Oneiric support will never need you to disclose it. Anyone who obtains the passphrase may be able to compromise your encrypted journal if they also obtain the required encrypted data or credentials.
+                  </p>
+                </div>
+              </div>
+
               <div className="flex flex-col gap-1 text-[11px] text-slate-400 pt-2 border-t border-slate-800/60">
                 <div className="flex items-center justify-between">
                   <span>Vault ID: <strong className="text-slate-300 font-mono">{credentials.vaultId}</strong></span>
@@ -358,6 +457,155 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* Connected Devices Management Section */}
+          <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 space-y-3.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800/70">
+              <div className="flex items-center gap-2">
+                <Laptop className="w-4 h-4 text-blue-400" />
+                <h3 className="text-xs font-semibold text-slate-200">
+                  Connected Devices ({devices.filter((d) => d.status !== 'revoked').length})
+                </h3>
+              </div>
+              <span className="text-[11px] text-slate-400">
+                Manage devices authorized to synchronize with this vault
+              </span>
+            </div>
+
+            {/* Device List */}
+            <div className="space-y-2">
+              {devices.map((device) => {
+                const isCurrentDevice = device.id === credentials.deviceId;
+                const isRevoked = device.status === 'revoked';
+
+                return (
+                  <div
+                    key={device.id}
+                    className={`p-3 rounded-lg border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
+                      isCurrentDevice
+                        ? 'bg-blue-950/20 border-blue-900/50'
+                        : isRevoked
+                        ? 'bg-slate-950/40 border-slate-800/50 opacity-60'
+                        : 'bg-slate-950/70 border-slate-800/80'
+                    }`}
+                  >
+                    <div className="flex items-start sm:items-center gap-3">
+                      <div
+                        className={`p-2 rounded-lg border shrink-0 ${
+                          isCurrentDevice
+                            ? 'bg-blue-900/30 border-blue-700/40 text-blue-400'
+                            : isRevoked
+                            ? 'bg-slate-900 border-slate-800 text-slate-500'
+                            : 'bg-slate-900 border-slate-800 text-slate-300'
+                        }`}
+                      >
+                        {device.type === 'mobile' ? (
+                          <Smartphone className="w-4 h-4" />
+                        ) : device.type === 'tablet' ? (
+                          <Tablet className="w-4 h-4" />
+                        ) : (
+                          <Laptop className="w-4 h-4" />
+                        )}
+                      </div>
+
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-medium text-slate-100">
+                            {device.name}
+                          </span>
+                          {isCurrentDevice && (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-950 text-blue-300 border border-blue-800/60">
+                              This Device
+                            </span>
+                          )}
+                          {isRevoked ? (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-950/60 text-red-300 border border-red-800/50">
+                              Revoked
+                            </span>
+                          ) : !isCurrentDevice ? (
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-950/60 text-emerald-300 border border-emerald-800/50">
+                              Active
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div className="flex items-center gap-3 text-[11px] text-slate-400 flex-wrap">
+                          <span>
+                            Paired: {new Date(device.pairedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                          <span>•</span>
+                          <span>
+                            Last synced: {formatSyncRelativeTime(device.lastSyncAt)}
+                          </span>
+                          {isRevoked && device.revokedAt && (
+                            <>
+                              <span>•</span>
+                              <span className="text-red-400">
+                                Revoked on {new Date(device.revokedAt).toLocaleDateString()}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action button */}
+                    <div className="flex items-center self-end sm:self-center">
+                      {isCurrentDevice ? (
+                        <span className="text-[11px] text-slate-500 italic">
+                          Current device (use Disconnect below)
+                        </span>
+                      ) : isRevoked ? (
+                        <span className="text-[11px] text-red-400/80 font-medium">
+                          Access Revoked
+                        </span>
+                      ) : (
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          onClick={() => setDeviceToRevoke(device)}
+                          icon={<UserX className="w-3.5 h-3.5 text-red-400" />}
+                          className="text-red-300 hover:text-red-200 hover:bg-red-950/40 border-red-900/60"
+                        >
+                          Remove Device
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {otherDevices.length === 0 && (
+                <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/60 text-center text-xs text-slate-400">
+                  No other devices are currently paired with this vault. Use your Device Sync Key to connect your phone, tablet, or secondary computer.
+                </div>
+              )}
+            </div>
+
+            {/* Security Boundary Notice & Re-Key Option */}
+            <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800/70 text-[11px] text-slate-400 space-y-2 leading-relaxed">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-1.5 text-slate-300 font-medium">
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Device Revocation & Security Boundaries</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsReKeyDialogOpen(true)}
+                  className="text-[11px] text-blue-400 hover:text-blue-300 font-medium underline cursor-pointer flex items-center gap-1"
+                >
+                  <KeyRound className="w-3 h-3" />
+                  <span>Rotate Vault Key</span>
+                </button>
+              </div>
+              <p>
+                Removing a device immediately revokes its authorization and blocks it from future synchronization with this vault. However, revocation cannot remotely erase dream records already downloaded onto that device before removal.
+              </p>
+              <p className="text-slate-500">
+                For complete cryptographic forward secrecy (if you suspect a device or passphrase was compromised), rotate your vault key. This generates a fresh vault and passphrase, completely excluding all revoked devices.
+              </p>
             </div>
           </div>
 
@@ -531,7 +779,7 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                         onClick={() => setShowConnectPassphrase(!showConnectPassphrase)}
                         className="text-[11px] text-slate-400 hover:text-slate-200 flex items-center gap-1 cursor-pointer"
                       >
-                        {showConnectPassphrase ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                        {showConnectPassphrase ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                         <span>{showConnectPassphrase ? 'Hide' : 'Reveal'}</span>
                       </button>
                     </div>
@@ -693,6 +941,30 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
         message="This will sever this device's connection to the cloud sync vault. All your dreams, tags, and notes will remain untouched on this device. You can reconnect anytime with your Sync Key."
         confirmText="Disconnect Vault"
         isDestructive={true}
+      />
+
+      {/* Revoke Device Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(deviceToRevoke)}
+        onClose={() => setDeviceToRevoke(null)}
+        onConfirm={handleConfirmRevoke}
+        title={`Remove ${deviceToRevoke?.name || 'Device'}?`}
+        message={`Revoking access will disconnect "${deviceToRevoke?.name || 'this device'}" from this sync vault and block it from future synchronization.\n\nNote: This prevents future sync operations, but does not wipe data already downloaded onto that device.`}
+        confirmText="Revoke Device Access"
+        isDestructive={true}
+        isLoading={isRevoking}
+      />
+
+      {/* Rotate Vault Key Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={isReKeyDialogOpen}
+        onClose={() => setIsReKeyDialogOpen(false)}
+        onConfirm={handleConfirmReKey}
+        title="Rotate Vault Encryption Key?"
+        message="This will generate a brand new Sync Vault with a fresh encryption passphrase and migrate your local dreams. All previously paired and revoked devices will be completely locked out. You will need to re-pair any trusted devices using the new Sync Key."
+        confirmText="Rotate Key & Create New Vault"
+        isDestructive={false}
+        isLoading={isReKeying}
       />
     </section>
   );
