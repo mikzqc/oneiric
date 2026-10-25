@@ -13,6 +13,7 @@ import {
   Network,
   Settings,
   ShieldCheck,
+  HelpCircle,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -45,6 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
       title: 'System',
       items: [
         { to: '/settings', label: 'Settings & Sync', icon: Settings },
+        { to: '/faq', label: 'FAQ & Help', icon: HelpCircle },
       ],
     },
   ];

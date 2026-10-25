@@ -976,12 +976,23 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
                 )}
               </button>
             ) : (
-              <span
-                className="flex items-center gap-1 text-[11px] text-slate-500 cursor-not-allowed"
-                title="Voice dictation is unsupported in your current browser. Standard keyboard input is active."
-              >
-                <MicOff className="w-3.5 h-3.5 text-slate-600" />
-                <span className="hidden sm:inline">Dictation Unavailable</span>
+              <span className="flex items-center gap-1.5 text-[11px] text-slate-400 cursor-default">
+                <span
+                  className="flex items-center gap-1 text-slate-400"
+                  title="Voice dictation is unsupported in your current browser. Standard keyboard input is active."
+                >
+                  <MicOff className="w-3.5 h-3.5 text-slate-500" />
+                  <span className="hidden sm:inline">Dictation Unavailable</span>
+                </span>
+                <a
+                  href="/faq#voice-dictation"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 underline cursor-pointer text-xs font-medium"
+                  title="Learn how to enable voice dictation in Firefox, Brave, Chrome, Safari, and other browsers"
+                >
+                  Why?
+                </a>
               </span>
             )}
 

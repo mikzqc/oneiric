@@ -13,6 +13,7 @@ import { LucidDreamsPage } from './pages/LucidDreamsPage';
 import { TechniquesPage } from './pages/TechniquesPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { CorrelationPage } from './pages/CorrelationPage';
+import { FaqPage } from './pages/FaqPage';
 import { DreamEntry } from './types/dream';
 
 interface LayoutContextType {
@@ -78,6 +79,7 @@ export const App: React.FC = () => {
           <Route path="false-awakenings" element={<FalseAwakeningsRoute />} />
           <Route path="techniques" element={<TechniquesPage />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="faq" element={<FaqPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

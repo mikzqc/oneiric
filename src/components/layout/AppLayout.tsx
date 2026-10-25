@@ -69,6 +69,7 @@ export const AppLayout: React.FC = () => {
     if (path.startsWith('/false-awakenings')) return { title: 'False Awakenings', subtitle: 'Simulated awakenings and transition patterns' };
     if (path.startsWith('/techniques')) return { title: 'Techniques Guide', subtitle: 'Induction protocols and reference guide' };
     if (path.startsWith('/settings')) return { title: 'Settings', subtitle: 'Data backup, export/import, and sync' };
+    if (path.startsWith('/faq')) return { title: 'FAQ & Help', subtitle: 'Frequently asked questions and browser setup guides' };
     return { title: 'Oneiric', subtitle: 'Dream Journal & Analysis' };
   };
 
