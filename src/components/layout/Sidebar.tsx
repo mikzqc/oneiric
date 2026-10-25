@@ -13,7 +13,6 @@ import {
   Network,
   Settings,
   ShieldCheck,
-  Moon,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -54,8 +53,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
     <aside className="w-60 h-full flex flex-col bg-[#0b132b] border-r border-slate-800 text-slate-300 shrink-0 select-none">
       {/* Brand Header */}
       <div className="px-5 py-4 border-b border-slate-800 flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-md bg-[#132042] border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
-          <Moon className="w-4 h-4 fill-blue-400/20 text-blue-400" />
+        <div className="w-8 h-8 rounded-md bg-[#132042] border border-blue-500/30 flex items-center justify-center shrink-0 overflow-hidden p-1">
+          <img src="/logo.png" alt="Oneiric" className="w-full h-full object-contain" />
         </div>
         <div>
           <div className="flex items-center gap-1.5">

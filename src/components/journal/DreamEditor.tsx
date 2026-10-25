@@ -1,8 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DreamDraft, DreamEntry, DreamScene, PREDEFINED_EMOTIONS, LucidityLevel, RecallQuality } from '../../types/dream';
 import { dreamService } from '../../services/dreamService';
 import { celebrationService } from '../../services/celebrationService';
 import { wakeTimeService, WakeTimeConfig, WAKE_TIME_CHANGED_EVENT } from '../../services/wakeTimeService';
+import {
+  isSpeechRecognitionSupported,
+  VoiceDictationController,
+  insertTextAtCursor,
+} from '../../services/voiceDictationService';
 import { getTodayDateString } from '../../utils/dateUtils';
 import { Button } from '../common/Button';
 import {
@@ -26,6 +31,9 @@ import {
   FileText,
   CheckCircle2,
   Globe,
+  Mic,
+  MicOff,
+  Square,
 } from 'lucide-react';
 
 interface DreamEditorProps {
@@ -242,6 +250,86 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
 
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Voice Dictation state and controller
+  const [isDictating, setIsDictating] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState('');
+  const [dictationError, setDictationError] = useState<string | null>(null);
+  const isDictationSupported = isSpeechRecognitionSupported();
+
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const cursorPositionRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
+  const dictationControllerRef = useRef<VoiceDictationController | null>(null);
+
+  // Initialize dictation controller once
+  useEffect(() => {
+    dictationControllerRef.current = new VoiceDictationController({
+      onFinalResult: (transcript) => {
+        setNarrative((prev) => {
+          const { start, end } = cursorPositionRef.current;
+          const { updatedText, newCursorPos } = insertTextAtCursor(prev, transcript, start, end);
+          cursorPositionRef.current = { start: newCursorPos, end: newCursorPos };
+
+          requestAnimationFrame(() => {
+            if (textareaRef.current) {
+              textareaRef.current.selectionStart = newCursorPos;
+              textareaRef.current.selectionEnd = newCursorPos;
+            }
+          });
+
+          return updatedText;
+        });
+        setInterimTranscript('');
+      },
+      onInterimResult: (interim) => {
+        setInterimTranscript(interim);
+      },
+      onStateChange: (listening) => {
+        setIsDictating(listening);
+        if (!listening) {
+          setInterimTranscript('');
+        }
+      },
+      onError: (_code, userMessage) => {
+        setDictationError(userMessage);
+        setIsDictating(false);
+        setInterimTranscript('');
+      },
+    });
+
+    return () => {
+      dictationControllerRef.current?.abort();
+      dictationControllerRef.current = null;
+    };
+  }, []);
+
+  const handleNarrativeSelect = (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
+    const el = e.currentTarget;
+    cursorPositionRef.current = {
+      start: el.selectionStart,
+      end: el.selectionEnd,
+    };
+  };
+
+  const toggleDictation = () => {
+    setDictationError(null);
+    if (isDictating) {
+      dictationControllerRef.current?.stop();
+    } else {
+      if (textareaRef.current) {
+        cursorPositionRef.current = {
+          start: textareaRef.current.selectionStart ?? narrative.length,
+          end: textareaRef.current.selectionEnd ?? narrative.length,
+        };
+      } else {
+        cursorPositionRef.current = {
+          start: narrative.length,
+          end: narrative.length,
+        };
+      }
+      dictationControllerRef.current?.start();
+    }
+  };
 
   const handleAddScene = () => {
     const nextNumber = scenes.length + 1;
@@ -853,18 +941,96 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
 
       {/* Dream Narrative */}
       <div>
-        <div className="flex items-center justify-between mb-1.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
           <label htmlFor="dream-narrative" className="text-xs font-semibold text-slate-300">
             Dream Narrative <span className="text-blue-400">*</span>
           </label>
-          <span className="text-xs text-slate-400 font-mono">
-            {wordCount} {wordCount === 1 ? 'word' : 'words'}
-          </span>
+          <div className="flex items-center gap-2.5">
+            {/* Rapid Morning Dictation Button */}
+            {isDictationSupported ? (
+              <button
+                type="button"
+                onClick={toggleDictation}
+                aria-label={isDictating ? 'Stop speech recognition' : 'Start speech recognition'}
+                title={
+                  isDictating
+                    ? 'Stop voice dictation'
+                    : 'Start voice dictation (Web Speech API). Audio may be processed by your browser speech engine.'
+                }
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer border ${
+                  isDictating
+                    ? 'bg-red-950/70 text-red-300 border-red-700/80 hover:bg-red-900/60 shadow-sm'
+                    : 'bg-[#121c38] text-blue-300 border-blue-500/40 hover:bg-[#18264d] hover:text-blue-200'
+                }`}
+              >
+                {isDictating ? (
+                  <>
+                    <Square className="w-3 h-3 fill-red-400 text-red-400" />
+                    <span>Stop Dictation</span>
+                  </>
+                ) : (
+                  <>
+                    <Mic className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Voice Dictation</span>
+                  </>
+                )}
+              </button>
+            ) : (
+              <span
+                className="flex items-center gap-1 text-[11px] text-slate-500 cursor-not-allowed"
+                title="Voice dictation is unsupported in your current browser. Standard keyboard input is active."
+              >
+                <MicOff className="w-3.5 h-3.5 text-slate-600" />
+                <span className="hidden sm:inline">Dictation Unavailable</span>
+              </span>
+            )}
+
+            <span className="text-xs text-slate-400 font-mono">
+              {wordCount} {wordCount === 1 ? 'word' : 'words'}
+            </span>
+          </div>
         </div>
+
+        {/* Active Dictation Listening Banner */}
+        {isDictating && (
+          <div className="mb-2 px-3 py-1.5 rounded-lg bg-blue-950/40 border border-blue-700/60 flex items-center justify-between gap-2 text-xs text-blue-200">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping shrink-0" />
+              <span className="font-semibold text-blue-300 shrink-0">Dictating:</span>
+              <span className="italic text-slate-200 truncate">
+                {interimTranscript || 'Listening... Speak your dream narrative.'}
+              </span>
+            </div>
+            <span className="text-[10px] text-slate-400 hidden md:inline shrink-0 font-mono">
+              Web Speech API
+            </span>
+          </div>
+        )}
+
+        {/* Dictation Error Notification */}
+        {dictationError && (
+          <div className="mb-2 px-3 py-2 rounded-lg bg-red-950/50 border border-red-800/70 flex items-center justify-between gap-2 text-xs text-red-200">
+            <div className="flex items-center gap-1.5">
+              <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+              <span>{dictationError}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDictationError(null)}
+              className="text-xs text-red-300 hover:text-red-100 px-1 font-semibold cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
         <textarea
+          ref={textareaRef}
           id="dream-narrative"
           value={narrative}
           onChange={(e) => setNarrative(e.target.value)}
+          onSelect={handleNarrativeSelect}
+          onClick={handleNarrativeSelect}
+          onKeyUp={handleNarrativeSelect}
           placeholder="Describe your dream in vivid detail. What did you see, hear, feel, and experience? What led up to your awareness?"
           rows={8}
           className="w-full px-3.5 py-2.5 rounded-lg bg-slate-900/90 border border-slate-800 text-slate-100 placeholder-slate-500 text-sm leading-relaxed focus:outline-none focus:border-blue-500 transition-colors font-sans"
