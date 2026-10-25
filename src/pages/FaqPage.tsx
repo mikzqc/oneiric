@@ -230,6 +230,63 @@ export const FaqPage: React.FC = () => {
         </div>
       ),
     },
+    {
+      id: 'vividness-vs-recall-quality',
+      category: 'journal',
+      question: 'What is the difference between Vividness and Recall Quality?',
+      answer: (
+        <div className="space-y-2.5 text-slate-300 text-sm leading-relaxed">
+          <p>
+            In sleep research and dream journaling, sensory intensity and memory completeness are two independent dimensions:
+          </p>
+          <ul className="text-xs space-y-1.5 list-disc list-inside text-slate-300">
+            <li><strong>Vividness (1 to 5 Stars):</strong> Measures how intensely real the dream felt while experiencing it. A 5-star dream has hyper-realistic colors, physical tactile sensations, audible dialogue, and palpable emotions.</li>
+            <li><strong>Recall Quality:</strong> Measures how much of the narrative survived upon waking:
+              <ul className="pl-4 mt-1 space-y-1 list-disc text-slate-400">
+                <li><em>Hazy:</em> Vague impressions, mood, or a single blurred image.</li>
+                <li><em>Fragmentary:</em> Isolated moments, single sentences, or disjointed clips.</li>
+                <li><em>Detailed:</em> Clear sequence of events with dialogue and distinct settings.</li>
+                <li><em>Crystal:</em> Complete, unbroken memory from beginning to awakening without narrative gaps.</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      ),
+    },
+    {
+      id: 'nocturnal-timeline-analysis',
+      category: 'journal',
+      question: 'How does the Nocturnal Timeline view help me analyze dreams?',
+      answer: (
+        <div className="space-y-2.5 text-slate-300 text-sm leading-relaxed">
+          <p>
+            The <strong>Timeline</strong> view (<code className="text-blue-300 bg-slate-900 px-1 py-0.5 rounded text-xs">/timeline</code>) organizes your nocturnal ledger chronologically by night:
+          </p>
+          <ul className="text-xs space-y-1.5 list-disc list-inside text-slate-300">
+            <li><strong>Multi-Dream Nights:</strong> Groups dreams occurring during the same sleep cycle under a unified night card with chronological wake-up indicators.</li>
+            <li><strong>Scene Transitions:</strong> Highlights intra-dream scene shifts, false awakening loops, and lucid awakenings in sequence.</li>
+            <li><strong>Protocol Linking:</strong> Displays induction techniques practiced on that night alongside the dreams recalled upon waking, making it easy to spot which protocols produce results.</li>
+          </ul>
+        </div>
+      ),
+    },
+    {
+      id: 'log-unremembered-nights',
+      category: 'journal',
+      question: 'How can I track unremembered nights without breaking my journaling streak?',
+      answer: (
+        <div className="space-y-2.5 text-slate-300 text-sm leading-relaxed">
+          <p>
+            In scientific oneirology, recording that no dreams were remembered is valuable empirical data:
+          </p>
+          <ul className="text-xs space-y-1.5 list-disc list-inside text-slate-300">
+            <li>On the <strong>Dashboard</strong> or in the <strong>Calendar</strong>, click <strong>+ Log Day</strong> to record a night with no recall.</li>
+            <li>This keeps your active daily habit intact and ensures your calculated <em>Recall Rate</em> in Analytics accurately reflects calendar recall frequency rather than assuming unlogged days were forgotten.</li>
+            <li>If you later remember a dream fragment from that day, simply record the dream and the placeholder is seamlessly updated.</li>
+          </ul>
+        </div>
+      ),
+    },
 
     // --- Lucid Induction & Signs ---
     {
@@ -271,6 +328,97 @@ export const FaqPage: React.FC = () => {
             <li>
               <strong>WILD (Wake-Initiated):</strong> Advanced. Maintaining continuous conscious awareness while the physical body transitions directly into REM sleep and dream hypnagogia.
             </li>
+          </ul>
+        </div>
+      ),
+    },
+    {
+      id: 'stabilization-grounding-protocols',
+      category: 'lucid',
+      question: 'What should I do immediately after becoming lucid? (Stabilization & Grounding)',
+      answer: (
+        <div className="space-y-2.5 text-slate-300 text-sm leading-relaxed">
+          <p>
+            The sudden rush of realizing "I am dreaming!" often causes excitement spikes that wake you up prematurely. To anchor your consciousness:
+          </p>
+          <ol className="text-xs space-y-1.5 list-decimal list-inside text-slate-300">
+            <li><strong>Remain Still and Breathe:</strong> Avoid running or jumping immediately. Pause for 5 seconds to let your arousal settle.</li>
+            <li><strong>Rub Your Hands Together:</strong> Tactile friction generates somatosensory feedback, engaging the parietal cortex and preventing the physical body from waking.</li>
+            <li><strong>Engage Dream Senses:</strong> Touch nearby surfaces (walls, grass, clothing), look closely at fine textures, or listen carefully to ambient dream sounds.</li>
+            <li><strong>Spin in a Circle:</strong> If the dream vision begins to fade or darken, gently spin your dream body in a circle while repeating "Clarity now!" until a new scene crystallizes.</li>
+          </ol>
+        </div>
+      ),
+    },
+    {
+      id: 'lucidity-vs-dream-control',
+      category: 'lucid',
+      question: 'What is the difference between Dream Control and Lucidity?',
+      answer: (
+        <div className="space-y-2.5 text-slate-300 text-sm leading-relaxed">
+          <p>
+            Oneiric tracks <strong>Lucidity</strong> and <strong>Dream Control</strong> as two separate analytical metrics:
+          </p>
+          <ul className="text-xs space-y-1.5 list-disc list-inside text-slate-300">
+            <li><strong>Lucidity (Cognitive Metacognition):</strong> The binary or probabilistic realization that you are currently in a dream state (<code className="text-blue-300 bg-slate-900 px-1 py-0.5 rounded text-xs">non-lucid</code>, <code className="text-amber-300 bg-slate-900 px-1 py-0.5 rounded text-xs">uncertain</code>, or <code className="text-emerald-300 bg-slate-900 px-1 py-0.5 rounded text-xs">lucid</code>).</li>
+            <li><strong>Dream Control (Volitional Agency):</strong> The degree of power you have to alter events, manipulate environments, fly, summon objects, or direct characters (rated 1 to 5).</li>
+            <li><em>Example:</em> You can be 100% lucid (fully conscious) while peacefully observing the dream without attempting to control anything (Control: 1). Conversely, high control over a plot can occur in non-lucid vivid dreams.</li>
+          </ul>
+        </div>
+      ),
+    },
+    {
+      id: 'reality-checks-most-reliable',
+      category: 'lucid',
+      question: 'How do Reality Checks work, and which ones are most reliable?',
+      answer: (
+        <div className="space-y-2.5 text-slate-300 text-sm leading-relaxed">
+          <p>
+            A <strong>Reality Check</strong> is a physical test designed to reveal the discrepancy between waking physical laws and dream neurology:
+          </p>
+          <ul className="text-xs space-y-2 list-disc list-inside text-xs sm:text-sm text-slate-300">
+            <li>
+              <strong>Nose Pinch Test (Most Reliable):</strong> Pinch your nostrils closed with fingers and attempt to gently breathe through your nose. In a dream, your physical lungs continue breathing, so you will breathe effortlessly through the pinched nose!
+            </li>
+            <li>
+              <strong>Digital Text / Clock Re-Reading:</strong> Look at a watch or text, look away for 2 seconds, then look back. In dreams, the reading center of the brain (left temporoparietal cortex) is hypoactive, causing text and numbers to mutate or scramble on second glance.
+            </li>
+            <li>
+              <strong>Finger Through Palm:</strong> Gently press your index finger against your opposite palm while genuinely questioning whether you might be dreaming.
+            </li>
+          </ul>
+        </div>
+      ),
+    },
+    {
+      id: 'sleep-paralysis-and-wild',
+      category: 'lucid',
+      question: 'What is Sleep Paralysis, and how does it relate to WILD?',
+      answer: (
+        <div className="space-y-2.5 text-slate-300 text-sm leading-relaxed">
+          <p>
+            <strong>Sleep Paralysis (REM Atonia)</strong> is a normal, healthy biological mechanism that temporarily relaxes motor muscles so you do not physically act out your dreams:
+          </p>
+          <ul className="text-xs space-y-1.5 list-disc list-inside text-slate-300">
+            <li>When practicing direct induction (WILD), your mind remains alert while your physical body drifts into atonia. You may perceive hypnagogic vibrations, buzzing, humming, or a feeling of heaviness.</li>
+            <li><strong>It is completely harmless:</strong> Understanding that these sensations are simply the neurological threshold of entering a dream eliminates fear.</li>
+            <li>Instead of trying to move your physical body, visualize floating upwards or rolling out into a lucid dream scene.</li>
+          </ul>
+        </div>
+      ),
+    },
+    {
+      id: 'lucidity-confidence-and-interpretation',
+      category: 'lucid',
+      question: 'What are Lucidity Confidence and Interpretation Notes in the Dream Editor?',
+      answer: (
+        <div className="space-y-2.5 text-slate-300 text-sm leading-relaxed">
+          <p>
+            These Phase 2 analytical tools allow deeper nocturnal research:
+          </p>
+          <ul className="text-xs space-y-1.5 list-disc list-inside text-slate-300">
+            <li><strong>Lucidity Confidence (1 to 5):</strong> Captures edge cases where you "dreamed that you were lucid" or experienced fleeting, foggy awareness versus razor-sharp, waking-level metacognition.</li>
+            <li><strong>Interpretation Notes:</strong> Keeps your objective raw narrative cleanly separated from subjective personal reflections, waking life associations, psychological symbols, and creative insights.</li>
           </ul>
         </div>
       ),
@@ -365,6 +513,24 @@ export const FaqPage: React.FC = () => {
         </div>
       ),
     },
+    {
+      id: 'forgot-sync-passphrase-recovery',
+      category: 'sync',
+      question: 'What happens if I forget my Sync Passphrase?',
+      answer: (
+        <div className="space-y-2.5 text-slate-300 text-sm leading-relaxed">
+          <p>
+            Because Oneiric adheres strictly to <strong>Zero-Knowledge Encryption</strong>, your passphrase is never stored on any server. If you forget it:
+          </p>
+          <ol className="text-xs space-y-1.5 list-decimal list-inside text-slate-300">
+            <li><strong>Your local data is safe:</strong> All your dreams currently stored in your browser's IndexedDB remain completely accessible.</li>
+            <li>Go to <strong>Settings &gt; Data Export</strong> and download a standard unencrypted JSON backup to preserve your local records.</li>
+            <li>In <strong>Settings &gt; Multi-Device Sync</strong>, disconnect the lost sync configuration.</li>
+            <li>Generate a new sync vault with a new passphrase and re-pair your devices using the new credentials.</li>
+          </ol>
+        </div>
+      ),
+    },
 
     // --- Privacy, Storage & Security ---
     {
@@ -450,6 +616,23 @@ export const FaqPage: React.FC = () => {
           <p>
             Dream journaling involves your most intimate thoughts, subconscious experiences, and personal psychology. Oneiric is designed from the ground up as an offline-first nocturnal workbench. There are no tracking cookies, no Google Analytics, no Facebook Pixels, and no external AI services consuming your narratives.
           </p>
+        </div>
+      ),
+    },
+    {
+      id: 'offline-pwa-mobile-install',
+      category: 'privacy',
+      question: 'Can I install Oneiric as an offline app on iPhone, iPad, or Android?',
+      answer: (
+        <div className="space-y-2.5 text-slate-300 text-sm leading-relaxed">
+          <p>
+            Yes! Oneiric functions as an offline-capable web application that you can pin directly to your home screen:
+          </p>
+          <ul className="text-xs space-y-1.5 list-disc list-inside text-slate-300">
+            <li><strong>iOS / Safari:</strong> Open Oneiric in Safari, tap the <em>Share</em> button (square with arrow), scroll down and tap <strong>Add to Home Screen</strong>.</li>
+            <li><strong>Android / Chrome:</strong> Open Oneiric in Chrome, tap the three dots menu in the top right, and select <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
+            <li>When opened from your home screen, Oneiric launches in a clean full-screen view without browser URL bars, providing instant morning access right from your nightstand.</li>
+          </ul>
         </div>
       ),
     },
