@@ -24,13 +24,11 @@ export const FaqPage: React.FC = () => {
     location.hash === '#voice-dictation' ? 'dictation' : 'all'
   );
   const [openItems, setOpenItems] = useState<Record<string, boolean>>(() => {
-    const isVoice = location.hash === '#voice-dictation';
-    const initialMap: Record<string, boolean> = {
-      'why-dictation-unavailable': true,
-      'firefox-enable-steps': true,
-      'brave-enable-steps': isVoice,
-    };
-    return initialMap;
+    const map: Record<string, boolean> = {};
+    if (location.hash === '#voice-dictation') {
+      map['why-dictation-unavailable'] = true;
+    }
+    return map;
   });
 
   // Handle hash scrolling if navigating to #voice-dictation
