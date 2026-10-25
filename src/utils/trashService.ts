@@ -159,10 +159,10 @@ export const trashService = {
 
       tombstoneService.removeTombstone(id);
 
-      // Refresh updatedAt to current time so remote syncing recognizes dream as updated after deletion
+      // Refresh updatedAt to strictly exceed the deletion timestamp even in sub-millisecond execution
       const restoredDream: DreamEntry = {
         ...target.dream,
-        updatedAt: Math.max(Date.now(), (target.dream.updatedAt || 0) + 1),
+        updatedAt: Math.max(Date.now(), (target.deletedAt || 0) + 1, (target.dream.updatedAt || 0) + 1),
       };
 
       try {

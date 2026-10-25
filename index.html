@@ -5,12 +5,109 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0b132b" />
-    <meta name="description" content="Oneiric — Premium Lucid Dreaming Tracker and Nocturnal Journal" />
-    <title>Oneiric</title>
+    <meta name="theme-color" content="#060913" />
+
+    <!-- Search Engine & Metadata -->
+    <title>Oneiric — Dream Journal & Analysis</title>
+    <meta
+      name="description"
+      content="Track nocturnal recall, inspect dream signs, and monitor lucid dreaming practice consistency with local IndexedDB privacy and optional cloud sync."
+    />
+    <link rel="canonical" href="https://oneiric-one.vercel.app/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://oneiric-one.vercel.app/" />
+    <meta property="og:title" content="Oneiric — Dream Journal & Analysis" />
+    <meta
+      property="og:description"
+      content="Track nocturnal recall, inspect dream signs, and monitor lucid dreaming practice consistency with local IndexedDB privacy and optional cloud sync."
+    />
+    <meta property="og:image" content="https://oneiric-one.vercel.app/logo.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="Oneiric Dream Journal Logo" />
+    <meta property="og:site_name" content="Oneiric" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Oneiric — Dream Journal & Analysis" />
+    <meta
+      name="twitter:description"
+      content="Track nocturnal recall, inspect dream signs, and monitor lucid dreaming practice consistency with local IndexedDB privacy and optional cloud sync."
+    />
+    <meta name="twitter:image" content="https://oneiric-one.vercel.app/logo.png" />
   </head>
-  <body class="bg-[#0b132b] text-slate-100 antialiased selection:bg-indigo-600/30 selection:text-indigo-200">
-    <div id="root"></div>
+  <body
+    style="margin: 0; background-color: #060913; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;"
+    class="bg-[#0b132b] text-slate-100 antialiased selection:bg-indigo-600/30 selection:text-indigo-200"
+  >
+    <div id="root">
+      <!-- Semantic Static Fallback for Web Crawlers, AI Browsers & Non-JS Clients -->
+      <div style="min-height: 100vh; background-color: #060913; color: #f8fafc; padding: 2.5rem 1.5rem; max-width: 56rem; margin: 0 auto; line-height: 1.6;">
+        <header style="border-bottom: 1px solid #1e293b; padding-bottom: 1.5rem; margin-bottom: 2rem;">
+          <h1 style="font-size: 1.75rem; font-weight: 700; margin: 0 0 0.5rem 0; color: #f8fafc; letter-spacing: -0.025em;">
+            Oneiric — Dream Journal & Analysis
+          </h1>
+          <p style="font-size: 0.95rem; color: #94a3b8; margin: 0;">
+            Track nocturnal recall, inspect dream signs, and monitor lucid dreaming practice consistency with local IndexedDB privacy and optional cloud sync.
+          </p>
+        </header>
+
+        <noscript>
+          <div style="background-color: #1e1b4b; border: 1px solid #3730a3; padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; color: #e0e7ff; font-size: 0.875rem;">
+            <strong>JavaScript Required for Interactive Workbench:</strong> Oneiric stores your nocturnal dream journal locally on your device inside IndexedDB. Please enable JavaScript in your browser to record dreams, inspect analytics, and use voice dictation.
+          </div>
+        </noscript>
+
+        <main style="display: flex; flex-direction: column; gap: 2rem;">
+          <!-- Journal & Recall Tracking -->
+          <section style="background-color: #101a38; border: 1px solid #1e293b; border-radius: 0.75rem; padding: 1.5rem;">
+            <h2 style="font-size: 1.15rem; font-weight: 600; margin-top: 0; margin-bottom: 0.75rem; color: #93c5fd;">
+              Journal & Recall Tracking
+            </h2>
+            <ul style="margin: 0; padding-left: 1.25rem; color: #cbd5e1; font-size: 0.9rem; display: flex; flex-direction: column; gap: 0.5rem;">
+              <li><strong>Dashboard:</strong> Nocturnal overview featuring Total Recorded dreams, Recalled This Week metrics, Lucid Dreams & lucidity rate, Journaling Streak, All-Time Recall Activity, and Unremembered Days logs.</li>
+              <li><strong>Dream Journal:</strong> Analytical journal workbench with Deep Content Search (scenes, interpretations, anomalies, and semantic concepts), tagging, emotions, and rapid morning voice dictation.</li>
+              <li><strong>Timeline:</strong> Chronological night-by-night nocturnal log with multi-scene transitions, dream signs, and technique linkages.</li>
+              <li><strong>Monthly Calendar:</strong> Interactive calendar displaying visual recall density dots and day detail inspection drawers.</li>
+            </ul>
+          </section>
+
+          <!-- Analysis & Lucidity Suite -->
+          <section style="background-color: #101a38; border: 1px solid #1e293b; border-radius: 0.75rem; padding: 1.5rem;">
+            <h2 style="font-size: 1.15rem; font-weight: 600; margin-top: 0; margin-bottom: 0.75rem; color: #93c5fd;">
+              Analysis & Lucidity Suite
+            </h2>
+            <ul style="margin: 0; padding-left: 1.25rem; color: #cbd5e1; font-size: 0.9rem; display: flex; flex-direction: column; gap: 0.5rem;">
+              <li><strong>Analytics:</strong> Longitudinal recall rates, heatmaps, temporal trends, vividness averages, and dream control progression.</li>
+              <li><strong>Correlations:</strong> Statistical discovery engine evaluating relationships between dream signs, emotions, lucidity triggers, and induction methods.</li>
+              <li><strong>Dream Signs:</strong> Automated heuristic detection across categories (people, places, objects, anomalies, actions) with daytime reality check conditioning.</li>
+              <li><strong>Lucid Dreams:</strong> Dedicated archive of conscious dream experiences with stabilization metrics and induction technique outcomes.</li>
+              <li><strong>False Awakenings:</strong> Pattern tracker for simulated awakenings, reality check failures, and transition anomalies.</li>
+              <li><strong>Techniques Guide:</strong> Evidence-based induction protocols (MILD, WILD, WBTB, SSILD, ADA) with step-by-step cognitive mechanisms and execution logging.</li>
+            </ul>
+          </section>
+
+          <!-- System & Local-First Privacy -->
+          <section style="background-color: #101a38; border: 1px solid #1e293b; border-radius: 0.75rem; padding: 1.5rem;">
+            <h2 style="font-size: 1.15rem; font-weight: 600; margin-top: 0; margin-bottom: 0.75rem; color: #93c5fd;">
+              System & Privacy Architecture
+            </h2>
+            <ul style="margin: 0; padding-left: 1.25rem; color: #cbd5e1; font-size: 0.9rem; display: flex; flex-direction: column; gap: 0.5rem;">
+              <li><strong>Local & Private Storage:</strong> All dream entries, narratives, and personal notes remain stored strictly on your device inside IndexedDB. Zero cloud tracking, zero external telemetry.</li>
+              <li><strong>Optional Cloud Sync:</strong> End-to-end client-side encryption (AES-256-GCM) with passphrases that never leave your device.</li>
+              <li><strong>Data Sovereignty:</strong> JSON backup export/import, 30-day Recently Deleted trash retention with instant Undo delete.</li>
+              <li><strong>FAQ & Help Guide:</strong> Clear browser guides for speech recognition setup in Firefox, Brave, Chrome, Safari, and offline operation details.</li>
+            </ul>
+          </section>
+        </main>
+
+        <footer style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid #1e293b; font-size: 0.8rem; color: #64748b; text-align: center;">
+          Oneiric — Nocturnal Journal & Lucid Dreaming Research Workbench. Local-first, private, and distraction-free.
+        </footer>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

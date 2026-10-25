@@ -26,6 +26,11 @@
 }
 
 /* Restrained, professional utility scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #1e293b #0b132b;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
