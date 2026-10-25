@@ -8,6 +8,7 @@ import { DreamEntry } from '../../types/dream';
 import { backupService } from '../../services/backupService';
 import { celebrationService, LucidCelebrationEvent } from '../../services/celebrationService';
 import { LucidCelebrationModal } from '../celebration/LucidCelebrationModal';
+import { UndoNotification } from '../common/UndoNotification';
 import { X, Info } from 'lucide-react';
 
 export const AppLayout: React.FC = () => {
@@ -217,6 +218,9 @@ export const AppLayout: React.FC = () => {
           navigate('/settings');
         }}
       />
+
+      {/* Global Non-Intrusive Undo Delete Notification */}
+      <UndoNotification />
     </div>
   );
 };

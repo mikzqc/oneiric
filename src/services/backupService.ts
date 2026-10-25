@@ -5,6 +5,7 @@ import { TechniqueLog } from '../types/technique';
 import { DreamSign } from '../types/dreamSign';
 import { generateSampleData } from '../db/sampleData';
 import { tombstoneService } from '../utils/tombstones';
+import { trashService } from '../utils/trashService';
 import { cryptoService } from './cryptoService';
 import { dreamSignService } from './dreamSignService';
 
@@ -533,6 +534,7 @@ export const backupService = {
       await db.customTags.clear();
       await db.dreamSigns.clear();
     });
+    trashService.clearAllTrash();
     tombstoneService.clearTombstones();
 
     try {

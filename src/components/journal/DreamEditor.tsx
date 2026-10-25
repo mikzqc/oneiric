@@ -43,13 +43,41 @@ interface SavedDraftPayload extends Partial<DreamDraft> {
   savedAt?: number;
 }
 
+function hasMeaningfulAdvancedData(target?: Partial<DreamDraft> | null): boolean {
+  if (!target) return false;
+  return Boolean(
+    target.falseAwakening ||
+      (target.dreamControl !== undefined && target.dreamControl > 0) ||
+      (target.interpretationNotes && target.interpretationNotes.trim().length > 0) ||
+      (Array.isArray(target.scenes) && target.scenes.length > 0) ||
+      (Array.isArray(target.relatedDreamIds) && target.relatedDreamIds.length > 0) ||
+      (Array.isArray(target.realityChecksUseful) && target.realityChecksUseful.length > 0) ||
+      (target.falseAwakeningDetails &&
+        (target.falseAwakeningDetails.environmentDescription?.trim() ||
+          target.falseAwakeningDetails.triggerOrAnomaly?.trim() ||
+          target.falseAwakeningDetails.realityCheckNotes?.trim()))
+  );
+}
+
 function getInitialDraft(isEditing: boolean, initialId?: string): SavedDraftPayload | null {
   try {
     const key = isEditing && initialId ? getEditDraftKey(initialId) : DRAFT_STORAGE_KEY;
     const savedDraft = localStorage.getItem(key);
     if (savedDraft) {
       const parsed = JSON.parse(savedDraft);
-      if (parsed.title || parsed.narrative) {
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        (parsed.title ||
+          parsed.narrative ||
+          parsed.dreamSignsNotes ||
+          parsed.interpretationNotes ||
+          parsed.falseAwakening ||
+          (parsed.dreamControl !== undefined && parsed.dreamControl > 0) ||
+          (Array.isArray(parsed.scenes) && parsed.scenes.length > 0) ||
+          (Array.isArray(parsed.tags) && parsed.tags.length > 0) ||
+          (Array.isArray(parsed.emotions) && parsed.emotions.length > 0))
+      ) {
         return parsed;
       }
     }
@@ -71,32 +99,32 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   const recoveredEditDraft = isEditing && initialDream ? getInitialDraft(true, initialDream.id) : null;
 
   // Initial values
-  const [title, setTitle] = useState(initialDream?.title || newDraft?.title || '');
-  const [narrative, setNarrative] = useState(initialDream?.narrative || newDraft?.narrative || '');
-  const [date, setDate] = useState(initialDream?.date || newDraft?.date || getTodayDateString());
+  const [title, setTitle] = useState(initialDream?.title ?? newDraft?.title ?? '');
+  const [narrative, setNarrative] = useState(initialDream?.narrative ?? newDraft?.narrative ?? '');
+  const [date, setDate] = useState(initialDream?.date ?? newDraft?.date ?? getTodayDateString());
   const [wakeConfig, setWakeConfig] = useState<WakeTimeConfig>(() =>
     wakeTimeService.getWakeTimeConfig()
   );
   const [wakeUpTime, setWakeUpTime] = useState(() => {
     if (initialDream?.wakeUpTime !== undefined) return initialDream.wakeUpTime;
     if (newDraft?.wakeUpTime !== undefined) return newDraft.wakeUpTime;
-    return wakeTimeService.getWakeTimeConfig().wakeTime;
+    return wakeTimeService.getInitialWakeTime();
   });
-  const [vividness, setVividness] = useState<number>(initialDream?.vividness || newDraft?.vividness || 3);
+  const [vividness, setVividness] = useState<number>(initialDream?.vividness ?? newDraft?.vividness ?? 3);
   const [recallQuality, setRecallQuality] = useState<RecallQuality>(
-    initialDream?.recallQuality || newDraft?.recallQuality || 'detailed'
+    initialDream?.recallQuality ?? newDraft?.recallQuality ?? 'detailed'
   );
   const [lucidity, setLucidity] = useState<LucidityLevel>(
-    initialDream?.lucidity || newDraft?.lucidity || 'non-lucid'
+    initialDream?.lucidity ?? newDraft?.lucidity ?? 'non-lucid'
   );
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>(
-    initialDream?.emotions || newDraft?.emotions || []
+    initialDream?.emotions ?? newDraft?.emotions ?? []
   );
-  const [tags, setTags] = useState<string[]>(initialDream?.tags || newDraft?.tags || []);
+  const [tags, setTags] = useState<string[]>(initialDream?.tags ?? newDraft?.tags ?? []);
   const [tagInput, setTagInput] = useState('');
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [dreamSignsNotes, setDreamSignsNotes] = useState(
-    initialDream?.dreamSignsNotes || newDraft?.dreamSignsNotes || ''
+    initialDream?.dreamSignsNotes ?? newDraft?.dreamSignsNotes ?? ''
   );
 
   // Autosave and Draft Recovery States
@@ -127,7 +155,9 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   };
 
   // Related Dreams Linking
-  const [relatedDreamIds, setRelatedDreamIds] = useState<string[]>(initialDream?.relatedDreamIds || []);
+  const [relatedDreamIds, setRelatedDreamIds] = useState<string[]>(
+    initialDream?.relatedDreamIds ?? newDraft?.relatedDreamIds ?? []
+  );
   const [availableDreamsForLinking, setAvailableDreamsForLinking] = useState<DreamEntry[]>([]);
 
   // Phase 2 Intelligence Fields
@@ -135,52 +165,80 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     if (initialDream?.scenes && initialDream.scenes.length > 0) {
       return initialDream.scenes;
     }
-    const d = newDraft as (Partial<DreamDraft> & { scenes?: DreamScene[] }) | null;
-    return d?.scenes || [];
+    if (newDraft?.scenes && newDraft.scenes.length > 0) {
+      return newDraft.scenes;
+    }
+    return [];
   });
+
+  const [falseAwakening, setFalseAwakening] = useState<boolean>(
+    initialDream?.falseAwakening ?? newDraft?.falseAwakening ?? false
+  );
+  const [believedAwake, setBelievedAwake] = useState<boolean>(
+    initialDream?.falseAwakeningDetails?.believedAwake ??
+      newDraft?.falseAwakeningDetails?.believedAwake ??
+      true
+  );
+  const [faEnvironment, setFaEnvironment] = useState<string>(
+    initialDream?.falseAwakeningDetails?.environmentDescription ??
+      newDraft?.falseAwakeningDetails?.environmentDescription ??
+      ''
+  );
+  const [faTrigger, setFaTrigger] = useState<string>(
+    initialDream?.falseAwakeningDetails?.triggerOrAnomaly ??
+      newDraft?.falseAwakeningDetails?.triggerOrAnomaly ??
+      ''
+  );
+  const [faRealityCheckNotes, setFaRealityCheckNotes] = useState<string>(
+    initialDream?.falseAwakeningDetails?.realityCheckNotes ??
+      newDraft?.falseAwakeningDetails?.realityCheckNotes ??
+      ''
+  );
+
+  const [dreamControl, setDreamControl] = useState<number>(
+    initialDream?.dreamControl ?? newDraft?.dreamControl ?? 0
+  );
+  const [scenesCount, setScenesCount] = useState<number>(() => {
+    if (initialDream?.scenes?.length) return initialDream.scenes.length;
+    if (initialDream?.scenesCount !== undefined) return initialDream.scenesCount;
+    if (newDraft?.scenes?.length) return newDraft.scenes.length;
+    if (newDraft?.scenesCount !== undefined) return newDraft.scenesCount;
+    return 1;
+  });
+  const [interpretationNotes, setInterpretationNotes] = useState<string>(
+    initialDream?.interpretationNotes ?? newDraft?.interpretationNotes ?? ''
+  );
+  const [realityCheckInput, setRealityCheckInput] = useState<string>('');
+  const [usefulRealityChecks, setUsefulRealityChecks] = useState<string[]>(
+    initialDream?.realityChecksUseful ?? newDraft?.realityChecksUseful ?? []
+  );
+
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(
+    hasMeaningfulAdvancedData(initialDream) || (!isEditing && hasMeaningfulAdvancedData(newDraft))
+  );
 
   const isDirty = isEditing
     ? title !== (initialDream?.title || '') ||
       narrative !== (initialDream?.narrative || '') ||
       dreamSignsNotes !== (initialDream?.dreamSignsNotes || '') ||
       vividness !== (initialDream?.vividness || 3) ||
-      lucidity !== (initialDream?.lucidity || 'non-lucid')
-    : Boolean(title.trim() || narrative.trim() || dreamSignsNotes.trim() || scenes.length > 0);
-  const [isAdvancedOpen, setIsAdvancedOpen] = useState(
-    !!(
-      initialDream?.falseAwakening ||
-      (initialDream?.dreamControl && initialDream.dreamControl > 0) ||
-      initialDream?.interpretationNotes ||
-      (initialDream?.scenes && initialDream.scenes.length > 0) ||
-      (initialDream?.relatedDreamIds && initialDream.relatedDreamIds.length > 0) ||
-      ((newDraft as unknown as { scenes?: DreamScene[] })?.scenes && (newDraft as unknown as { scenes?: DreamScene[] }).scenes!.length > 0)
-    )
-  );
-  const [falseAwakening, setFalseAwakening] = useState<boolean>(initialDream?.falseAwakening || false);
-  const [believedAwake, setBelievedAwake] = useState<boolean>(
-    initialDream?.falseAwakeningDetails?.believedAwake ?? true
-  );
-  const [faEnvironment, setFaEnvironment] = useState<string>(
-    initialDream?.falseAwakeningDetails?.environmentDescription || ''
-  );
-  const [faTrigger, setFaTrigger] = useState<string>(
-    initialDream?.falseAwakeningDetails?.triggerOrAnomaly || ''
-  );
-  const [faRealityCheckNotes, setFaRealityCheckNotes] = useState<string>(
-    initialDream?.falseAwakeningDetails?.realityCheckNotes || ''
-  );
-
-  const [dreamControl, setDreamControl] = useState<number>(initialDream?.dreamControl || 0);
-  const [scenesCount, setScenesCount] = useState<number>(
-    initialDream?.scenes?.length || initialDream?.scenesCount || (newDraft as unknown as { scenes?: DreamScene[] })?.scenes?.length || 1
-  );
-  const [interpretationNotes, setInterpretationNotes] = useState<string>(
-    initialDream?.interpretationNotes || ''
-  );
-  const [realityCheckInput, setRealityCheckInput] = useState<string>('');
-  const [usefulRealityChecks, setUsefulRealityChecks] = useState<string[]>(
-    initialDream?.realityChecksUseful || []
-  );
+      lucidity !== (initialDream?.lucidity || 'non-lucid') ||
+      falseAwakening !== (initialDream?.falseAwakening || false) ||
+      dreamControl !== (initialDream?.dreamControl || 0) ||
+      interpretationNotes !== (initialDream?.interpretationNotes || '') ||
+      scenes.length !== (initialDream?.scenes?.length || 0) ||
+      wakeUpTime !== (initialDream?.wakeUpTime || '')
+    : Boolean(
+        title.trim() ||
+          narrative.trim() ||
+          dreamSignsNotes.trim() ||
+          interpretationNotes.trim() ||
+          scenes.length > 0 ||
+          falseAwakening ||
+          dreamControl > 0 ||
+          tags.length > 0 ||
+          selectedEmotions.length > 0
+      );
 
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -223,8 +281,21 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
 
   // Persist draft for unsaved work (both new dreams and edits)
   useEffect(() => {
+    // Prevent clobbering an existing edit draft on initial mount before user restores/discards
+    if (isEditing && hasRestoredEditDraft) {
+      return;
+    }
+
     const hasContent = Boolean(
-      title.trim() || narrative.trim() || dreamSignsNotes.trim() || scenes.length > 0
+      title.trim() ||
+        narrative.trim() ||
+        dreamSignsNotes.trim() ||
+        interpretationNotes.trim() ||
+        scenes.length > 0 ||
+        falseAwakening ||
+        dreamControl > 0 ||
+        tags.length > 0 ||
+        selectedEmotions.length > 0
     );
 
     if (hasContent) {
@@ -240,6 +311,14 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
         tags,
         dreamSignsNotes,
         falseAwakening,
+        falseAwakeningDetails: falseAwakening
+          ? {
+              believedAwake,
+              environmentDescription: faEnvironment.trim() || undefined,
+              triggerOrAnomaly: faTrigger.trim() || undefined,
+              realityCheckNotes: faRealityCheckNotes.trim() || undefined,
+            }
+          : undefined,
         dreamControl,
         scenesCount: scenes.length > 0 ? scenes.length : scenesCount,
         scenes: scenes.length > 0 ? scenes : undefined,
@@ -264,6 +343,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   }, [
     isEditing,
     initialDream,
+    hasRestoredEditDraft,
     title,
     narrative,
     date,
@@ -275,6 +355,10 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     tags,
     dreamSignsNotes,
     falseAwakening,
+    believedAwake,
+    faEnvironment,
+    faTrigger,
+    faRealityCheckNotes,
     dreamControl,
     scenesCount,
     scenes,
@@ -296,7 +380,41 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     if (recoveredEditDraft.tags !== undefined) setTags(recoveredEditDraft.tags);
     if (recoveredEditDraft.dreamSignsNotes !== undefined) setDreamSignsNotes(recoveredEditDraft.dreamSignsNotes);
     if (recoveredEditDraft.scenes !== undefined) setScenes(recoveredEditDraft.scenes);
+    if (recoveredEditDraft.scenesCount !== undefined) setScenesCount(recoveredEditDraft.scenesCount);
     if (recoveredEditDraft.relatedDreamIds !== undefined) setRelatedDreamIds(recoveredEditDraft.relatedDreamIds);
+
+    // Phase 2 Enhanced Intelligence Fields Restoration
+    if (recoveredEditDraft.falseAwakening !== undefined) {
+      setFalseAwakening(recoveredEditDraft.falseAwakening);
+    }
+    if (recoveredEditDraft.falseAwakeningDetails !== undefined) {
+      if (recoveredEditDraft.falseAwakeningDetails.believedAwake !== undefined) {
+        setBelievedAwake(recoveredEditDraft.falseAwakeningDetails.believedAwake);
+      }
+      if (recoveredEditDraft.falseAwakeningDetails.environmentDescription !== undefined) {
+        setFaEnvironment(recoveredEditDraft.falseAwakeningDetails.environmentDescription);
+      }
+      if (recoveredEditDraft.falseAwakeningDetails.triggerOrAnomaly !== undefined) {
+        setFaTrigger(recoveredEditDraft.falseAwakeningDetails.triggerOrAnomaly);
+      }
+      if (recoveredEditDraft.falseAwakeningDetails.realityCheckNotes !== undefined) {
+        setFaRealityCheckNotes(recoveredEditDraft.falseAwakeningDetails.realityCheckNotes);
+      }
+    }
+    if (recoveredEditDraft.dreamControl !== undefined) {
+      setDreamControl(recoveredEditDraft.dreamControl);
+    }
+    if (recoveredEditDraft.interpretationNotes !== undefined) {
+      setInterpretationNotes(recoveredEditDraft.interpretationNotes);
+    }
+    if (recoveredEditDraft.realityChecksUseful !== undefined) {
+      setUsefulRealityChecks(recoveredEditDraft.realityChecksUseful);
+    }
+
+    if (hasMeaningfulAdvancedData(recoveredEditDraft)) {
+      setIsAdvancedOpen(true);
+    }
+
     setHasRestoredEditDraft(false);
   };
 
@@ -437,14 +555,26 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     setHasRestoredDraft(false);
     setTitle('');
     setNarrative('');
-    setDreamSignsNotes('');
-    setTags([]);
-    setSelectedEmotions([]);
+    setDate(getTodayDateString());
+    setWakeUpTime(wakeTimeService.getInitialWakeTime());
     setVividness(3);
+    setRecallQuality('detailed');
     setLucidity('non-lucid');
+    setSelectedEmotions([]);
+    setTags([]);
+    setDreamSignsNotes('');
     setFalseAwakening(false);
+    setBelievedAwake(true);
+    setFaEnvironment('');
+    setFaTrigger('');
+    setFaRealityCheckNotes('');
     setDreamControl(0);
+    setScenesCount(1);
+    setScenes([]);
     setInterpretationNotes('');
+    setUsefulRealityChecks([]);
+    setRelatedDreamIds([]);
+    setIsAdvancedOpen(false);
   };
 
   const wordCount = narrative.trim() ? narrative.trim().split(/\s+/).length : 0;

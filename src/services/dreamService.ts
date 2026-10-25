@@ -194,7 +194,11 @@ export const dreamService = {
 
   async restoreFromTrash(id: string): Promise<DreamEntry | undefined> {
     const dream = trashService.restoreDream(id);
-    if (!dream) return undefined;
+    if (!dream) {
+      const existing = await db.dreams.get(id);
+      if (existing) return existing;
+      return undefined;
+    }
     await db.dreams.put(dream);
     dreamSignService.scanAndDetectSigns().catch(() => {});
     syncService.triggerAutoSync({ immediate: true });

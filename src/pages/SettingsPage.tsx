@@ -26,6 +26,7 @@ import {
   Globe,
 } from 'lucide-react';
 import { SyncSettingsCard } from '../components/sync/SyncSettingsCard';
+import { RecentlyDeletedCard } from '../components/settings/RecentlyDeletedCard';
 
 export const SettingsPage: React.FC = () => {
   const [hasSample, setHasSample] = useState(false);
@@ -660,6 +661,9 @@ export const SettingsPage: React.FC = () => {
           </ul>
         </div>
       </section>
+
+      {/* Section: Recently Deleted Trash Archive */}
+      <RecentlyDeletedCard onFeedback={showFeedback} />
 
       {/* Section 6: Danger Zone (Factory Reset) */}
       <section className="p-6 rounded-xl bg-red-950/20 border border-red-900/40 space-y-4">
