@@ -3,12 +3,14 @@ import { DreamEntry } from '../../types/dream';
 import { LucidityBadge, EmotionBadge, TagBadge } from '../common/Badge';
 import { formatDate, formatTime } from '../../utils/dateUtils';
 import { Star, Clock, Calendar, Eye, Edit, Trash2 } from 'lucide-react';
+import { SearchMatchDetail } from '../../services/searchService';
 
 interface DreamCardProps {
   dream: DreamEntry;
   onView: (dream: DreamEntry) => void;
   onEdit: (dream: DreamEntry) => void;
   onDelete: (dream: DreamEntry) => void;
+  matchDetails?: SearchMatchDetail[];
 }
 
 export const DreamCard: React.FC<DreamCardProps> = ({
@@ -16,6 +18,7 @@ export const DreamCard: React.FC<DreamCardProps> = ({
   onView,
   onEdit,
   onDelete,
+  matchDetails,
 }) => {
   const isLucid = dream.lucidity === 'lucid';
 
@@ -77,9 +80,17 @@ export const DreamCard: React.FC<DreamCardProps> = ({
 
         {/* Dream sign indicator if exists */}
         {dream.dreamSignsNotes && (
-          <div className="mb-3 flex items-center gap-1.5 text-[11px] text-slate-300 bg-slate-900 px-2 py-0.5 rounded border border-slate-800 line-clamp-1">
+          <div className="mb-2 flex items-center gap-1.5 text-[11px] text-slate-300 bg-slate-900 px-2 py-0.5 rounded border border-slate-800 line-clamp-1">
             <span className="text-blue-400 font-medium">Sign:</span>
             <span className="truncate">{dream.dreamSignsNotes}</span>
+          </div>
+        )}
+
+        {/* Deep Content Search Match Reason if searching */}
+        {matchDetails && matchDetails.length > 0 && (
+          <div className="mb-2.5 flex items-center gap-1.5 text-[10px] text-blue-300 bg-blue-950/40 px-2 py-0.5 rounded border border-blue-900/50 line-clamp-1 font-mono">
+            <span className="text-blue-400 font-semibold shrink-0">Match:</span>
+            <span className="truncate">{matchDetails.map((m) => m.label).join(' · ')}</span>
           </div>
         )}
       </div>
@@ -109,27 +120,27 @@ export const DreamCard: React.FC<DreamCardProps> = ({
           <button
             type="button"
             onClick={() => onView(dream)}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
-            title="Read entry"
-            aria-label="Read dream entry"
+            className="p-1.5 text-slate-400 hover:text-slate-100 rounded-md hover:bg-slate-800 transition-colors"
+            title="Inspect Dream"
+            aria-label={`View details of ${dream.title}`}
           >
             <Eye className="w-3.5 h-3.5" />
           </button>
           <button
             type="button"
             onClick={() => onEdit(dream)}
-            className="p-1 rounded-md text-slate-400 hover:text-blue-300 hover:bg-slate-800 transition-colors cursor-pointer"
-            title="Edit entry"
-            aria-label="Edit dream entry"
+            className="p-1.5 text-slate-400 hover:text-blue-400 rounded-md hover:bg-slate-800 transition-colors"
+            title="Edit Dream"
+            aria-label={`Edit ${dream.title}`}
           >
             <Edit className="w-3.5 h-3.5" />
           </button>
           <button
             type="button"
             onClick={() => onDelete(dream)}
-            className="p-1 rounded-md text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors cursor-pointer"
-            title="Delete entry"
-            aria-label="Delete dream entry"
+            className="p-1.5 text-slate-400 hover:text-red-400 rounded-md hover:bg-slate-800 transition-colors"
+            title="Delete Dream"
+            aria-label={`Delete ${dream.title}`}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { dreamService } from '../services/dreamService';
 import { DreamEntry, LucidityLevel, PREDEFINED_EMOTIONS } from '../types/dream';
+import { searchDreams, SearchMatchDetail } from '../services/searchService';
 import { DreamCard } from '../components/journal/DreamCard';
 import { DreamDetailModal } from '../components/journal/DreamDetailModal';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
@@ -79,23 +80,19 @@ export const Journal: React.FC<JournalProps> = ({
     }
   };
 
-  // Filter and sort dreams
-  const filteredDreams = useMemo(() => {
-    return dreams
-      .filter((dream) => {
-        // Search filter
-        if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase();
-          const matchesTitle = dream.title.toLowerCase().includes(q);
-          const matchesNarrative = dream.narrative.toLowerCase().includes(q);
-          const matchesDreamSigns = dream.dreamSignsNotes?.toLowerCase().includes(q) || false;
-          const matchesTags = dream.tags?.some((t) => t.toLowerCase().includes(q)) || false;
-          const matchesEmotions = dream.emotions?.some((e) => e.toLowerCase().includes(q)) || false;
-          if (!matchesTitle && !matchesNarrative && !matchesDreamSigns && !matchesTags && !matchesEmotions) {
-            return false;
-          }
-        }
+  // Filter and rank dreams using Deep Content Search & Semantic matching
+  const filteredResults = useMemo(() => {
+    const isSearching = searchQuery.trim().length > 0;
+    let baseList: { dream: DreamEntry; score: number; matchDetails?: SearchMatchDetail[] }[];
 
+    if (isSearching) {
+      baseList = searchDreams(dreams, searchQuery);
+    } else {
+      baseList = dreams.map((d) => ({ dream: d, score: 0 }));
+    }
+
+    return baseList
+      .filter(({ dream }) => {
         // Lucidity filter
         if (lucidityFilter !== 'all' && dream.lucidity !== lucidityFilter) {
           return false;
@@ -114,7 +111,12 @@ export const Journal: React.FC<JournalProps> = ({
         return true;
       })
       .sort((a, b) => {
-        const compare = a.date.localeCompare(b.date) || a.createdAt - b.createdAt;
+        if (isSearching) {
+          if (b.score !== a.score) {
+            return b.score - a.score;
+          }
+        }
+        const compare = a.dream.date.localeCompare(b.dream.date) || a.dream.createdAt - b.dream.createdAt;
         return sortOrder === 'newest' ? -compare : compare;
       });
   }, [dreams, searchQuery, lucidityFilter, selectedEmotion, selectedTag, sortOrder]);
@@ -254,17 +256,30 @@ export const Journal: React.FC<JournalProps> = ({
         </div>
       </div>
 
+      {/* Search results status indicator */}
+      {searchQuery.trim() && !isLoading && (
+        <div className="flex items-center justify-between text-xs text-slate-400 px-1 font-mono">
+          <span>
+            Found {filteredResults.length} {filteredResults.length === 1 ? 'dream' : 'dreams'} matching "{searchQuery}"
+          </span>
+          <span className="text-[11px] text-slate-500 hidden sm:inline">
+            Ranked by relevance (deep content & semantic concept match)
+          </span>
+        </div>
+      )}
+
       {/* Dreams List / Grid */}
       {isLoading ? (
         <div className="flex items-center justify-center min-h-[30vh]">
           <div className="w-8 h-8 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
         </div>
-      ) : filteredDreams.length > 0 ? (
+      ) : filteredResults.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredDreams.map((dream) => (
+          {filteredResults.map(({ dream, matchDetails }) => (
             <DreamCard
               key={dream.id}
               dream={dream}
+              matchDetails={matchDetails}
               onView={setSelectedDreamForView}
               onEdit={onEditDream}
               onDelete={setDreamToDelete}
@@ -274,8 +289,12 @@ export const Journal: React.FC<JournalProps> = ({
       ) : hasActiveFilters ? (
         <EmptyState
           icon={<Search className="w-7 h-7" />}
-          title="No Matching Dreams Found"
-          description="None of your recorded dreams match the selected search query and filter criteria."
+          title={searchQuery.trim() ? `No Dreams Match "${searchQuery}"` : "No Matching Dreams Found"}
+          description={
+            searchQuery.trim()
+              ? "No dreams found matching your search. Try searching for related scenes, characters, interpretations, anomalies, or emotions."
+              : "None of your recorded dreams match the selected filter criteria."
+          }
           actionText="Reset Filters"
           onAction={resetFilters}
         />
