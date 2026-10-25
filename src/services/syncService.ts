@@ -234,7 +234,10 @@ export const syncService = {
             d.name.toLowerCase() === remoteName.toLowerCase() ||
             d.id.toLowerCase().includes(remoteName.toLowerCase().replace(/\s+/g, '_'))
         );
-        if (!alreadyInList) {
+        const isRevoked = (creds.revokedDeviceIds || []).some((id) =>
+          id.toLowerCase().includes(remoteName.toLowerCase().replace(/\s+/g, '_'))
+        );
+        if (!alreadyInList && !isRevoked) {
           const remoteType: DeviceType = /ipad|tablet/i.test(remoteName)
             ? 'tablet'
             : /phone|mobile/i.test(remoteName)
@@ -248,6 +251,17 @@ export const syncService = {
             lastSyncAt: creds.lastRemoteUpdate || creds.lastSyncedAt || creds.createdAt || new Date().toISOString(),
             status: 'active',
           });
+          dirty = true;
+        }
+      }
+
+      // Purge any revoked devices from the devices list so they completely disappear
+      if (Array.isArray(creds.devices) && creds.revokedDeviceIds && creds.revokedDeviceIds.length > 0) {
+        const initialCount = creds.devices.length;
+        creds.devices = creds.devices.filter(
+          (d) => !creds.revokedDeviceIds?.includes(d.id) && d.status !== 'revoked'
+        );
+        if (creds.devices.length !== initialCount) {
           dirty = true;
         }
       }
@@ -957,17 +971,10 @@ export const syncService = {
       throw new Error('Unauthorized: This device has been revoked and cannot modify vault permissions.');
     }
 
-    const nowStr = new Date().toISOString();
-    const updatedDevices: SyncedDevice[] = (creds.devices || []).map((dev) => {
-      if (dev.id === targetDeviceId) {
-        return {
-          ...dev,
-          status: 'revoked' as const,
-          revokedAt: nowStr,
-        };
-      }
-      return dev;
-    });
+    // Remove the revoked device completely from the active devices list so it disappears
+    const updatedDevices: SyncedDevice[] = (creds.devices || []).filter(
+      (dev) => dev.id !== targetDeviceId
+    );
 
     const updatedRevokedIds = Array.from(
       new Set([...(creds.revokedDeviceIds || []), targetDeviceId])

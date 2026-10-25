@@ -277,9 +277,11 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
 
   const devices: SyncedDevice[] = React.useMemo(() => {
     if (credentials?.devices && credentials.devices.length > 0) {
-      return credentials.devices;
+      return credentials.devices.filter(
+        (d) => d.status !== 'revoked' && !credentials.revokedDeviceIds?.includes(d.id)
+      );
     }
-    if (credentials?.deviceId) {
+    if (credentials?.deviceId && !credentials.revokedDeviceIds?.includes(credentials.deviceId)) {
       const fallbackDate = credentials.createdAt || '2026-01-01T00:00:00.000Z';
       return [
         {
@@ -503,7 +505,6 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
             <div className="space-y-2">
               {devices.map((device) => {
                 const isCurrentDevice = device.id === credentials.deviceId;
-                const isRevoked = device.status === 'revoked';
 
                 return (
                   <div
@@ -511,8 +512,6 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                     className={`p-3 rounded-lg border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors ${
                       isCurrentDevice
                         ? 'bg-blue-950/20 border-blue-900/50'
-                        : isRevoked
-                        ? 'bg-slate-950/40 border-slate-800/50 opacity-60'
                         : 'bg-slate-950/70 border-slate-800/80'
                     }`}
                   >
@@ -521,8 +520,6 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                         className={`p-2 rounded-lg border shrink-0 ${
                           isCurrentDevice
                             ? 'bg-blue-900/30 border-blue-700/40 text-blue-400'
-                            : isRevoked
-                            ? 'bg-slate-900 border-slate-800 text-slate-500'
                             : 'bg-slate-900 border-slate-800 text-slate-300'
                         }`}
                       >
@@ -540,20 +537,15 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                           <span className="text-xs font-medium text-slate-100">
                             {device.name}
                           </span>
-                          {isCurrentDevice && (
+                          {isCurrentDevice ? (
                             <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-950 text-blue-300 border border-blue-800/60">
                               This Device
                             </span>
-                          )}
-                          {isRevoked ? (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-950/60 text-red-300 border border-red-800/50">
-                              Revoked
-                            </span>
-                          ) : !isCurrentDevice ? (
+                          ) : (
                             <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-950/60 text-emerald-300 border border-emerald-800/50">
                               Active
                             </span>
-                          ) : null}
+                          )}
                         </div>
 
                         <div className="flex items-center gap-3 text-[11px] text-slate-400 flex-wrap">
@@ -564,14 +556,6 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                           <span>
                             Last synced: {formatSyncRelativeTime(device.lastSyncAt)}
                           </span>
-                          {isRevoked && device.revokedAt && (
-                            <>
-                              <span>•</span>
-                              <span className="text-red-400">
-                                Revoked on {new Date(device.revokedAt).toLocaleDateString()}
-                              </span>
-                            </>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -581,10 +565,6 @@ export const SyncSettingsCard: React.FC<SyncSettingsCardProps> = ({ onFeedback }
                       {isCurrentDevice ? (
                         <span className="text-[11px] text-slate-500 italic">
                           Current device (use Disconnect below)
-                        </span>
-                      ) : isRevoked ? (
-                        <span className="text-[11px] text-red-400/80 font-medium">
-                          Access Revoked
                         </span>
                       ) : (
                         <Button

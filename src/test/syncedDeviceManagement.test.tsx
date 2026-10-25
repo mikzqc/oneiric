@@ -329,9 +329,10 @@ describe('Synced Device Management & Credential Security Warnings', () => {
       const updatedCreds = syncService.getCredentials();
       expect(updatedCreds?.revokedDeviceIds).toContain(secondaryDeviceId);
 
+      // Device is revoked and completely disappears from the devices list
       const revokedDevice = updatedCreds?.devices?.find((d) => d.id === secondaryDeviceId);
-      expect(revokedDevice?.status).toBe('revoked');
-      expect(revokedDevice?.revokedAt).toBeTruthy();
+      expect(revokedDevice).toBeUndefined();
+      expect(updatedCreds?.devices?.length).toBe(1);
 
       // Verify cloud envelope also received the revocation list
       expect(cloudStoredEnvelope.revokedDeviceIds).toContain(secondaryDeviceId);
