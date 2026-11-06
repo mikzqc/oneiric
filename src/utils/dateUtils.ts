@@ -1,3 +1,5 @@
+import { preferencesService } from '../services/preferencesService';
+
 /**
  * Returns current date in local YYYY-MM-DD format
  */
@@ -22,6 +24,28 @@ export function parseLocalDate(dateStr: string): Date {
 export function formatDate(dateStr: string): string {
   if (!dateStr) return '';
   const date = parseLocalDate(dateStr);
+  const prefs = preferencesService.getPreferences();
+
+  if (prefs.dateFormat === 'iso') {
+    return dateStr;
+  }
+
+  if (prefs.dateFormat === 'european') {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = date.toLocaleDateString(undefined, { month: 'short' });
+    const year = date.getFullYear();
+    return `${day} ${month} ${year}`;
+  }
+
+  if (prefs.dateFormat === 'relative') {
+    const today = parseLocalDate(getTodayDateString());
+    const diffTime = today.getTime() - date.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays > 1 && diffDays <= 6) return `${diffDays} days ago`;
+  }
+
   return date.toLocaleDateString(undefined, {
     month: 'short',
     day: 'numeric',
@@ -35,6 +59,20 @@ export function formatDate(dateStr: string): string {
 export function formatFullDate(dateStr: string): string {
   if (!dateStr) return '';
   const date = parseLocalDate(dateStr);
+  const prefs = preferencesService.getPreferences();
+
+  if (prefs.dateFormat === 'iso') {
+    return dateStr;
+  }
+
+  if (prefs.dateFormat === 'european') {
+    const weekday = date.toLocaleDateString(undefined, { weekday: 'short' });
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = date.toLocaleDateString(undefined, { month: 'short' });
+    const year = date.getFullYear();
+    return `${weekday}, ${day} ${month} ${year}`;
+  }
+
   return date.toLocaleDateString(undefined, {
     weekday: 'short',
     month: 'short',
@@ -44,12 +82,18 @@ export function formatFullDate(dateStr: string): string {
 }
 
 /**
- * Formats timestamp to readable time string, e.g. "07:30 AM"
+ * Formats timestamp to readable time string, e.g. "07:30 AM" or "07:30"
  */
 export function formatTime(timeStr?: string): string {
   if (!timeStr) return '';
   const [hours, minutes] = timeStr.split(':').map(Number);
   if (isNaN(hours) || isNaN(minutes)) return timeStr;
+
+  const prefs = preferencesService.getPreferences();
+  if (prefs.timeFormat === '24h') {
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+  }
+
   const ampm = hours >= 12 ? 'PM' : 'AM';
   const displayHours = hours % 12 || 12;
   return `${displayHours}:${String(minutes).padStart(2, '0')} ${ampm}`;

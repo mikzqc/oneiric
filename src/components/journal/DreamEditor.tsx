@@ -11,6 +11,7 @@ import {
 } from '../../types/dream';
 import { dreamService } from '../../services/dreamService';
 import { celebrationService } from '../../services/celebrationService';
+import { preferencesService } from '../../services/preferencesService';
 import { wakeTimeService, WakeTimeConfig, WAKE_TIME_CHANGED_EVENT } from '../../services/wakeTimeService';
 import {
   isSpeechRecognitionSupported,
@@ -131,12 +132,14 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     if (newDraft?.wakeUpTime !== undefined) return newDraft.wakeUpTime;
     return wakeTimeService.getInitialWakeTime();
   });
+  const userPrefs = preferencesService.getPreferences();
+
   const [vividness, setVividness] = useState<number>(initialDream?.vividness ?? newDraft?.vividness ?? 3);
   const [recallQuality, setRecallQuality] = useState<RecallQuality>(
-    initialDream?.recallQuality ?? newDraft?.recallQuality ?? 'detailed'
+    initialDream?.recallQuality ?? newDraft?.recallQuality ?? userPrefs.defaultRecallQuality ?? 'detailed'
   );
   const [lucidity, setLucidity] = useState<LucidityLevel>(
-    initialDream?.lucidity ?? newDraft?.lucidity ?? 'non-lucid'
+    initialDream?.lucidity ?? newDraft?.lucidity ?? preferencesService.getEffectiveNewDreamLucidity()
   );
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>(
     initialDream?.emotions ?? newDraft?.emotions ?? []
@@ -150,7 +153,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
 
   // Induction Technique Used
   const [techniqueUsed, setTechniqueUsed] = useState<string>(
-    initialDream?.techniqueUsed ?? newDraft?.techniqueUsed ?? 'none'
+    initialDream?.techniqueUsed ?? newDraft?.techniqueUsed ?? preferencesService.getEffectiveNewDreamTechnique()
   );
   const [customTechniqueUsed, setCustomTechniqueUsed] = useState<string>(
     initialDream?.customTechniqueUsed ?? newDraft?.customTechniqueUsed ?? ''
@@ -243,7 +246,9 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   );
 
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(
-    hasMeaningfulAdvancedData(initialDream) || (!isEditing && hasMeaningfulAdvancedData(newDraft))
+    hasMeaningfulAdvancedData(initialDream) ||
+      (!isEditing && hasMeaningfulAdvancedData(newDraft)) ||
+      (!isEditing && userPrefs.autoExpandAdvancedFields)
   );
 
   const isDirty = isEditing
@@ -671,6 +676,9 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
         }
       }
 
+      preferencesService.recordLastUsedLucidity(draftData.lucidity);
+      preferencesService.recordLastUsedTechnique(draftData.techniqueUsed);
+
       onSaved(savedEntry);
     } catch (err: unknown) {
       setValidationError(err instanceof Error ? err.message : 'Failed to save dream.');
@@ -789,9 +797,11 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
             <span className="text-slate-500 text-[11px]">Local autosave & crash recovery active</span>
           )}
         </div>
-        <div className="text-[11px] text-slate-400 font-mono">
-          {wordCount} words · {charCount} chars · ~{readingTime} min read
-        </div>
+        {userPrefs.showWordCounter && (
+          <div className="text-[11px] text-slate-400 font-mono">
+            {wordCount} words · {charCount} chars · ~{readingTime} min read
+          </div>
+        )}
       </div>
 
       {/* Validation Error Banner */}
@@ -1170,7 +1180,8 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
           onKeyUp={handleNarrativeSelect}
           placeholder="Describe your dream in vivid detail. What did you see, hear, feel, and experience? What led up to your awareness?"
           rows={8}
-          className="w-full px-3.5 py-2.5 rounded-lg bg-slate-900/90 border border-slate-800 text-slate-100 placeholder-slate-500 text-sm leading-relaxed focus:outline-none focus:border-blue-500 transition-colors font-sans"
+          style={{ fontFamily: 'var(--font-narrative, inherit)', fontSize: 'var(--font-size-narrative, inherit)' }}
+          className="w-full px-3.5 py-2.5 rounded-lg bg-slate-900/90 border border-slate-800 text-slate-100 placeholder-slate-500 leading-relaxed focus:outline-none focus:border-blue-500 transition-colors"
         />
       </div>
 

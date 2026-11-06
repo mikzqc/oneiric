@@ -5,9 +5,11 @@ import App from './App'
 import { backupService } from './services/backupService'
 import { wakeTimeService } from './services/wakeTimeService'
 import { themeService } from './services/themeService'
+import { preferencesService } from './services/preferencesService'
 
-// Initialize user's selected theme immediately
+// Initialize user's selected theme and preferences immediately
 themeService.initTheme()
+preferencesService.init()
 
 // Clean up any ephemeral sample exploration data on startup / page refresh
 backupService.cleanupSamplePreviewOnStartup().finally(() => {

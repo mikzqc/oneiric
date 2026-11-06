@@ -28,6 +28,8 @@ import {
 import { SyncSettingsCard } from '../components/sync/SyncSettingsCard';
 import { RecentlyDeletedCard } from '../components/settings/RecentlyDeletedCard';
 import { ThemeSelectorCard } from '../components/settings/ThemeSelectorCard';
+import { DisplayPreferencesCard } from '../components/settings/DisplayPreferencesCard';
+import { JournalPreferencesCard } from '../components/settings/JournalPreferencesCard';
 
 export const SettingsPage: React.FC = () => {
   const [hasSample, setHasSample] = useState(false);
@@ -361,6 +363,12 @@ export const SettingsPage: React.FC = () => {
 
       {/* Theme Settings Card */}
       <ThemeSelectorCard onFeedback={showFeedback} />
+
+      {/* Journaling & Entry Defaults */}
+      <JournalPreferencesCard onFeedback={showFeedback} />
+
+      {/* Typography, Reading & Layout Preferences */}
+      <DisplayPreferencesCard onFeedback={showFeedback} />
 
       {/* Section 1: Backup & Restoration */}
       <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">

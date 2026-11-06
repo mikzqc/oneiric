@@ -4,6 +4,7 @@ import { LucidityBadge, EmotionBadge, TagBadge } from '../common/Badge';
 import { formatDate, formatTime } from '../../utils/dateUtils';
 import { Star, Clock, Calendar, Eye, Edit, Trash2, Brain } from 'lucide-react';
 import { SearchMatchDetail } from '../../services/searchService';
+import { preferencesService } from '../../services/preferencesService';
 
 interface DreamCardProps {
   dream: DreamEntry;
@@ -21,11 +22,12 @@ export const DreamCard: React.FC<DreamCardProps> = ({
   matchDetails,
 }) => {
   const isLucid = dream.lucidity === 'lucid';
+  const density = preferencesService.getPreferences().cardDensity;
 
   return (
     <article
       onClick={() => onView(dream)}
-      className={`group relative p-4 rounded-xl border transition-colors cursor-pointer flex flex-col justify-between ${
+      className={`group relative ${density === 'compact' ? 'p-3' : 'p-4'} rounded-xl border transition-colors cursor-pointer flex flex-col justify-between ${
         isLucid
           ? 'bg-[#0f172a]/80 hover:bg-[#131d36] border-slate-800 hover:border-slate-700 border-l-2 border-l-sky-500'
           : 'bg-[#0f172a]/60 hover:bg-[#121a30] border-slate-800/80 hover:border-slate-700'
@@ -89,7 +91,16 @@ export const DreamCard: React.FC<DreamCardProps> = ({
         </h3>
 
         {/* Narrative Excerpt */}
-        <p className="text-xs sm:text-sm text-slate-300 line-clamp-3 leading-relaxed mb-3 font-normal">
+        <p
+          className={`text-xs sm:text-sm text-slate-300 leading-relaxed mb-3 font-normal ${
+            density === 'compact'
+              ? 'line-clamp-1 mb-2'
+              : density === 'expanded'
+              ? 'line-clamp-none'
+              : 'line-clamp-3'
+          }`}
+          style={{ fontFamily: 'var(--font-narrative, inherit)' }}
+        >
           {dream.narrative}
         </p>
 

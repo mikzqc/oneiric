@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { THEMES_CATALOG, ThemeId } from '../types/theme';
+import { THEMES_CATALOG } from '../types/theme';
 import { themeService, THEME_STORAGE_KEY, THEME_CHANGED_EVENT } from '../services/themeService';
 import { ThemeSelectorCard } from '../components/settings/ThemeSelectorCard';
 

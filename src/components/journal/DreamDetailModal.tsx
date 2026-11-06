@@ -186,7 +186,13 @@ export const DreamDetailModal: React.FC<DreamDetailModalProps> = ({
         )}
 
         {/* Narrative (Clean long-text typography) */}
-        <div className="text-slate-200 text-sm sm:text-base leading-relaxed space-y-4 whitespace-pre-wrap font-sans bg-slate-900/40 p-4 sm:p-5 rounded-lg border border-slate-800">
+        <div
+          className="text-slate-200 leading-relaxed space-y-4 whitespace-pre-wrap bg-slate-900/40 p-4 sm:p-5 rounded-lg border border-slate-800"
+          style={{
+            fontFamily: 'var(--font-narrative, inherit)',
+            fontSize: 'var(--font-size-narrative, inherit)',
+          }}
+        >
           {dream.narrative}
         </div>
 
