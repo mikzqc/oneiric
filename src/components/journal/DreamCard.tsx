@@ -1,8 +1,8 @@
 import React from 'react';
-import { DreamEntry } from '../../types/dream';
+import { DreamEntry, formatTechniqueShortName } from '../../types/dream';
 import { LucidityBadge, EmotionBadge, TagBadge } from '../common/Badge';
 import { formatDate, formatTime } from '../../utils/dateUtils';
-import { Star, Clock, Calendar, Eye, Edit, Trash2 } from 'lucide-react';
+import { Star, Clock, Calendar, Eye, Edit, Trash2, Brain } from 'lucide-react';
 import { SearchMatchDetail } from '../../services/searchService';
 
 interface DreamCardProps {
@@ -39,6 +39,21 @@ export const DreamCard: React.FC<DreamCardProps> = ({
             {dream.falseAwakening && (
               <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-950/60 text-blue-300 border border-blue-800/50">
                 FA
+              </span>
+            )}
+            {dream.techniqueUsed && dream.techniqueUsed !== 'none' && (
+              <span
+                className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-indigo-950/70 text-indigo-300 border border-indigo-800/60 flex items-center gap-1"
+                title={`Induction technique: ${
+                  dream.techniqueUsed === 'Other' && dream.customTechniqueUsed
+                    ? dream.customTechniqueUsed
+                    : dream.techniqueUsed
+                }`}
+              >
+                <Brain className="w-2.5 h-2.5 text-indigo-400 shrink-0" />
+                <span className="truncate max-w-[100px]">
+                  {formatTechniqueShortName(dream.techniqueUsed, dream.customTechniqueUsed)}
+                </span>
               </span>
             )}
             <div className="flex items-center gap-1 text-xs text-slate-400">

@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { DreamDraft, DreamEntry, DreamScene, PREDEFINED_EMOTIONS, LucidityLevel, RecallQuality } from '../../types/dream';
+import {
+  DreamDraft,
+  DreamEntry,
+  DreamScene,
+  PREDEFINED_EMOTIONS,
+  LucidityLevel,
+  RecallQuality,
+  INDUCTION_TECHNIQUE_OPTIONS,
+  formatTechniqueDisplayName,
+} from '../../types/dream';
 import { dreamService } from '../../services/dreamService';
 import { celebrationService } from '../../services/celebrationService';
 import { wakeTimeService, WakeTimeConfig, WAKE_TIME_CHANGED_EVENT } from '../../services/wakeTimeService';
@@ -56,6 +65,8 @@ function hasMeaningfulAdvancedData(target?: Partial<DreamDraft> | null): boolean
   return Boolean(
     target.falseAwakening ||
       (target.dreamControl !== undefined && target.dreamControl > 0) ||
+      (target.techniqueUsed && target.techniqueUsed !== 'none') ||
+      (target.customTechniqueUsed && target.customTechniqueUsed.trim().length > 0) ||
       (target.interpretationNotes && target.interpretationNotes.trim().length > 0) ||
       (Array.isArray(target.scenes) && target.scenes.length > 0) ||
       (Array.isArray(target.relatedDreamIds) && target.relatedDreamIds.length > 0) ||
@@ -81,6 +92,8 @@ function getInitialDraft(isEditing: boolean, initialId?: string): SavedDraftPayl
           parsed.dreamSignsNotes ||
           parsed.interpretationNotes ||
           parsed.falseAwakening ||
+          (parsed.techniqueUsed && parsed.techniqueUsed !== 'none') ||
+          parsed.customTechniqueUsed ||
           (parsed.dreamControl !== undefined && parsed.dreamControl > 0) ||
           (Array.isArray(parsed.scenes) && parsed.scenes.length > 0) ||
           (Array.isArray(parsed.tags) && parsed.tags.length > 0) ||
@@ -133,6 +146,14 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [dreamSignsNotes, setDreamSignsNotes] = useState(
     initialDream?.dreamSignsNotes ?? newDraft?.dreamSignsNotes ?? ''
+  );
+
+  // Induction Technique Used
+  const [techniqueUsed, setTechniqueUsed] = useState<string>(
+    initialDream?.techniqueUsed ?? newDraft?.techniqueUsed ?? 'none'
+  );
+  const [customTechniqueUsed, setCustomTechniqueUsed] = useState<string>(
+    initialDream?.customTechniqueUsed ?? newDraft?.customTechniqueUsed ?? ''
   );
 
   // Autosave and Draft Recovery States
@@ -229,6 +250,8 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     ? title !== (initialDream?.title || '') ||
       narrative !== (initialDream?.narrative || '') ||
       dreamSignsNotes !== (initialDream?.dreamSignsNotes || '') ||
+      techniqueUsed !== (initialDream?.techniqueUsed || 'none') ||
+      customTechniqueUsed !== (initialDream?.customTechniqueUsed || '') ||
       vividness !== (initialDream?.vividness || 3) ||
       lucidity !== (initialDream?.lucidity || 'non-lucid') ||
       falseAwakening !== (initialDream?.falseAwakening || false) ||
@@ -241,6 +264,8 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
           narrative.trim() ||
           dreamSignsNotes.trim() ||
           interpretationNotes.trim() ||
+          techniqueUsed !== 'none' ||
+          customTechniqueUsed.trim() ||
           scenes.length > 0 ||
           falseAwakening ||
           dreamControl > 0 ||
@@ -379,6 +404,8 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
         narrative.trim() ||
         dreamSignsNotes.trim() ||
         interpretationNotes.trim() ||
+        (techniqueUsed && techniqueUsed !== 'none') ||
+        customTechniqueUsed.trim() ||
         scenes.length > 0 ||
         falseAwakening ||
         dreamControl > 0 ||
@@ -398,6 +425,11 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
         emotions: selectedEmotions,
         tags,
         dreamSignsNotes,
+        techniqueUsed,
+        customTechniqueUsed:
+          techniqueUsed === 'Other' && customTechniqueUsed.trim()
+            ? customTechniqueUsed.trim()
+            : undefined,
         falseAwakening,
         falseAwakeningDetails: falseAwakening
           ? {
@@ -442,6 +474,8 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     selectedEmotions,
     tags,
     dreamSignsNotes,
+    techniqueUsed,
+    customTechniqueUsed,
     falseAwakening,
     believedAwake,
     faEnvironment,
@@ -467,6 +501,8 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     if (recoveredEditDraft.emotions !== undefined) setSelectedEmotions(recoveredEditDraft.emotions);
     if (recoveredEditDraft.tags !== undefined) setTags(recoveredEditDraft.tags);
     if (recoveredEditDraft.dreamSignsNotes !== undefined) setDreamSignsNotes(recoveredEditDraft.dreamSignsNotes);
+    if (recoveredEditDraft.techniqueUsed !== undefined) setTechniqueUsed(recoveredEditDraft.techniqueUsed);
+    if (recoveredEditDraft.customTechniqueUsed !== undefined) setCustomTechniqueUsed(recoveredEditDraft.customTechniqueUsed);
     if (recoveredEditDraft.scenes !== undefined) setScenes(recoveredEditDraft.scenes);
     if (recoveredEditDraft.scenesCount !== undefined) setScenesCount(recoveredEditDraft.scenesCount);
     if (recoveredEditDraft.relatedDreamIds !== undefined) setRelatedDreamIds(recoveredEditDraft.relatedDreamIds);
@@ -580,6 +616,11 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
         emotions: selectedEmotions,
         tags,
         dreamSignsNotes: dreamSignsNotes.trim() || undefined,
+        techniqueUsed: techniqueUsed !== 'none' ? techniqueUsed : undefined,
+        customTechniqueUsed:
+          techniqueUsed === 'Other' && customTechniqueUsed.trim()
+            ? customTechniqueUsed.trim()
+            : undefined,
 
         // Phase 2 Fields
         scenesCount: scenes.length > 0 ? scenes.length : Math.max(1, scenesCount),
@@ -901,6 +942,91 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
             <option value="crystal">Crystal clear / Complete</option>
           </select>
         </div>
+      </div>
+
+      {/* Induction Technique Used */}
+      <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-1.5">
+          <label htmlFor="dream-technique-select" className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+            <Brain className="w-3.5 h-3.5 text-blue-400" />
+            <span>Induction Technique Used</span>
+          </label>
+          <span className="text-[11px] text-slate-400 font-mono">
+            {techniqueUsed === 'none'
+              ? 'No protocol used (Natural)'
+              : techniqueUsed === 'Other'
+              ? customTechniqueUsed.trim() || 'Custom technique'
+              : formatTechniqueDisplayName(techniqueUsed)}
+          </span>
+        </div>
+
+        {/* Quick-select pill buttons */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {INDUCTION_TECHNIQUE_OPTIONS.map((opt) => {
+            const isSelected = techniqueUsed === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  setTechniqueUsed(opt.value);
+                  if (opt.value !== 'Other') {
+                    setCustomTechniqueUsed('');
+                  }
+                }}
+                title={opt.description || opt.label}
+                className={`px-2.5 py-1 text-xs rounded-lg border transition-all cursor-pointer font-medium ${
+                  isSelected
+                    ? 'bg-blue-950 border-blue-500 text-blue-200 shadow-sm shadow-blue-950/50'
+                    : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                }`}
+              >
+                {opt.shortLabel}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Detailed Dropdown Menu for quick reference / alternative selection */}
+        <div className="pt-0.5">
+          <select
+            id="dream-technique-select"
+            aria-label="Select Induction Technique"
+            value={techniqueUsed}
+            onChange={(e) => {
+              const val = e.target.value;
+              setTechniqueUsed(val);
+              if (val !== 'Other') {
+                setCustomTechniqueUsed('');
+              }
+            }}
+            className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800/80 text-slate-300 text-xs focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+          >
+            {INDUCTION_TECHNIQUE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label} — {opt.description}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Custom Technique Name Input when 'Other' is active */}
+        {techniqueUsed === 'Other' && (
+          <div className="pt-1.5 space-y-1 animate-fadeIn">
+            <label htmlFor="custom-technique-name" className="block text-[11px] font-medium text-blue-300">
+              Custom Technique Name <span className="text-blue-400">*</span>
+            </label>
+            <input
+              id="custom-technique-name"
+              type="text"
+              value={customTechniqueUsed}
+              onChange={(e) => setCustomTechniqueUsed(e.target.value)}
+              placeholder="e.g. Dream Yoga, Galantamine, Lucid Mask, Binaural Beats, Self-Hypnosis..."
+              className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-blue-900/60 text-slate-100 placeholder-slate-500 text-xs focus:outline-none focus:border-blue-500 transition-colors"
+              autoFocus
+            />
+          </div>
+        )}
       </div>
 
       {/* Vividness Slider (1 - 5) */}

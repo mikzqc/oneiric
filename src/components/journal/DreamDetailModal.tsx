@@ -1,5 +1,5 @@
 import React from 'react';
-import { DreamEntry } from '../../types/dream';
+import { DreamEntry, formatTechniqueDisplayName } from '../../types/dream';
 import { Modal } from '../common/Modal';
 import { LucidityBadge, EmotionBadge, TagBadge } from '../common/Badge';
 import { formatFullDate, formatTime } from '../../utils/dateUtils';
@@ -132,6 +132,16 @@ export const DreamDetailModal: React.FC<DreamDetailModalProps> = ({
               <div className="flex items-center gap-1 text-slate-400">
                 <Layers className="w-3.5 h-3.5 text-slate-500" />
                 <span>{dream.scenesCount} scenes</span>
+              </div>
+            )}
+
+            {dream.techniqueUsed && dream.techniqueUsed !== 'none' && (
+              <div className="flex items-center gap-1.5 text-indigo-300 bg-indigo-950/40 border border-indigo-800/50 px-2 py-0.5 rounded-md">
+                <Brain className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                <span className="text-slate-400">Technique:</span>
+                <span className="font-semibold text-indigo-200">
+                  {formatTechniqueDisplayName(dream.techniqueUsed, dream.customTechniqueUsed)}
+                </span>
               </div>
             )}
           </div>

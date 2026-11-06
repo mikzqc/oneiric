@@ -6,6 +6,7 @@ export interface SearchMatchDetail {
     | 'narrative'
     | 'tags'
     | 'emotions'
+    | 'technique'
     | 'signs'
     | 'scenes'
     | 'interpretation'
@@ -430,6 +431,27 @@ export function searchDreams(dreams: DreamEntry[], rawQuery: string): DreamSearc
             matchDetails.push({ field: 'emotions', label: `Emotion: ${emotion}` });
             matchedFieldsSet.add('emotions');
           }
+        }
+      }
+    }
+
+    // Induction Technique Matching
+    if (dream.techniqueUsed && dream.techniqueUsed !== 'none') {
+      const techText = normalizeText(
+        `${dream.techniqueUsed} ${dream.customTechniqueUsed || ''}`
+      );
+      if (
+        techText.includes(query) ||
+        queryTokens.some((qt) => techText.includes(qt) || isFuzzyMatch(qt, normalizeText(dream.techniqueUsed)))
+      ) {
+        score += 40;
+        if (!matchedFieldsSet.has('technique')) {
+          const displayTech =
+            dream.techniqueUsed === 'Other' && dream.customTechniqueUsed
+              ? dream.customTechniqueUsed
+              : dream.techniqueUsed;
+          matchDetails.push({ field: 'technique', label: `Technique: ${displayTech}` });
+          matchedFieldsSet.add('technique');
         }
       }
     }

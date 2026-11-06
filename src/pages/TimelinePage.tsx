@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { dreamService, TimelineNightGroup } from '../services/dreamService';
-import { DreamEntry } from '../types/dream';
+import { DreamEntry, formatTechniqueShortName } from '../types/dream';
 import { DreamDetailModal } from '../components/journal/DreamDetailModal';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { LucidityBadge } from '../components/common/Badge';
@@ -16,6 +16,7 @@ import {
   Layers,
   ArrowRight,
   Moon,
+  Brain,
 } from 'lucide-react';
 
 interface TimelinePageProps {
@@ -226,6 +227,21 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({
                               {dream.falseAwakening && (
                                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-amber-950/60 text-amber-300 border border-amber-800/60">
                                   False Awakening
+                                </span>
+                              )}
+                              {dream.techniqueUsed && dream.techniqueUsed !== 'none' && (
+                                <span
+                                  className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-indigo-950/70 text-indigo-300 border border-indigo-800/60 flex items-center gap-1"
+                                  title={`Induction technique: ${
+                                    dream.techniqueUsed === 'Other' && dream.customTechniqueUsed
+                                      ? dream.customTechniqueUsed
+                                      : dream.techniqueUsed
+                                  }`}
+                                >
+                                  <Brain className="w-2.5 h-2.5 text-indigo-400 shrink-0" />
+                                  <span>
+                                    {formatTechniqueShortName(dream.techniqueUsed, dream.customTechniqueUsed)}
+                                  </span>
                                 </span>
                               )}
                               {dream.wakeUpTime && (

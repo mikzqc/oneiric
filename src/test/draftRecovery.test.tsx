@@ -27,6 +27,7 @@ describe('Dream Editor Draft Auto-Recovery System', () => {
       emotions: ['Awe', 'Euphoria'],
       tags: ['Astral', 'Space'],
       dreamSignsNotes: 'Binary star constellations pulsating rhythmically',
+      techniqueUsed: 'WILD',
       falseAwakening: true,
       falseAwakeningDetails: {
         believedAwake: false,
@@ -101,6 +102,7 @@ describe('Dream Editor Draft Auto-Recovery System', () => {
     expect(savedPayload.emotions).toEqual(['Awe', 'Euphoria']);
     expect(savedPayload.tags).toEqual(['Astral', 'Space']);
     expect(savedPayload.dreamSignsNotes).toBe('Binary star constellations pulsating rhythmically');
+    expect(savedPayload.techniqueUsed).toBe('WILD');
 
     // Verify Phase 2 Intelligence fields
     expect(savedPayload.falseAwakening).toBe(true);
