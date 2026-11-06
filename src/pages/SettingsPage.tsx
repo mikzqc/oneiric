@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { SyncSettingsCard } from '../components/sync/SyncSettingsCard';
 import { RecentlyDeletedCard } from '../components/settings/RecentlyDeletedCard';
+import { ThemeSelectorCard } from '../components/settings/ThemeSelectorCard';
 
 export const SettingsPage: React.FC = () => {
   const [hasSample, setHasSample] = useState(false);
@@ -357,6 +358,9 @@ export const SettingsPage: React.FC = () => {
 
       {/* Section 0: End-to-End Multi-Device Sync Card */}
       <SyncSettingsCard onFeedback={showFeedback} />
+
+      {/* Theme Settings Card */}
+      <ThemeSelectorCard onFeedback={showFeedback} />
 
       {/* Section 1: Backup & Restoration */}
       <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">

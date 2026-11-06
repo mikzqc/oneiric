@@ -4,6 +4,10 @@ import './index.css'
 import App from './App'
 import { backupService } from './services/backupService'
 import { wakeTimeService } from './services/wakeTimeService'
+import { themeService } from './services/themeService'
+
+// Initialize user's selected theme immediately
+themeService.initTheme()
 
 // Clean up any ephemeral sample exploration data on startup / page refresh
 backupService.cleanupSamplePreviewOnStartup().finally(() => {

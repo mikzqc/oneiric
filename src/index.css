@@ -6,29 +6,386 @@
     --bg-surface: #101a38;
     --bg-surface-raised: #152248;
     --bg-surface-hover: #1b2b5a;
-    --border-subtle: rgba(255, 255, 255, 0.08);
-    --border-strong: rgba(255, 255, 255, 0.16);
+    --border-subtle: #1e293b;
+    --border-strong: #334155;
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
     --text-muted: #64748b;
+    --accent-primary: #2563eb;
+    --accent-primary-hover: #1d4ed8;
   }
 
   body {
-    background-color: #0b132b;
-    color: #f1f5f9;
+    background-color: var(--bg-base);
+    color: var(--text-primary);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     min-height: 100vh;
     margin: 0;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.15s ease, color 0.15s ease;
   }
+}
+
+/* Global Theme Harmonizers for Hardcoded Background and Border Utility Tokens */
+[data-theme] .bg-\[\#0b132b\] {
+  background-color: var(--bg-base) !important;
+}
+
+[data-theme] .bg-\[\#101a38\],
+[data-theme] .bg-\[\#0f172a\] {
+  background-color: var(--bg-surface) !important;
+}
+
+[data-theme] .bg-\[\#121c38\],
+[data-theme] .bg-\[\#132042\],
+[data-theme] .bg-\[\#152248\] {
+  background-color: var(--bg-surface-raised) !important;
+}
+
+[data-theme] .border-slate-800 {
+  border-color: var(--border-subtle) !important;
+}
+
+[data-theme] .border-slate-700 {
+  border-color: var(--border-strong) !important;
+}
+
+/* ========================================================================= */
+/* THEME 1: Oneiric Midnight (Default)                                       */
+/* ========================================================================= */
+[data-theme="midnight"] {
+  --bg-base: #0b132b;
+  --bg-surface: #101a38;
+  --bg-surface-raised: #152248;
+  --bg-surface-hover: #1b2b5a;
+  --border-subtle: #1e293b;
+  --border-strong: #334155;
+  --accent-primary: #2563eb;
+  --accent-primary-hover: #1d4ed8;
+  --color-slate-950: #060b18;
+  --color-slate-900: #101a38;
+  --color-slate-800: #1e293b;
+  --color-slate-700: #334155;
+  --color-blue-600: #2563eb;
+  --color-blue-500: #3b82f6;
+  --color-blue-400: #60a5fa;
+  --color-blue-950: #0d1a45;
+}
+
+/* ========================================================================= */
+/* THEME 2: Abyssal Obsidian                                                 */
+/* ========================================================================= */
+[data-theme="abyssal-obsidian"] {
+  --bg-base: #09090b;
+  --bg-surface: #121216;
+  --bg-surface-raised: #1c1c22;
+  --bg-surface-hover: #26262e;
+  --border-subtle: #27272a;
+  --border-strong: #3f3f46;
+  --accent-primary: #38bdf8;
+  --accent-primary-hover: #0284c7;
+  --color-slate-950: #050506;
+  --color-slate-900: #121216;
+  --color-slate-800: #27272a;
+  --color-slate-700: #3f3f46;
+  --color-blue-600: #0284c7;
+  --color-blue-500: #38bdf8;
+  --color-blue-400: #7dd3fc;
+  --color-blue-950: #082f49;
+}
+
+/* ========================================================================= */
+/* THEME 3: Nordic Aurora                                                    */
+/* ========================================================================= */
+[data-theme="nordic-aurora"] {
+  --bg-base: #08131a;
+  --bg-surface: #0d1f2b;
+  --bg-surface-raised: #132c3d;
+  --bg-surface-hover: #1b3d54;
+  --border-subtle: #19394f;
+  --border-strong: #25506e;
+  --accent-primary: #06b6d4;
+  --accent-primary-hover: #0891b2;
+  --color-slate-950: #040a0e;
+  --color-slate-900: #0d1f2b;
+  --color-slate-800: #19394f;
+  --color-slate-700: #25506e;
+  --color-blue-600: #0891b2;
+  --color-blue-500: #06b6d4;
+  --color-blue-400: #22d3ee;
+  --color-blue-950: #083344;
+}
+
+/* ========================================================================= */
+/* THEME 4: Emerald Abyss                                                    */
+/* ========================================================================= */
+[data-theme="emerald-abyss"] {
+  --bg-base: #061712;
+  --bg-surface: #0c241d;
+  --bg-surface-raised: #12362b;
+  --bg-surface-hover: #1a493b;
+  --border-subtle: #1b4a3c;
+  --border-strong: #266754;
+  --accent-primary: #10b981;
+  --accent-primary-hover: #059669;
+  --color-slate-950: #030e0b;
+  --color-slate-900: #0c241d;
+  --color-slate-800: #1b4a3c;
+  --color-slate-700: #266754;
+  --color-blue-600: #059669;
+  --color-blue-500: #10b981;
+  --color-blue-400: #34d399;
+  --color-blue-950: #064e3b;
+}
+
+/* ========================================================================= */
+/* THEME 5: Amethyst Twilight                                                */
+/* ========================================================================= */
+[data-theme="amethyst-twilight"] {
+  --bg-base: #120c1f;
+  --bg-surface: #1c1330;
+  --bg-surface-raised: #281c44;
+  --bg-surface-hover: #35265b;
+  --border-subtle: #37275e;
+  --border-strong: #4c3682;
+  --accent-primary: #a855f7;
+  --accent-primary-hover: #9333ea;
+  --color-slate-950: #0a0612;
+  --color-slate-900: #1c1330;
+  --color-slate-800: #37275e;
+  --color-slate-700: #4c3682;
+  --color-blue-600: #9333ea;
+  --color-blue-500: #a855f7;
+  --color-blue-400: #c084fc;
+  --color-blue-950: #3b0764;
+}
+
+/* ========================================================================= */
+/* THEME 6: Solar Eclipse                                                    */
+/* ========================================================================= */
+[data-theme="solar-eclipse"] {
+  --bg-base: #13110d;
+  --bg-surface: #1f1a14;
+  --bg-surface-raised: #2c251c;
+  --bg-surface-hover: #3b3226;
+  --border-subtle: #3d3326;
+  --border-strong: #534533;
+  --accent-primary: #f59e0b;
+  --accent-primary-hover: #d97706;
+  --color-slate-950: #0a0907;
+  --color-slate-900: #1f1a14;
+  --color-slate-800: #3d3326;
+  --color-slate-700: #534533;
+  --color-blue-600: #d97706;
+  --color-blue-500: #f59e0b;
+  --color-blue-400: #fbbf24;
+  --color-blue-950: #451a03;
+}
+
+/* ========================================================================= */
+/* THEME 7: Crimson Nebula                                                   */
+/* ========================================================================= */
+[data-theme="crimson-nebula"] {
+  --bg-base: #190a11;
+  --bg-surface: #26101a;
+  --bg-surface-raised: #361625;
+  --bg-surface-hover: #481e32;
+  --border-subtle: #4b1e34;
+  --border-strong: #672948;
+  --accent-primary: #f43f5e;
+  --accent-primary-hover: #e11d48;
+  --color-slate-950: #0f050a;
+  --color-slate-900: #26101a;
+  --color-slate-800: #4b1e34;
+  --color-slate-700: #672948;
+  --color-blue-600: #e11d48;
+  --color-blue-500: #f43f5e;
+  --color-blue-400: #fb7185;
+  --color-blue-950: #4c0519;
+}
+
+/* ========================================================================= */
+/* THEME 8: Cyberspace Slate                                                 */
+/* ========================================================================= */
+[data-theme="cyberspace-slate"] {
+  --bg-base: #0b111c;
+  --bg-surface: #111929;
+  --bg-surface-raised: #18243b;
+  --bg-surface-hover: #202f4d;
+  --border-subtle: #223252;
+  --border-strong: #304673;
+  --accent-primary: #3b82f6;
+  --accent-primary-hover: #2563eb;
+  --color-slate-950: #070a12;
+  --color-slate-900: #111929;
+  --color-slate-800: #223252;
+  --color-slate-700: #304673;
+  --color-blue-600: #2563eb;
+  --color-blue-500: #3b82f6;
+  --color-blue-400: #60a5fa;
+  --color-blue-950: #172554;
+}
+
+/* ========================================================================= */
+/* THEME 9: Nocturnal Moss                                                   */
+/* ========================================================================= */
+[data-theme="nocturnal-moss"] {
+  --bg-base: #0d1511;
+  --bg-surface: #15211b;
+  --bg-surface-raised: #1e2f27;
+  --bg-surface-hover: #283e33;
+  --border-subtle: #2a4136;
+  --border-strong: #39594a;
+  --accent-primary: #34d399;
+  --accent-primary-hover: #10b981;
+  --color-slate-950: #070b09;
+  --color-slate-900: #15211b;
+  --color-slate-800: #2a4136;
+  --color-slate-700: #39594a;
+  --color-blue-600: #10b981;
+  --color-blue-500: #34d399;
+  --color-blue-400: #6ee7b7;
+  --color-blue-950: #064e3b;
+}
+
+/* ========================================================================= */
+/* THEME 10: Deep Oceanic (Mariana)                                          */
+/* ========================================================================= */
+[data-theme="deep-oceanic"] {
+  --bg-base: #05141e;
+  --bg-surface: #0a2030;
+  --bg-surface-raised: #0f2d44;
+  --bg-surface-hover: #153c5a;
+  --border-subtle: #163e5e;
+  --border-strong: #205682;
+  --accent-primary: #0ea5e9;
+  --accent-primary-hover: #0284c7;
+  --color-slate-950: #020a0f;
+  --color-slate-900: #0a2030;
+  --color-slate-800: #163e5e;
+  --color-slate-700: #205682;
+  --color-blue-600: #0284c7;
+  --color-blue-500: #0ea5e9;
+  --color-blue-400: #38bdf8;
+  --color-blue-950: #082f49;
+}
+
+/* ========================================================================= */
+/* THEME 11: Velvet Espresso                                                 */
+/* ========================================================================= */
+[data-theme="velvet-espresso"] {
+  --bg-base: #15100d;
+  --bg-surface: #201814;
+  --bg-surface-raised: #2d221c;
+  --bg-surface-hover: #3b2c25;
+  --border-subtle: #3e2f27;
+  --border-strong: #554035;
+  --accent-primary: #d97706;
+  --accent-primary-hover: #b45309;
+  --color-slate-950: #0b0806;
+  --color-slate-900: #201814;
+  --color-slate-800: #3e2f27;
+  --color-slate-700: #554035;
+  --color-blue-600: #b45309;
+  --color-blue-500: #d97706;
+  --color-blue-400: #f59e0b;
+  --color-blue-950: #451a03;
+}
+
+/* ========================================================================= */
+/* THEME 12: Bioluminescent Abyss                                            */
+/* ========================================================================= */
+[data-theme="bioluminescent"] {
+  --bg-base: #070d22;
+  --bg-surface: #0e183c;
+  --bg-surface-raised: #142254;
+  --bg-surface-hover: #1c3076;
+  --border-subtle: #1d3175;
+  --border-strong: #28439e;
+  --accent-primary: #00d2ff;
+  --accent-primary-hover: #00b4db;
+  --color-slate-950: #030612;
+  --color-slate-900: #0e183c;
+  --color-slate-800: #1d3175;
+  --color-slate-700: #28439e;
+  --color-blue-600: #00b4db;
+  --color-blue-500: #00d2ff;
+  --color-blue-400: #67e8f9;
+  --color-blue-950: #083344;
+}
+
+/* ========================================================================= */
+/* THEME 13: Monochrome Matrix                                               */
+/* ========================================================================= */
+[data-theme="monochrome-matrix"] {
+  --bg-base: #0b120d;
+  --bg-surface: #121c15;
+  --bg-surface-raised: #1a291f;
+  --bg-surface-hover: #23362a;
+  --border-subtle: #243a2b;
+  --border-strong: #32523d;
+  --accent-primary: #4ade80;
+  --accent-primary-hover: #22c55e;
+  --color-slate-950: #050906;
+  --color-slate-900: #121c15;
+  --color-slate-800: #243a2b;
+  --color-slate-700: #32523d;
+  --color-blue-600: #22c55e;
+  --color-blue-500: #4ade80;
+  --color-blue-400: #86efac;
+  --color-blue-950: #052e16;
+}
+
+/* ========================================================================= */
+/* THEME 14: Astral Dusk                                                     */
+/* ========================================================================= */
+[data-theme="astral-dusk"] {
+  --bg-base: #0f0e26;
+  --bg-surface: #17163c;
+  --bg-surface-raised: #212054;
+  --bg-surface-hover: #2b2a6d;
+  --border-subtle: #2d2c73;
+  --border-strong: #3d3c9a;
+  --accent-primary: #818cf8;
+  --accent-primary-hover: #6366f1;
+  --color-slate-950: #080715;
+  --color-slate-900: #17163c;
+  --color-slate-800: #2d2c73;
+  --color-slate-700: #3d3c9a;
+  --color-blue-600: #6366f1;
+  --color-blue-500: #818cf8;
+  --color-blue-400: #a5b4fc;
+  --color-blue-950: #1e1b4b;
+}
+
+/* ========================================================================= */
+/* THEME 15: Vaporwave Night                                                 */
+/* ========================================================================= */
+[data-theme="vaporwave-night"] {
+  --bg-base: #150a22;
+  --bg-surface: #211036;
+  --bg-surface-raised: #2e174c;
+  --bg-surface-hover: #3d1f65;
+  --border-subtle: #41206b;
+  --border-strong: #5a2d94;
+  --accent-primary: #e879f9;
+  --accent-primary-hover: #d946ef;
+  --color-slate-950: #0a0411;
+  --color-slate-900: #211036;
+  --color-slate-800: #41206b;
+  --color-slate-700: #5a2d94;
+  --color-blue-600: #d946ef;
+  --color-blue-500: #e879f9;
+  --color-blue-400: #f0abfc;
+  --color-blue-950: #4a044e;
 }
 
 /* Restrained, professional utility scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #1e293b #0b132b;
+  scrollbar-color: var(--border-subtle, #1e293b) var(--bg-base, #0b132b);
 }
 
 ::-webkit-scrollbar {
@@ -36,14 +393,14 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0b132b;
+  background: var(--bg-base, #0b132b);
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: var(--border-subtle, #1e293b);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: var(--border-strong, #334155);
 }
 
 /* Mask secret strings cleanly without triggering browser password saving heuristics */
