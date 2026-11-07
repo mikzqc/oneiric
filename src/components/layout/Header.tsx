@@ -83,7 +83,7 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           type="button"
           onClick={onOpenMobileMenu}
-          className="md:hidden p-1.5 rounded-md text-slate-400 hover:text-slate-100 hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer"
+          className="md:hidden p-1.5 rounded-md text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-all duration-150 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer"
           aria-label="Open mobile navigation menu"
         >
           <Menu className="w-5 h-5" />
@@ -109,7 +109,7 @@ export const Header: React.FC<HeaderProps> = ({
               ? 'Encrypted Sync Active (Click to sync now)'
               : 'Configure Multi-Device Sync in Settings')
           }
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors cursor-pointer ${
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-all duration-150 active:scale-95 cursor-pointer ${
             syncFeedback?.type === 'error'
               ? 'bg-red-950/60 border-red-700/80 text-red-300 hover:bg-red-900/60'
               : syncFeedback?.type === 'success'

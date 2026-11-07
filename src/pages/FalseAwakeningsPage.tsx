@@ -203,7 +203,7 @@ export const FalseAwakeningsPage: React.FC<FalseAwakeningsPageProps> = ({
           <h2 className="text-sm font-semibold text-slate-100">Chronological False Awakening Ledger</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {dreams.map((dream) => {
+            {dreams.map((dream, idx) => {
               const details = dream.falseAwakeningDetails;
               const isLucid = dream.lucidity === 'lucid';
 
@@ -211,7 +211,8 @@ export const FalseAwakeningsPage: React.FC<FalseAwakeningsPageProps> = ({
                 <div
                   key={dream.id}
                   onClick={() => setSelectedDreamForView(dream)}
-                  className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-colors cursor-pointer space-y-3"
+                  style={{ animationDelay: `${Math.min(idx, 10) * 35}ms` }}
+                  className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/20 cursor-pointer space-y-3 animate-card"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-xs text-slate-400 flex items-center gap-1.5">

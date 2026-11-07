@@ -1,4 +1,5 @@
 import React from 'react';
+import { AnimatedNumber } from '../common/AnimatedNumber';
 
 interface StatCardProps {
   title: string;
@@ -27,20 +28,22 @@ export const StatCard: React.FC<StatCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`p-4 rounded-xl border border-slate-800 bg-[#0f172a]/70 transition-colors flex flex-col justify-between ${
-        onClick ? 'cursor-pointer hover:border-slate-700 hover:bg-[#121c35]' : ''
+      className={`p-4 rounded-xl border border-slate-800 bg-[#0f172a]/70 transition-all duration-200 ease-out flex flex-col justify-between ${
+        onClick
+          ? 'cursor-pointer hover:border-slate-700 hover:bg-[#121c35] hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/20 active:scale-[0.99]'
+          : 'hover:border-slate-750'
       }`}
     >
       <div className="flex items-center justify-between gap-3 mb-2.5">
         <span className="text-xs font-medium text-slate-400">{title}</span>
-        <div className={`w-8 h-8 rounded-lg border ${iconColors[variant]} flex items-center justify-center shrink-0`}>
+        <div className={`w-8 h-8 rounded-lg border ${iconColors[variant]} flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105`}>
           {icon}
         </div>
       </div>
 
       <div>
         <div className="text-2xl font-bold text-slate-100 tracking-tight mb-0.5">
-          {value}
+          <AnimatedNumber value={value} />
         </div>
         <p className="text-xs text-slate-400 font-normal">{subtitle}</p>
       </div>

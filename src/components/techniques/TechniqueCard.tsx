@@ -32,7 +32,7 @@ export const TechniqueCard: React.FC<TechniqueCardProps> = ({ info }) => {
   };
 
   return (
-    <div className="p-4 sm:p-5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-colors flex flex-col justify-between shadow-sm">
+    <div className="p-4 sm:p-5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/20 flex flex-col justify-between shadow-sm">
       <div className="space-y-3">
         {/* Top Badges & Timing */}
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -76,7 +76,7 @@ export const TechniqueCard: React.FC<TechniqueCardProps> = ({ info }) => {
 
         {/* Expanded Protocol Details */}
         {isExpanded && (
-          <div className="space-y-3.5 pt-3 border-t border-slate-800 text-xs text-slate-300">
+          <div className="space-y-3.5 pt-3 border-t border-slate-800 text-xs text-slate-300 animate-fadeIn">
             <p className="leading-relaxed text-slate-400">{info.description}</p>
 
             {/* Scientific Mechanism */}
@@ -163,7 +163,7 @@ export const TechniqueCard: React.FC<TechniqueCardProps> = ({ info }) => {
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-xs text-blue-400 hover:text-blue-200 flex items-center gap-1.5 cursor-pointer font-medium p-1 transition-colors"
+          className="text-xs text-blue-400 hover:text-blue-200 flex items-center gap-1.5 cursor-pointer font-medium p-1 transition-all duration-150 active:scale-95"
         >
           <span>{isExpanded ? 'Collapse guide' : 'View full protocol & science'}</span>
           {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}

@@ -100,14 +100,14 @@ export const UndoNotification: React.FC = () => {
             type="button"
             onClick={handleUndo}
             disabled={isRestoring}
-            className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-50 text-white font-medium text-xs border border-blue-500/60 transition-colors cursor-pointer shrink-0 ml-auto focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 active:bg-blue-700 disabled:opacity-50 text-white font-medium text-xs border border-blue-500/60 transition-all duration-150 active:scale-95 cursor-pointer shrink-0 ml-auto focus-visible:ring-2 focus-visible:ring-blue-500"
           >
             {isRestoring ? 'Restoring...' : 'Undo'}
           </button>
           <button
             type="button"
             onClick={handleDismiss}
-            className="text-slate-400 hover:text-slate-200 p-1 rounded hover:bg-slate-800 transition-colors cursor-pointer shrink-0 focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="text-slate-400 hover:text-slate-200 p-1 rounded hover:bg-slate-800 transition-all duration-150 active:scale-90 cursor-pointer shrink-0 focus-visible:ring-2 focus-visible:ring-blue-500"
             aria-label="Dismiss notification"
           >
             <X className="w-3.5 h-3.5" />

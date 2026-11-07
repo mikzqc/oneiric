@@ -155,10 +155,11 @@ export const LucidDreamsPage: React.FC<LucidDreamsPageProps> = ({
         </div>
       ) : totalLucid > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {lucidDreams.map((dream) => (
+          {lucidDreams.map((dream, idx) => (
             <DreamCard
               key={dream.id}
               dream={dream}
+              index={idx}
               onView={setSelectedDreamForView}
               onEdit={onEditDream}
               onDelete={setDreamToDelete}

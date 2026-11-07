@@ -23,6 +23,10 @@ interface RecallChartProps {
 
 export const RecallChart: React.FC<RecallChartProps> = ({ data }) => {
   const maxCount = data.length > 0 ? Math.max(...data.map((d) => d.count), 3) : 3;
+  const isReduced =
+    typeof window !== 'undefined' &&
+    (window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ||
+      document.documentElement.classList.contains('reduce-motion'));
 
   return (
     <div className="w-full h-64">
@@ -93,6 +97,9 @@ export const RecallChart: React.FC<RecallChartProps> = ({ data }) => {
             fillOpacity={1}
             fill="url(#colorTotal)"
             name="Total Dreams"
+            isAnimationActive={!isReduced}
+            animationDuration={600}
+            animationEasing="ease-out"
           />
           <Area
             type="monotone"
@@ -102,6 +109,9 @@ export const RecallChart: React.FC<RecallChartProps> = ({ data }) => {
             fillOpacity={1}
             fill="url(#colorLucid)"
             name="Lucid Dreams"
+            isAnimationActive={!isReduced}
+            animationDuration={600}
+            animationEasing="ease-out"
           />
         </AreaChart>
       </ResponsiveContainer>

@@ -20,9 +20,9 @@ export const LucidityBadge: React.FC<LucidityBadgeProps> = ({
   if (lucidity === 'lucid') {
     return (
       <span
-        className={`inline-flex items-center gap-1.5 font-medium rounded-md bg-sky-950/70 text-sky-300 border border-sky-700/60 ${sizeClasses} ${className}`}
+        className={`inline-flex items-center gap-1.5 font-medium rounded-md bg-sky-950/70 text-sky-300 border border-sky-700/60 transition-colors duration-150 ${sizeClasses} ${className}`}
       >
-        {showIcon && <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />}
+        {showIcon && <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0 animate-pulseGentle" />}
         <span>Lucid</span>
       </span>
     );
@@ -58,7 +58,7 @@ export const EmotionBadge: React.FC<{ emotion: string; size?: 'sm' | 'md'; onRem
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-md bg-slate-800/90 text-slate-200 border border-slate-700/80 ${sizeClasses}`}
+      className={`inline-flex items-center gap-1 rounded-md bg-slate-800/90 text-slate-200 border border-slate-700/80 transition-all duration-150 animate-fadeIn ${sizeClasses}`}
     >
       <span>{emotion}</span>
       {onRemove && (
@@ -68,7 +68,7 @@ export const EmotionBadge: React.FC<{ emotion: string; size?: 'sm' | 'md'; onRem
             e.stopPropagation();
             onRemove();
           }}
-          className="text-slate-400 hover:text-slate-100 ml-0.5 cursor-pointer"
+          className="text-slate-400 hover:text-slate-100 ml-0.5 cursor-pointer transition-transform duration-100 active:scale-75"
           aria-label={`Remove emotion ${emotion}`}
         >
           &times;
@@ -89,8 +89,8 @@ export const TagBadge: React.FC<{ tag: string; size?: 'sm' | 'md'; onRemove?: ()
   return (
     <span
       onClick={onClick}
-      className={`inline-flex items-center gap-1 rounded-md bg-slate-900/90 text-slate-300 border border-slate-800 ${sizeClasses} ${
-        onClick ? 'cursor-pointer hover:bg-slate-800 hover:text-slate-100' : ''
+      className={`inline-flex items-center gap-1 rounded-md bg-slate-900/90 text-slate-300 border border-slate-800 transition-all duration-150 animate-fadeIn ${sizeClasses} ${
+        onClick ? 'cursor-pointer hover:bg-slate-800 hover:text-slate-100 active:scale-95' : ''
       }`}
     >
       <span className="text-slate-500">#</span>
@@ -102,7 +102,7 @@ export const TagBadge: React.FC<{ tag: string; size?: 'sm' | 'md'; onRemove?: ()
             e.stopPropagation();
             onRemove();
           }}
-          className="text-slate-400 hover:text-slate-100 ml-0.5 cursor-pointer"
+          className="text-slate-400 hover:text-slate-100 ml-0.5 cursor-pointer transition-transform duration-100 active:scale-75"
           aria-label={`Remove tag ${tag}`}
         >
           &times;

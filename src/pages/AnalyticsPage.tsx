@@ -3,6 +3,7 @@ import { analyticsService, AnalyticsSummary, TimeRangeFilter } from '../services
 import { LucidityLevel } from '../types/dream';
 import { formatDate } from '../utils/dateUtils';
 import { EmptyState } from '../components/common/EmptyState';
+import { AnimatedNumber } from '../components/common/AnimatedNumber';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -80,7 +81,7 @@ export const AnalyticsPage: React.FC = () => {
                 key={tr}
                 type="button"
                 onClick={() => setTimeRange(tr)}
-                className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md font-medium transition-all duration-150 active:scale-95 cursor-pointer ${
                   timeRange === tr
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
@@ -122,28 +123,34 @@ export const AnalyticsPage: React.FC = () => {
           {/* Primary Metrics Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total Dreams in Period */}
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 transition-all duration-200 ease-out hover:-translate-y-0.5 shadow-sm">
               <span className="text-xs font-semibold text-slate-400 block mb-1">
                 Dreams in Window
               </span>
-              <div className="text-2xl font-bold text-slate-100">{data.totalDreams}</div>
+              <div className="text-2xl font-bold text-slate-100">
+                <AnimatedNumber value={data.totalDreams} />
+              </div>
               <p className="text-xs text-slate-400 mt-1">
                 {data.recordedDaysCount} of {data.calendarDaysCount} nights journaled
               </p>
             </div>
 
             {/* Recall Rate */}
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 transition-all duration-200 ease-out hover:-translate-y-0.5 shadow-sm">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-semibold text-slate-400">
                   Recall Consistency
                 </span>
-                <span className="text-xs font-bold text-blue-400">{data.recallRate}%</span>
+                <span className="text-xs font-bold text-blue-400">
+                  <AnimatedNumber value={`${data.recallRate}%`} />
+                </span>
               </div>
-              <div className="text-2xl font-bold text-slate-100">{data.recallRate}%</div>
+              <div className="text-2xl font-bold text-slate-100">
+                <AnimatedNumber value={`${data.recallRate}%`} />
+              </div>
               <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
                 <div
-                  className="bg-blue-500 h-1.5 rounded-full"
+                  className="bg-blue-500 h-1.5 rounded-full transition-all duration-500 ease-out"
                   style={{ width: `${data.recallRate}%` }}
                 />
               </div>
@@ -153,7 +160,7 @@ export const AnalyticsPage: React.FC = () => {
             </div>
 
             {/* Lucid Rate */}
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 transition-all duration-200 ease-out hover:-translate-y-0.5 shadow-sm">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-semibold text-slate-400">
                   Lucidity Frequency
@@ -161,7 +168,7 @@ export const AnalyticsPage: React.FC = () => {
                 <Sparkles className="w-4 h-4 text-cyan-400" />
               </div>
               <div className="text-2xl font-bold text-cyan-300">
-                {data.totalLucid}{' '}
+                <AnimatedNumber value={data.totalLucid} />{' '}
                 <span className="text-sm font-normal text-slate-400">({data.lucidityRate}%)</span>
               </div>
               <p className="text-xs text-slate-400 mt-1">
@@ -170,13 +177,15 @@ export const AnalyticsPage: React.FC = () => {
             </div>
 
             {/* Average Vividness & Control */}
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
+            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 transition-all duration-200 ease-out hover:-translate-y-0.5 shadow-sm">
               <span className="text-xs font-semibold text-slate-400 block mb-1">
                 Quality & Agency
               </span>
               <div className="flex items-center gap-3">
                 <div>
-                  <span className="text-2xl font-bold text-amber-300">{data.averageVividness}</span>
+                  <span className="text-2xl font-bold text-amber-300">
+                    <AnimatedNumber value={data.averageVividness} />
+                  </span>
                   <span className="text-xs text-slate-500 block">Vividness (/5)</span>
                 </div>
                 <div className="h-8 w-px bg-slate-800" />

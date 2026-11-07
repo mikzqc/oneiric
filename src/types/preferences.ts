@@ -5,6 +5,7 @@ export type NarrativeFontFamily = 'sans' | 'serif' | 'mono';
 export type NarrativeFontSize = 'sm' | 'base' | 'lg' | 'xl';
 export type DateFormatOption = 'standard' | 'iso' | 'european' | 'relative';
 export type TimeFormatOption = '12h' | '24h';
+export type MotionOption = 'auto' | 'standard' | 'reduced';
 export type DefaultLucidityOption = LucidityLevel | 'last-used';
 export type DefaultRecallOption = RecallQuality;
 export type DefaultTechniqueOption =
@@ -35,6 +36,8 @@ export interface UserPreferences {
   narrativeFontSize: NarrativeFontSize;
   dateFormat: DateFormatOption;
   timeFormat: TimeFormatOption;
+  motionPreference: MotionOption;
+  enableAtmosphericParticles: boolean;
 
   // Analytics & Retention
   defaultAnalyticsWindow: '1w' | '2w' | '1m' | 'all';
@@ -54,6 +57,8 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   narrativeFontSize: 'base',
   dateFormat: 'standard',
   timeFormat: '12h',
+  motionPreference: 'auto',
+  enableAtmosphericParticles: true,
 
   defaultAnalyticsWindow: '1w',
   autoPurgeTrashDays: 30,

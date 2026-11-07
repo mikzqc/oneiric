@@ -59,7 +59,7 @@ export const CorrelationCard: React.FC<CorrelationCardProps> = ({
   };
 
   return (
-    <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 transition-all space-y-3">
+    <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/20 space-y-3">
       {/* Card Header */}
       <div className="flex items-start justify-between gap-2">
         <div>

@@ -730,7 +730,7 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredSigns.map((sign) => {
+          {filteredSigns.map((sign, idx) => {
             const isConfirmed = sign.status === 'confirmed';
             const isSuggested = sign.status === 'suggested';
             const isDismissed = sign.status === 'dismissed';
@@ -740,7 +740,8 @@ export const DreamSignsPage: React.FC<DreamSignsPageProps> = ({ onEditDream }) =
               <div
                 key={sign.id}
                 onClick={() => handleOpenDetail(sign)}
-                className={`p-4 rounded-xl border transition-colors cursor-pointer flex flex-col justify-between shadow-sm relative group ${
+                style={{ animationDelay: `${Math.min(idx, 12) * 30}ms` }}
+                className={`p-4 rounded-xl border transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/20 cursor-pointer flex flex-col justify-between shadow-sm relative group animate-card ${
                   isSelected
                     ? 'ring-2 ring-blue-500 border-blue-500 bg-slate-900'
                     : isSuggested

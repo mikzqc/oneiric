@@ -12,6 +12,7 @@ interface DreamCardProps {
   onEdit: (dream: DreamEntry) => void;
   onDelete: (dream: DreamEntry) => void;
   matchDetails?: SearchMatchDetail[];
+  index?: number;
 }
 
 export const DreamCard: React.FC<DreamCardProps> = ({
@@ -20,6 +21,7 @@ export const DreamCard: React.FC<DreamCardProps> = ({
   onEdit,
   onDelete,
   matchDetails,
+  index = 0,
 }) => {
   const isLucid = dream.lucidity === 'lucid';
   const density = preferencesService.getPreferences().cardDensity;
@@ -27,9 +29,10 @@ export const DreamCard: React.FC<DreamCardProps> = ({
   return (
     <article
       onClick={() => onView(dream)}
-      className={`group relative ${density === 'compact' ? 'p-3' : 'p-4'} rounded-xl border transition-colors cursor-pointer flex flex-col justify-between ${
+      style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}
+      className={`group relative ${density === 'compact' ? 'p-3' : 'p-4'} rounded-xl border transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/25 cursor-pointer flex flex-col justify-between animate-card ${
         isLucid
-          ? 'bg-[#0f172a]/80 hover:bg-[#131d36] border-slate-800 hover:border-slate-700 border-l-2 border-l-sky-500'
+          ? 'bg-[#0f172a]/80 hover:bg-[#131d36] border-slate-800 hover:border-sky-500/40 border-l-2 border-l-sky-500'
           : 'bg-[#0f172a]/60 hover:bg-[#121a30] border-slate-800/80 hover:border-slate-700'
       }`}
     >
@@ -146,7 +149,7 @@ export const DreamCard: React.FC<DreamCardProps> = ({
           <button
             type="button"
             onClick={() => onView(dream)}
-            className="p-1.5 text-slate-400 hover:text-slate-100 rounded-md hover:bg-slate-800 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-100 rounded-md hover:bg-slate-800 transition-all duration-150 active:scale-90"
             title="Inspect Dream"
             aria-label={`View details of ${dream.title}`}
           >
@@ -155,7 +158,7 @@ export const DreamCard: React.FC<DreamCardProps> = ({
           <button
             type="button"
             onClick={() => onEdit(dream)}
-            className="p-1.5 text-slate-400 hover:text-blue-400 rounded-md hover:bg-slate-800 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-blue-400 rounded-md hover:bg-slate-800 transition-all duration-150 active:scale-90"
             title="Edit Dream"
             aria-label={`Edit ${dream.title}`}
           >
@@ -164,7 +167,7 @@ export const DreamCard: React.FC<DreamCardProps> = ({
           <button
             type="button"
             onClick={() => onDelete(dream)}
-            className="p-1.5 text-slate-400 hover:text-red-400 rounded-md hover:bg-slate-800 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-red-400 rounded-md hover:bg-slate-800 transition-all duration-150 active:scale-90"
             title="Delete Dream"
             aria-label={`Delete ${dream.title}`}
           >

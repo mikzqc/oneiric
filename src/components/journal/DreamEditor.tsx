@@ -31,7 +31,6 @@ import {
   AlertCircle,
   Sliders,
   ChevronDown,
-  ChevronUp,
   Brain,
   Shield,
   Layers,
@@ -1302,7 +1301,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
         <button
           type="button"
           onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
-          className="w-full flex items-center justify-between p-3 rounded-lg bg-slate-900/60 border border-slate-800 hover:border-slate-700 text-left transition-colors cursor-pointer"
+          className="w-full flex items-center justify-between p-3 rounded-lg bg-slate-900/60 border border-slate-800 hover:border-slate-700 text-left transition-all duration-150 active:scale-[0.99] cursor-pointer"
         >
           <div className="flex items-center gap-2.5">
             <Sliders className="w-4 h-4 text-blue-400" />
@@ -1315,15 +1314,11 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
               </span>
             </div>
           </div>
-          {isAdvancedOpen ? (
-            <ChevronUp className="w-4 h-4 text-slate-400" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-slate-400" />
-          )}
+          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isAdvancedOpen ? 'rotate-180' : ''}`} />
         </button>
 
         {isAdvancedOpen && (
-          <div className="mt-2.5 p-4 rounded-lg bg-slate-900/40 border border-slate-800 space-y-4">
+          <div className="mt-2.5 p-4 rounded-lg bg-slate-900/40 border border-slate-800 space-y-4 animate-fadeIn">
             {/* False Awakening Checkbox & Details */}
             <div className="space-y-3 pb-4 border-b border-slate-800/80">
               <label className="flex items-start gap-3 cursor-pointer">

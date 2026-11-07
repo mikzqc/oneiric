@@ -82,10 +82,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
                   end={item.to === '/'}
                   onClick={onCloseMobile}
                   className={({ isActive }) =>
-                    `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    `flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-all duration-150 ease-out ${
                       isActive
                         ? 'bg-blue-600/15 text-blue-300 font-semibold border-l-2 border-blue-500 pl-2'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 hover:translate-x-0.5'
                     }`
                   }
                 >

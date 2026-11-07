@@ -99,7 +99,7 @@ export const MonthCalendar: React.FC<MonthCalendarProps> = ({
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="p-1.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-1.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-all duration-150 active:scale-90 cursor-pointer"
               aria-label="Previous month"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -107,7 +107,7 @@ export const MonthCalendar: React.FC<MonthCalendarProps> = ({
             <button
               type="button"
               onClick={handleNextMonth}
-              className="p-1.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-1.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-all duration-150 active:scale-90 cursor-pointer"
               aria-label="Next month"
             >
               <ChevronRight className="w-4 h-4" />
@@ -151,7 +151,7 @@ export const MonthCalendar: React.FC<MonthCalendarProps> = ({
               key={dateStr}
               type="button"
               onClick={() => onSelectDate(dateStr)}
-              className={`h-16 sm:h-18 p-1.5 sm:p-2 rounded-lg text-left border flex flex-col justify-between transition-colors cursor-pointer relative group ${
+              className={`h-16 sm:h-18 p-1.5 sm:p-2 rounded-lg text-left border flex flex-col justify-between transition-all duration-150 ease-out hover:-translate-y-0.5 active:scale-95 cursor-pointer relative group ${
                 isSelected
                   ? 'bg-slate-800/90 border-blue-500 ring-1 ring-blue-500'
                   : hasLucid

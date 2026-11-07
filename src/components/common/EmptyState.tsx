@@ -25,7 +25,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   return (
     <div
-      className={`flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-xl border border-slate-800 bg-[#0f172a]/40 ${className}`}
+      className={`flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-xl border border-slate-800 bg-[#0f172a]/40 animate-fadeIn ${className}`}
     >
       <div className="w-10 h-10 rounded-lg bg-slate-800/80 border border-slate-700/80 flex items-center justify-center text-slate-400 mb-3.5">
         {icon || <BookOpen className="w-5 h-5" />}

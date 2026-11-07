@@ -170,7 +170,7 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
                 key={tr}
                 type="button"
                 onClick={() => setFilter((prev) => ({ ...prev, timeRange: tr }))}
-                className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md font-medium transition-all duration-150 active:scale-95 cursor-pointer ${
                   filter.timeRange === tr
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-slate-200'
@@ -258,7 +258,7 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-3 py-2 border-b-2 text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+              className={`flex items-center gap-2 px-3 py-2 border-b-2 text-xs font-semibold whitespace-nowrap transition-all duration-150 active:scale-95 cursor-pointer ${
                 isActive
                   ? 'border-blue-500 text-blue-400 bg-blue-950/20'
                   : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
@@ -280,7 +280,7 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
 
       {/* Tab Content 1: Signs & Lucidity */}
       {activeTab === 'signs-lucidity' && (
-        <div className="space-y-4">
+        <div className="space-y-4 animate-fadeIn">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-200">
               Dream Signs Associated with Conscious Lucidity
@@ -326,7 +326,7 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
 
       {/* Tab Content 2: Signs & Vividness */}
       {activeTab === 'signs-vividness' && (
-        <div className="space-y-4">
+        <div className="space-y-4 animate-fadeIn">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-200">
               Dream Signs Associated with Sensory Vividness (1–5 Scale)
@@ -372,7 +372,7 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
 
       {/* Tab Content 3: Emotional Triggers */}
       {activeTab === 'emotions' && (
-        <div className="space-y-4">
+        <div className="space-y-4 animate-fadeIn">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-200">
               Emotional States Co-occurring with Conscious Awakenings
@@ -416,7 +416,7 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
 
       {/* Tab Content 4: False Awakenings */}
       {activeTab === 'false-awakenings' && (
-        <div className="space-y-4">
+        <div className="space-y-4 animate-fadeIn">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-200">
               Recurring Elements Disproportionately Present in False Awakenings
@@ -461,7 +461,7 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
 
       {/* Tab Content 5: Scene Complexity */}
       {activeTab === 'scene-complexity' && (
-        <div className="space-y-4">
+        <div className="space-y-4 animate-fadeIn">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-200">
               Single-Scene vs. Multi-Scene Dream Structure
@@ -559,7 +559,7 @@ export const CorrelationPage: React.FC<CorrelationPageProps> = ({ onOpenDream })
 
       {/* Tab Content 6: Induction Techniques vs Recall */}
       {activeTab === 'techniques' && (
-        <div className="space-y-4">
+        <div className="space-y-4 animate-fadeIn">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-slate-200">
               Personal Induction Protocols vs. Recall Outcomes

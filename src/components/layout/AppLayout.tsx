@@ -9,6 +9,7 @@ import { backupService } from '../../services/backupService';
 import { celebrationService, LucidCelebrationEvent } from '../../services/celebrationService';
 import { LucidCelebrationModal } from '../celebration/LucidCelebrationModal';
 import { UndoNotification } from '../common/UndoNotification';
+import { AtmosphericBackground } from './AtmosphericBackground';
 import { X, Info } from 'lucide-react';
 
 export const AppLayout: React.FC = () => {
@@ -109,9 +110,12 @@ export const AppLayout: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#0b132b] text-slate-100">
+    <div className="relative flex h-screen w-screen overflow-hidden bg-[#0b132b] text-slate-100">
+      {/* Subtle Atmospheric Background System */}
+      <AtmosphericBackground />
+
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex md:shrink-0">
+      <div className="relative z-20 hidden md:flex md:shrink-0">
         <Sidebar />
       </div>
 
@@ -119,15 +123,15 @@ export const AppLayout: React.FC = () => {
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden" role="dialog" aria-modal="true">
           <div
-            className="fixed inset-0 bg-black/80 transition-opacity"
+            className="fixed inset-0 bg-black/80 animate-backdrop"
             onClick={() => setIsMobileMenuOpen(false)}
             aria-hidden="true"
           />
-          <div className="relative w-64 max-w-[80vw] h-full bg-[#0b132b] border-r border-slate-800 shadow-xl z-10 flex flex-col">
+          <div className="relative w-64 max-w-[80vw] h-full bg-[#0b132b] border-r border-slate-800 shadow-xl z-10 flex flex-col animate-drawer">
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="absolute top-3.5 right-3.5 p-1.5 text-slate-400 hover:text-slate-100 rounded-md hover:bg-slate-800"
+              className="absolute top-3.5 right-3.5 p-1.5 text-slate-400 hover:text-slate-100 rounded-md hover:bg-slate-800 transition-colors"
               aria-label="Close menu"
             >
               <X className="w-4 h-4" />
@@ -138,10 +142,10 @@ export const AppLayout: React.FC = () => {
       )}
 
       {/* Main Content Area */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+      <div className="relative z-10 flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Sample Preview Banner if active */}
         {isSamplePreview && (
-          <div className="bg-amber-950/70 border-b border-amber-800/80 px-4 py-2 text-xs text-amber-200 flex items-center justify-between gap-3 shrink-0">
+          <div className="bg-amber-950/70 border-b border-amber-800/80 px-4 py-2 text-xs text-amber-200 flex items-center justify-between gap-3 shrink-0 animate-fadeIn">
             <div className="flex items-center gap-2">
               <Info className="w-4 h-4 text-amber-400 shrink-0" />
               <span>
@@ -151,7 +155,7 @@ export const AppLayout: React.FC = () => {
             <button
               type="button"
               onClick={handleExitPreview}
-              className="px-2.5 py-1 rounded-md bg-amber-900/80 hover:bg-amber-800 text-amber-100 border border-amber-700/80 font-medium cursor-pointer shrink-0 transition-colors"
+              className="px-2.5 py-1 rounded-md bg-amber-900/80 hover:bg-amber-800 text-amber-100 border border-amber-700/80 font-medium cursor-pointer shrink-0 transition-all duration-150 active:scale-95"
             >
               Exit Preview
             </button>
@@ -166,7 +170,7 @@ export const AppLayout: React.FC = () => {
         />
 
         <div className="flex-1 overflow-y-auto w-full">
-          <main className="p-4 sm:p-6 lg:p-7 max-w-7xl mx-auto w-full">
+          <main key={location.pathname} className="p-4 sm:p-6 lg:p-7 max-w-7xl mx-auto w-full animate-fadeIn">
             <Outlet
               context={{
                 onOpenNewDream: handleOpenNewDream,

@@ -84,10 +84,32 @@ export const preferencesService = {
       xl: '1.1875rem', // 19px
     };
     root.style.setProperty('--font-size-narrative', fontSizes[currentPrefs.narrativeFontSize] || fontSizes.base);
+
+    // Apply Motion Preference & Reduced Motion Class
+    const shouldReduceMotion =
+      currentPrefs.motionPreference === 'reduced' ||
+      (currentPrefs.motionPreference === 'auto' &&
+        typeof window !== 'undefined' &&
+        window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
+
+    if (shouldReduceMotion) {
+      root.classList.add('reduce-motion');
+    } else {
+      root.classList.remove('reduce-motion');
+    }
   },
 
   init(): void {
     this.applyPreferences();
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+      media.addEventListener('change', () => {
+        const prefs = this.getPreferences();
+        if (prefs.motionPreference === 'auto') {
+          this.applyPreferences(prefs);
+        }
+      });
+    }
   },
 
   recordLastUsedLucidity(lucidity: LucidityLevel): void {

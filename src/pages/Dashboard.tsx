@@ -284,7 +284,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         key={opt.value}
                         type="button"
                         onClick={() => handleRangeChange(opt.value)}
-                        className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none ${
+                        className={`px-2.5 py-1 rounded-md font-medium transition-all duration-150 active:scale-95 cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none ${
                           isSelected
                             ? 'bg-blue-600 text-white shadow-sm'
                             : 'text-slate-400 hover:text-slate-200'
@@ -455,10 +455,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {stats.recentDreams.map((dream) => (
+            {stats.recentDreams.map((dream, idx) => (
               <DreamCard
                 key={dream.id}
                 dream={dream}
+                index={idx}
                 onView={setSelectedDreamForView}
                 onEdit={onEditDream}
                 onDelete={setDreamToDelete}

@@ -7,7 +7,6 @@ import {
   RefreshCw,
   Search,
   ChevronDown,
-  ChevronUp,
   BookOpen,
   Eye,
 } from 'lucide-react';
@@ -788,12 +787,12 @@ export const FaqPage: React.FC = () => {
             return (
               <div
                 key={item.id}
-                className="rounded-xl bg-[#101a38] border border-slate-800 overflow-hidden transition-colors"
+                className="rounded-xl bg-[#101a38] border border-slate-800 overflow-hidden transition-all duration-200 hover:border-slate-700/80"
               >
                 <button
                   type="button"
                   onClick={() => toggleItem(item.id)}
-                  className="w-full px-5 py-4 flex items-center justify-between text-left gap-4 hover:bg-slate-900/50 transition-colors cursor-pointer"
+                  className="w-full px-5 py-4 flex items-center justify-between text-left gap-4 hover:bg-slate-900/50 transition-all duration-150 active:scale-[0.99] cursor-pointer"
                   aria-expanded={isOpen}
                 >
                   <span className="font-medium text-slate-100 text-sm sm:text-base flex items-center gap-2.5">
@@ -804,14 +803,14 @@ export const FaqPage: React.FC = () => {
                     {item.category === 'privacy' && <ShieldCheck className="w-4 h-4 text-indigo-400 shrink-0" />}
                     <span>{item.question}</span>
                   </span>
-                  {isOpen ? (
-                    <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
-                  )}
+                  <ChevronDown
+                    className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${
+                      isOpen ? 'rotate-180' : ''
+                    }`}
+                  />
                 </button>
                 {isOpen && (
-                  <div className="px-5 pb-5 pt-1 border-t border-slate-800/80 bg-[#0d152e]">
+                  <div className="px-5 pb-5 pt-1 border-t border-slate-800/80 bg-[#0d152e] animate-fadeIn">
                     {item.answer}
                   </div>
                 )}

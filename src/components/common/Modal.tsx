@@ -55,14 +55,14 @@ export const Modal: React.FC<ModalProps> = ({
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity duration-200"
+        className="fixed inset-0 bg-black/75 backdrop-blur-sm animate-backdrop transition-opacity duration-200"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Modal Container */}
       <div
-        className={`relative w-full ${maxWidthClasses[maxWidth]} bg-[#0f172a] border border-slate-800 rounded-xl shadow-xl z-10 overflow-hidden my-auto max-h-[90vh] flex flex-col`}
+        className={`relative w-full ${maxWidthClasses[maxWidth]} bg-[#0f172a] border border-slate-800 rounded-xl shadow-xl z-10 overflow-hidden my-auto max-h-[90vh] flex flex-col animate-modal`}
       >
         {/* Header */}
         {(title || showCloseButton) && (

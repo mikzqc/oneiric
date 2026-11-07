@@ -96,9 +96,13 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({
         />
       ) : (
         <div className="relative pl-6 sm:pl-8 border-l border-slate-800/80 space-y-8">
-          {nights.map((night) => {
+          {nights.map((night, idx) => {
             return (
-              <div key={night.date} className="relative group">
+              <div
+                key={night.date}
+                style={{ animationDelay: `${Math.min(idx, 10) * 40}ms` }}
+                className="relative group animate-card"
+              >
                 {/* Timeline node icon */}
                 <div
                   className={`absolute -left-[31px] sm:-left-[39px] top-1.5 w-7 h-7 rounded-full border flex items-center justify-center transition-colors ${
@@ -123,7 +127,7 @@ export const TimelinePage: React.FC<TimelinePageProps> = ({
                 </div>
 
                 {/* Night Header Card */}
-                <div className="p-4 sm:p-5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
+                <div className="p-4 sm:p-5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 transition-all duration-200 space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800">
                     <div>
                       <h2 className="text-sm sm:text-base font-semibold text-slate-100">

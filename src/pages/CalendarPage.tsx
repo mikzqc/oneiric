@@ -173,10 +173,11 @@ export const CalendarPage: React.FC<CalendarPageProps> = ({
                 </div>
               ) : (
                 <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-                  {selectedDateDreams.map((dream) => (
+                  {selectedDateDreams.map((dream, idx) => (
                     <DreamCard
                       key={dream.id}
                       dream={dream}
+                      index={idx}
                       onView={setSelectedDreamForView}
                       onEdit={onEditDream}
                       onDelete={setDreamToDelete}
