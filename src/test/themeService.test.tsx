@@ -78,16 +78,26 @@ describe('Theme Management System', () => {
   });
 
   describe('ThemeSelectorCard Component', () => {
-    it('renders all 15 themes in the grid by default', () => {
+    it('opens dropdown and displays themes when trigger is clicked', () => {
       render(<ThemeSelectorCard />);
+
+      const trigger = screen.getByLabelText('Select theme dropdown');
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+
+      fireEvent.click(trigger);
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
 
       for (const theme of THEMES_CATALOG) {
         expect(screen.getAllByText(theme.name).length).toBeGreaterThanOrEqual(1);
       }
     });
 
-    it('filters themes by category pills', () => {
+    it('filters themes by category pills inside the dropdown', () => {
       render(<ThemeSelectorCard />);
+
+      // Open dropdown
+      const trigger = screen.getByLabelText('Select theme dropdown');
+      fireEvent.click(trigger);
 
       // Filter by Earthy
       const earthyButton = screen.getByRole('button', { name: /Earthy & Organic/i });
@@ -99,12 +109,16 @@ describe('Theme Management System', () => {
       expect(screen.queryByText('Nordic Aurora')).not.toBeInTheDocument();
     });
 
-    it('switches the active theme when clicking a theme card', () => {
+    it('switches the active theme when selecting from the dropdown', () => {
       const onFeedback = vi.fn();
       render(<ThemeSelectorCard onFeedback={onFeedback} />);
 
-      const obsidianCard = screen.getByText('Abyssal Obsidian');
-      fireEvent.click(obsidianCard);
+      // Open dropdown
+      const trigger = screen.getByLabelText('Select theme dropdown');
+      fireEvent.click(trigger);
+
+      const obsidianOption = screen.getByText('Abyssal Obsidian');
+      fireEvent.click(obsidianOption);
 
       expect(themeService.getCurrentThemeId()).toBe('abyssal-obsidian');
       expect(document.documentElement.getAttribute('data-theme')).toBe('abyssal-obsidian');
