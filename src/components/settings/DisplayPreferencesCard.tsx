@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sliders, Type, LayoutGrid, Clock, Calendar, Wind } from 'lucide-react';
+import { Sliders, Type, LayoutGrid, Clock, Calendar, Wind, LineChart, RotateCcw } from 'lucide-react';
 import {
   preferencesService,
   PREFERENCES_CHANGED_EVENT,
@@ -333,6 +333,83 @@ export const DisplayPreferencesCard: React.FC<DisplayPreferencesCardProps> = ({ 
                 }`}
               />
             </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Graph Line Colors */}
+      <div className="pt-4 border-t border-slate-800/80 space-y-3">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+            <LineChart className="w-3.5 h-3.5 text-blue-400" />
+            <span>Activity Graph Line Colors</span>
+          </label>
+          {(prefs.chartTotalColor !== '#3b82f6' || prefs.chartLucidColor !== '#06b6d4') && (
+            <button
+              type="button"
+              onClick={() =>
+                update(
+                  { chartTotalColor: '#3b82f6', chartLucidColor: '#06b6d4' },
+                  'Graph line colors'
+                )
+              }
+              className="text-[11px] text-slate-400 hover:text-slate-200 flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>Reset to default</span>
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Total Line Color */}
+          <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-800 flex items-center justify-between gap-3">
+            <div>
+              <span className="text-xs font-semibold text-slate-200 block">Total Dreams Line</span>
+              <span className="text-[11px] text-slate-400 block font-mono mt-0.5">
+                {prefs.chartTotalColor || '#3b82f6'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="relative flex items-center justify-center cursor-pointer">
+                <span
+                  className="w-7 h-7 rounded-lg border border-slate-700/80 shadow-sm transition-transform hover:scale-105"
+                  style={{ backgroundColor: prefs.chartTotalColor || '#3b82f6' }}
+                />
+                <input
+                  type="color"
+                  value={prefs.chartTotalColor || '#3b82f6'}
+                  onChange={(e) => update({ chartTotalColor: e.target.value }, 'Total line color')}
+                  className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                  aria-label="Pick color for Total dreams line"
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* Lucid Line Color */}
+          <div className="p-3 rounded-lg bg-slate-900/50 border border-slate-800 flex items-center justify-between gap-3">
+            <div>
+              <span className="text-xs font-semibold text-slate-200 block">Lucid Dreams Line</span>
+              <span className="text-[11px] text-slate-400 block font-mono mt-0.5">
+                {prefs.chartLucidColor || '#06b6d4'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="relative flex items-center justify-center cursor-pointer">
+                <span
+                  className="w-7 h-7 rounded-lg border border-slate-700/80 shadow-sm transition-transform hover:scale-105"
+                  style={{ backgroundColor: prefs.chartLucidColor || '#06b6d4' }}
+                />
+                <input
+                  type="color"
+                  value={prefs.chartLucidColor || '#06b6d4'}
+                  onChange={(e) => update({ chartLucidColor: e.target.value }, 'Lucid line color')}
+                  className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                  aria-label="Pick color for Lucid dreams line"
+                />
+              </label>
+            </div>
           </div>
         </div>
       </div>

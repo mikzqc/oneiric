@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -8,6 +8,8 @@ import {
   Tooltip,
   CartesianGrid,
 } from 'recharts';
+import { preferencesService, PREFERENCES_CHANGED_EVENT } from '../../services/preferencesService';
+import { UserPreferences } from '../../types/preferences';
 
 interface RecallChartDataPoint {
   date: string;
@@ -19,9 +21,31 @@ interface RecallChartDataPoint {
 
 interface RecallChartProps {
   data: RecallChartDataPoint[];
+  totalColor?: string;
+  lucidColor?: string;
 }
 
-export const RecallChart: React.FC<RecallChartProps> = ({ data }) => {
+export const RecallChart: React.FC<RecallChartProps> = ({
+  data,
+  totalColor: propTotalColor,
+  lucidColor: propLucidColor,
+}) => {
+  const [prefs, setPrefs] = useState<UserPreferences>(() => preferencesService.getPreferences());
+
+  useEffect(() => {
+    const handlePrefsChange = (e: Event) => {
+      const custom = e as CustomEvent<UserPreferences>;
+      if (custom.detail) {
+        setPrefs(custom.detail);
+      }
+    };
+    window.addEventListener(PREFERENCES_CHANGED_EVENT, handlePrefsChange);
+    return () => window.removeEventListener(PREFERENCES_CHANGED_EVENT, handlePrefsChange);
+  }, []);
+
+  const effectiveTotalColor = propTotalColor || prefs.chartTotalColor || '#3b82f6';
+  const effectiveLucidColor = propLucidColor || prefs.chartLucidColor || '#06b6d4';
+
   const maxCount = data.length > 0 ? Math.max(...data.map((d) => d.count), 3) : 3;
   const isReduced =
     typeof window !== 'undefined' &&
@@ -37,12 +61,12 @@ export const RecallChart: React.FC<RecallChartProps> = ({ data }) => {
         >
           <defs>
             <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
-              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
+              <stop offset="5%" stopColor={effectiveTotalColor} stopOpacity={0.4} />
+              <stop offset="95%" stopColor={effectiveTotalColor} stopOpacity={0.0} />
             </linearGradient>
             <linearGradient id="colorLucid" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.6} />
-              <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.0} />
+              <stop offset="5%" stopColor={effectiveLucidColor} stopOpacity={0.6} />
+              <stop offset="95%" stopColor={effectiveLucidColor} stopOpacity={0.0} />
             </linearGradient>
           </defs>
           <CartesianGrid
@@ -75,13 +99,23 @@ export const RecallChart: React.FC<RecallChartProps> = ({ data }) => {
                     <p className="font-semibold text-slate-200">
                       {item.label} ({item.fullLabel})
                     </p>
-                    <div className="flex items-center gap-2 text-blue-300">
-                      <span className="w-2 h-2 rounded-full bg-blue-500" />
-                      <span>Total Recalled: <strong className="text-white">{item.count}</strong></span>
+                    <div className="flex items-center gap-2" style={{ color: effectiveTotalColor }}>
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: effectiveTotalColor }}
+                      />
+                      <span>
+                        Total Recalled: <strong className="text-white">{item.count}</strong>
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2 text-cyan-300">
-                      <span className="w-2 h-2 rounded-full bg-cyan-400" />
-                      <span>Lucid Dreams: <strong className="text-white">{item.lucidCount}</strong></span>
+                    <div className="flex items-center gap-2" style={{ color: effectiveLucidColor }}>
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ backgroundColor: effectiveLucidColor }}
+                      />
+                      <span>
+                        Lucid Dreams: <strong className="text-white">{item.lucidCount}</strong>
+                      </span>
                     </div>
                   </div>
                 );
@@ -92,7 +126,7 @@ export const RecallChart: React.FC<RecallChartProps> = ({ data }) => {
           <Area
             type="monotone"
             dataKey="count"
-            stroke="#3b82f6"
+            stroke={effectiveTotalColor}
             strokeWidth={2.5}
             fillOpacity={1}
             fill="url(#colorTotal)"
@@ -104,7 +138,7 @@ export const RecallChart: React.FC<RecallChartProps> = ({ data }) => {
           <Area
             type="monotone"
             dataKey="lucidCount"
-            stroke="#06b6d4"
+            stroke={effectiveLucidColor}
             strokeWidth={2}
             fillOpacity={1}
             fill="url(#colorLucid)"

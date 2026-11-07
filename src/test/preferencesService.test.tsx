@@ -85,6 +85,19 @@ describe('preferencesService', () => {
     expect(reset.cardDensity).toBe('comfortable');
     expect(preferencesService.getPreferences().cardDensity).toBe('comfortable');
   });
+
+  it('updates and persists custom graph line colors to preferences and CSS properties', () => {
+    preferencesService.updatePreferences({
+      chartTotalColor: '#8b5cf6',
+      chartLucidColor: '#ec4899',
+    });
+
+    const prefs = preferencesService.getPreferences();
+    expect(prefs.chartTotalColor).toBe('#8b5cf6');
+    expect(prefs.chartLucidColor).toBe('#ec4899');
+    expect(document.documentElement.style.getPropertyValue('--chart-total-color')).toBe('#8b5cf6');
+    expect(document.documentElement.style.getPropertyValue('--chart-lucid-color')).toBe('#ec4899');
+  });
 });
 
 describe('dateUtils with preferences integration', () => {

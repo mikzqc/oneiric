@@ -4,6 +4,7 @@ import { LucidityLevel } from '../types/dream';
 import { formatDate } from '../utils/dateUtils';
 import { EmptyState } from '../components/common/EmptyState';
 import { AnimatedNumber } from '../components/common/AnimatedNumber';
+import { preferencesService, PREFERENCES_CHANGED_EVENT } from '../services/preferencesService';
 import {
   ResponsiveContainer,
   AreaChart,
@@ -20,6 +21,7 @@ import {
   TrendingUp,
   Info,
   Clock,
+  RotateCcw,
 } from 'lucide-react';
 
 export const AnalyticsPage: React.FC = () => {
@@ -27,6 +29,29 @@ export const AnalyticsPage: React.FC = () => {
   const [lucidityFilter, setLucidityFilter] = useState<'all' | LucidityLevel>('all');
   const [data, setData] = useState<AnalyticsSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [chartTotalColor, setChartTotalColor] = useState<string>(
+    () => preferencesService.getPreferences().chartTotalColor || '#3b82f6'
+  );
+  const [chartLucidColor, setChartLucidColor] = useState<string>(
+    () => preferencesService.getPreferences().chartLucidColor || '#06b6d4'
+  );
+
+  useEffect(() => {
+    const handlePrefsChange = (e: Event) => {
+      const custom = e as CustomEvent<{ chartTotalColor?: string; chartLucidColor?: string }>;
+      if (custom.detail) {
+        if (custom.detail.chartTotalColor) setChartTotalColor(custom.detail.chartTotalColor);
+        if (custom.detail.chartLucidColor) setChartLucidColor(custom.detail.chartLucidColor);
+      }
+    };
+    window.addEventListener(PREFERENCES_CHANGED_EVENT, handlePrefsChange);
+    return () => window.removeEventListener(PREFERENCES_CHANGED_EVENT, handlePrefsChange);
+  }, []);
+
+  const isCustomColors =
+    chartTotalColor.toLowerCase() !== '#3b82f6' ||
+    (chartLucidColor.toLowerCase() !== '#06b6d4' && chartLucidColor.toLowerCase() !== '#06b6d4');
 
   useEffect(() => {
     let isMounted = true;
@@ -218,15 +243,72 @@ export const AnalyticsPage: React.FC = () => {
                 <p className="text-xs text-slate-400">Total remembered dreams vs lucid experiences</p>
               </div>
 
-              <div className="flex items-center gap-4 text-xs">
-                <div className="flex items-center gap-1.5 text-blue-300">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-blue-500" />
-                  <span>Total Dreams</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-cyan-300">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-cyan-400" />
-                  <span>Lucid Awakenings</span>
-                </div>
+              <div className="flex items-center gap-3 text-xs">
+                <label className="flex items-center gap-1.5 cursor-pointer group" title="Change Total line color">
+                  <span className="relative flex items-center justify-center">
+                    <span
+                      className="w-2.5 h-2.5 rounded-sm border border-white/20 shadow-xs transition-transform group-hover:scale-110"
+                      style={{ backgroundColor: chartTotalColor }}
+                    />
+                    <input
+                      type="color"
+                      value={chartTotalColor}
+                      onChange={(e) => {
+                        setChartTotalColor(e.target.value);
+                        preferencesService.updatePreferences({ chartTotalColor: e.target.value });
+                      }}
+                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                      aria-label="Pick color for Total dreams"
+                    />
+                  </span>
+                  <span className="font-medium group-hover:text-white transition-colors">
+                    Total Dreams
+                  </span>
+                </label>
+
+                <label className="flex items-center gap-1.5 cursor-pointer group" title="Change Lucid line color">
+                  <span className="relative flex items-center justify-center">
+                    <span
+                      className="w-2.5 h-2.5 rounded-sm border border-white/20 shadow-xs transition-transform group-hover:scale-110"
+                      style={{ backgroundColor: chartLucidColor }}
+                    />
+                    <input
+                      type="color"
+                      value={chartLucidColor}
+                      onChange={(e) => {
+                        setChartLucidColor(e.target.value);
+                        preferencesService.updatePreferences({ chartLucidColor: e.target.value });
+                      }}
+                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                      aria-label="Pick color for Lucid awakenings"
+                    />
+                  </span>
+                  <span
+                    className="font-medium group-hover:brightness-125 transition-all"
+                    style={{ color: chartLucidColor }}
+                  >
+                    Lucid Awakenings
+                  </span>
+                </label>
+
+                {isCustomColors && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setChartTotalColor('#3b82f6');
+                      setChartLucidColor('#06b6d4');
+                      preferencesService.updatePreferences({
+                        chartTotalColor: '#3b82f6',
+                        chartLucidColor: '#06b6d4',
+                      });
+                    }}
+                    className="text-[10px] text-slate-400 hover:text-slate-200 transition-colors flex items-center gap-1 cursor-pointer pl-1 border-l border-slate-800"
+                    title="Reset line colors to default"
+                  >
+                    <RotateCcw className="w-2.5 h-2.5" />
+                    <span>Reset</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -235,12 +317,12 @@ export const AnalyticsPage: React.FC = () => {
                 <AreaChart data={data.recallTimeline} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="anColorTotal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor={chartTotalColor} stopOpacity={0.4} />
+                      <stop offset="95%" stopColor={chartTotalColor} stopOpacity={0.0} />
                     </linearGradient>
                     <linearGradient id="anColorLucid" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.6} />
-                      <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor={chartLucidColor} stopOpacity={0.6} />
+                      <stop offset="95%" stopColor={chartLucidColor} stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.05)" vertical={false} />
@@ -253,10 +335,16 @@ export const AnalyticsPage: React.FC = () => {
                         return (
                           <div className="p-3 bg-slate-900 border border-slate-700 rounded-lg shadow-xl text-xs space-y-1">
                             <p className="font-semibold text-slate-200">{formatDate(item.date)}</p>
-                            <p className="text-blue-300">Total Dreams: <strong className="text-white">{item.total}</strong></p>
-                            <p className="text-cyan-300">Lucid Dreams: <strong className="text-white">{item.lucid}</strong></p>
+                            <p style={{ color: chartTotalColor }}>
+                              Total Dreams: <strong className="text-white">{item.total}</strong>
+                            </p>
+                            <p style={{ color: chartLucidColor }}>
+                              Lucid Dreams: <strong className="text-white">{item.lucid}</strong>
+                            </p>
                             {item.controlAvg !== null && (
-                              <p className="text-slate-400">Control Avg: <strong className="text-blue-200">{item.controlAvg}/5</strong></p>
+                              <p className="text-slate-400">
+                                Control Avg: <strong className="text-blue-200">{item.controlAvg}/5</strong>
+                              </p>
                             )}
                           </div>
                         );
@@ -264,8 +352,8 @@ export const AnalyticsPage: React.FC = () => {
                       return null;
                     }}
                   />
-                  <Area type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={2} fill="url(#anColorTotal)" />
-                  <Area type="monotone" dataKey="lucid" stroke="#06b6d4" strokeWidth={2} fill="url(#anColorLucid)" />
+                  <Area type="monotone" dataKey="total" stroke={chartTotalColor} strokeWidth={2} fill="url(#anColorTotal)" />
+                  <Area type="monotone" dataKey="lucid" stroke={chartLucidColor} strokeWidth={2} fill="url(#anColorLucid)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

@@ -85,6 +85,10 @@ export const preferencesService = {
     };
     root.style.setProperty('--font-size-narrative', fontSizes[currentPrefs.narrativeFontSize] || fontSizes.base);
 
+    // Apply Custom Graph Line Colors
+    root.style.setProperty('--chart-total-color', currentPrefs.chartTotalColor || '#3b82f6');
+    root.style.setProperty('--chart-lucid-color', currentPrefs.chartLucidColor || '#06b6d4');
+
     // Apply Motion Preference & Reduced Motion Class
     const shouldReduceMotion =
       currentPrefs.motionPreference === 'reduced' ||

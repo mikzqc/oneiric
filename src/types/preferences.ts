@@ -38,6 +38,8 @@ export interface UserPreferences {
   timeFormat: TimeFormatOption;
   motionPreference: MotionOption;
   enableAtmosphericParticles: boolean;
+  chartTotalColor: string;
+  chartLucidColor: string;
 
   // Analytics & Retention
   defaultAnalyticsWindow: '1w' | '2w' | '1m' | 'all';
@@ -59,6 +61,8 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   timeFormat: '12h',
   motionPreference: 'auto',
   enableAtmosphericParticles: true,
+  chartTotalColor: '#3b82f6',
+  chartLucidColor: '#06b6d4',
 
   defaultAnalyticsWindow: '1w',
   autoPurgeTrashDays: 30,

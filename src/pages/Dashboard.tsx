@@ -14,6 +14,7 @@ import { EmptyState } from '../components/common/EmptyState';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
 import { formatDate, getTodayDateString } from '../utils/dateUtils';
+import { preferencesService, PREFERENCES_CHANGED_EVENT } from '../services/preferencesService';
 import {
   BookOpen,
   Sparkles,
@@ -22,6 +23,7 @@ import {
   ArrowRight,
   Plus,
   Trash2,
+  RotateCcw,
 } from 'lucide-react';
 
 interface DashboardStats {
@@ -97,6 +99,49 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [selectedDreamForView, setSelectedDreamForView] = useState<DreamEntry | null>(null);
   const [dreamToDelete, setDreamToDelete] = useState<DreamEntry | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Graph Line Custom Colors
+  const [chartTotalColor, setChartTotalColor] = useState<string>(
+    () => preferencesService.getPreferences().chartTotalColor || '#3b82f6'
+  );
+  const [chartLucidColor, setChartLucidColor] = useState<string>(
+    () => preferencesService.getPreferences().chartLucidColor || '#06b6d4'
+  );
+
+  useEffect(() => {
+    const handlePrefsChange = (e: Event) => {
+      const custom = e as CustomEvent<{ chartTotalColor?: string; chartLucidColor?: string }>;
+      if (custom.detail) {
+        if (custom.detail.chartTotalColor) setChartTotalColor(custom.detail.chartTotalColor);
+        if (custom.detail.chartLucidColor) setChartLucidColor(custom.detail.chartLucidColor);
+      }
+    };
+    window.addEventListener(PREFERENCES_CHANGED_EVENT, handlePrefsChange);
+    return () => window.removeEventListener(PREFERENCES_CHANGED_EVENT, handlePrefsChange);
+  }, []);
+
+  const handleUpdateTotalColor = (newColor: string) => {
+    setChartTotalColor(newColor);
+    preferencesService.updatePreferences({ chartTotalColor: newColor });
+  };
+
+  const handleUpdateLucidColor = (newColor: string) => {
+    setChartLucidColor(newColor);
+    preferencesService.updatePreferences({ chartLucidColor: newColor });
+  };
+
+  const handleResetChartColors = () => {
+    setChartTotalColor('#3b82f6');
+    setChartLucidColor('#06b6d4');
+    preferencesService.updatePreferences({
+      chartTotalColor: '#3b82f6',
+      chartLucidColor: '#06b6d4',
+    });
+  };
+
+  const isCustomColors =
+    chartTotalColor.toLowerCase() !== '#3b82f6' ||
+    (chartLucidColor.toLowerCase() !== '#06b6d4' && chartLucidColor.toLowerCase() !== '#06b6d4');
 
   const loadDashboardData = async (targetRange: RecallRange = recallRange) => {
     try {
@@ -298,21 +343,76 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   })}
                 </div>
 
-                {/* Legend */}
+                {/* Interactive Legend with Color Pickers */}
                 <div className="flex items-center gap-3 text-xs pl-1">
-                  <div className="flex items-center gap-1.5 text-slate-300">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-blue-500" />
-                    <span>Total</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-cyan-300">
-                    <span className="w-2.5 h-2.5 rounded-sm bg-cyan-400" />
-                    <span>Lucid</span>
-                  </div>
+                  <label
+                    className="flex items-center gap-1.5 cursor-pointer group"
+                    title="Click to customize Total dreams line color"
+                  >
+                    <span className="relative flex items-center justify-center">
+                      <span
+                        className="w-3 h-3 rounded-sm border border-white/20 shadow-xs transition-transform group-hover:scale-110"
+                        style={{ backgroundColor: chartTotalColor }}
+                      />
+                      <input
+                        type="color"
+                        value={chartTotalColor}
+                        onChange={(e) => handleUpdateTotalColor(e.target.value)}
+                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                        aria-label="Pick color for Total dreams line"
+                      />
+                    </span>
+                    <span className="text-slate-300 font-medium group-hover:text-white transition-colors">
+                      Total
+                    </span>
+                  </label>
+
+                  <label
+                    className="flex items-center gap-1.5 cursor-pointer group"
+                    title="Click to customize Lucid dreams line color"
+                  >
+                    <span className="relative flex items-center justify-center">
+                      <span
+                        className="w-3 h-3 rounded-sm border border-white/20 shadow-xs transition-transform group-hover:scale-110"
+                        style={{ backgroundColor: chartLucidColor }}
+                      />
+                      <input
+                        type="color"
+                        value={chartLucidColor}
+                        onChange={(e) => handleUpdateLucidColor(e.target.value)}
+                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                        aria-label="Pick color for Lucid dreams line"
+                      />
+                    </span>
+                    <span
+                      className="font-medium group-hover:brightness-125 transition-all"
+                      style={{ color: chartLucidColor }}
+                    >
+                      Lucid
+                    </span>
+                  </label>
+
+                  {isCustomColors && (
+                    <button
+                      type="button"
+                      onClick={handleResetChartColors}
+                      className="text-[10px] text-slate-400 hover:text-slate-200 transition-colors flex items-center gap-1 cursor-pointer pl-1 border-l border-slate-800"
+                      title="Reset graph line colors to default"
+                      aria-label="Reset graph line colors to default"
+                    >
+                      <RotateCcw className="w-2.5 h-2.5" />
+                      <span>Reset</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
 
-            <RecallChart data={stats.recallChartData} />
+            <RecallChart
+              data={stats.recallChartData}
+              totalColor={chartTotalColor}
+              lucidColor={chartLucidColor}
+            />
           </div>
 
           {/* No-Dream Days & Recall (1 col) */}
