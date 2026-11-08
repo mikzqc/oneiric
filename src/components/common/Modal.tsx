@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 export interface ModalProps {
@@ -20,16 +21,24 @@ export const Modal: React.FC<ModalProps> = ({
   maxWidth = 'lg',
   showCloseButton = true,
 }) => {
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const contentBodyRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
+    if (!isOpen) return;
+
+    if (overlayRef.current) overlayRef.current.scrollTop = 0;
+    if (contentBodyRef.current) contentBodyRef.current.scrollTop = 0;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
         onClose();
       }
     };
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      window.addEventListener('keydown', handleKeyDown);
-    }
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
       document.body.style.overflow = '';
       window.removeEventListener('keydown', handleKeyDown);
@@ -47,8 +56,9 @@ export const Modal: React.FC<ModalProps> = ({
     '4xl': 'max-w-4xl',
   };
 
-  return (
+  const modalNode = (
     <div
+      ref={overlayRef}
       role="dialog"
       aria-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
@@ -85,8 +95,10 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Content Body */}
-        <div className="p-6 overflow-y-auto grow custom-scrollbar">{children}</div>
+        <div ref={contentBodyRef} className="p-6 overflow-y-auto grow custom-scrollbar">{children}</div>
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalNode, document.body) : modalNode;
 };

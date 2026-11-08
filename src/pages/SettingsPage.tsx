@@ -24,6 +24,10 @@ import {
   EyeOff,
   Clock,
   Globe,
+  SlidersHorizontal,
+  Palette,
+  BookOpen,
+  Cloud,
 } from 'lucide-react';
 import { SyncSettingsCard } from '../components/sync/SyncSettingsCard';
 import { RecentlyDeletedCard } from '../components/settings/RecentlyDeletedCard';
@@ -32,6 +36,8 @@ import { DisplayPreferencesCard } from '../components/settings/DisplayPreference
 import { JournalPreferencesCard } from '../components/settings/JournalPreferencesCard';
 
 export const SettingsPage: React.FC = () => {
+  type SettingsTab = 'all' | 'appearance' | 'journal' | 'sync' | 'vault';
+  const [activeTab, setActiveTab] = useState<SettingsTab>('all');
   const [hasSample, setHasSample] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<{
     type: 'success' | 'error';
@@ -369,198 +375,65 @@ export const SettingsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Section 0: End-to-End Multi-Device Sync Card */}
-      <SyncSettingsCard onFeedback={showFeedback} />
-
-      {/* Theme Settings Card */}
-      <ThemeSelectorCard onFeedback={showFeedback} />
-
-      {/* Journaling & Entry Defaults */}
-      <JournalPreferencesCard onFeedback={showFeedback} />
-
-      {/* Typography, Reading & Layout Preferences */}
-      <DisplayPreferencesCard onFeedback={showFeedback} />
-
-      {/* Section 1: Backup & Restoration */}
-      <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
-        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
-          <Database className="w-5 h-5 text-blue-400" />
-          <div>
-            <h2 className="text-base font-bold text-slate-100">Backup & Restoration</h2>
-            <p className="text-xs text-slate-400">Export your journal archive as plain or password-protected encrypted files</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Export Card */}
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between space-y-3">
-            <div>
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-200 mb-1">
-                <Download className="w-4 h-4 text-blue-400" />
-                <span>Export Journal Archive</span>
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed mb-3">
-                Download a complete, structured file containing all dreams, lucidity notes, tags, dream signs, and technique logs.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleExportPlain}
-                icon={<Download className="w-4 h-4" />}
-                className="flex-1"
-              >
-                Plain JSON
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setExportPassphrase('');
-                  setIsExportEncryptedModalOpen(true);
-                }}
-                icon={<Lock className="w-4 h-4 text-amber-400" />}
-                className="flex-1"
-              >
-                Encrypted (.enc)
-              </Button>
-            </div>
-          </div>
-
-          {/* Import Card */}
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between space-y-3">
-            <div>
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-200 mb-1">
-                <Upload className="w-4 h-4 text-cyan-400" />
-                <span>Restore from Backup</span>
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed mb-3">
-                Upload a verified Oneiric backup (.json or password-protected .enc.json). All data is validated before storage.
-              </p>
-            </div>
-            <div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json,.enc.json,application/json"
-                onChange={handleFileChange}
-                className="hidden"
-                id="import-file-input"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => fileInputRef.current?.click()}
-                icon={<Upload className="w-4 h-4" />}
-              >
-                Select Backup File (.json / .enc)
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Section 2: Sample Data Controls */}
-      <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
-        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
-          <Sparkles className="w-5 h-5 text-amber-400" />
-          <div>
-            <h2 className="text-base font-bold text-slate-100">Sample Exploration Preview</h2>
-            <p className="text-xs text-slate-400">
-              Preview Oneiric features with realistic dream entries and technique records
-            </p>
-          </div>
-        </div>
-
-        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-          Previewing sample data populates 5 astronomical dream narratives (including 2 lucid experiences) and 4 technique logs. This preview is purely temporary and <strong>will automatically disappear upon page refresh</strong>, leaving your real journal records untouched.
-        </p>
-
-        <div className="flex flex-wrap items-center gap-3 pt-2">
-          <Button
-            variant="secondary"
-            onClick={handleLoadSample}
-            icon={<Sparkles className="w-4 h-4 text-amber-400" />}
-          >
-            Preview Sample Data (Disappears on refresh)
-          </Button>
-
-          {hasSample && (
-            <Button
-              variant="outline"
-              onClick={() => setIsClearSampleDialogOpen(true)}
+      {/* Category Navigation Tabs */}
+      <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-900/80 border border-slate-800 overflow-x-auto no-scrollbar">
+        {[
+          { id: 'all', label: 'All Settings', icon: SlidersHorizontal },
+          { id: 'appearance', label: 'Appearance & Display', icon: Palette },
+          { id: 'journal', label: 'Journal & Schedule', icon: BookOpen },
+          { id: 'sync', label: 'Multi-Device Sync', icon: Cloud },
+          { id: 'vault', label: 'Data Vault & Storage', icon: Database },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id as SettingsTab)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150 cursor-pointer whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                isActive
+                  ? 'bg-blue-600 text-white font-semibold shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+              }`}
             >
-              Exit Preview Now
-            </Button>
+              <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 1. Appearance & Display Category */}
+      {(activeTab === 'all' || activeTab === 'appearance') && (
+        <div className="space-y-6">
+          {activeTab === 'all' && (
+            <div className="flex items-center gap-2 pt-2 border-t border-slate-800/60">
+              <Palette className="w-4 h-4 text-blue-400" />
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Appearance & Display
+              </h3>
+            </div>
           )}
+          {/* Theme Settings Card */}
+      <ThemeSelectorCard onFeedback={showFeedback} />
+          {/* Typography, Reading & Layout Preferences */}
+      <DisplayPreferencesCard onFeedback={showFeedback} />
         </div>
-      </section>
+      )}
 
-      {/* Section 3: Lucid Dream Celebration / Party Mode Preferences & Diagnostics */}
-      <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-5">
-        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
-          <Sparkles className="w-5 h-5 text-amber-400" />
-          <div>
-            <h2 className="text-base font-bold text-slate-100">Lucid Dream Celebrations</h2>
-            <p className="text-xs text-slate-400">
-              Configure full-screen celebration party mode and testing tools
-            </p>
-          </div>
-        </div>
-
-        {/* Toggle Subsequent Celebrations */}
-        <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-slate-900/80 border border-slate-800">
-          <div className="space-y-1">
-            <label htmlFor="toggle-subsequent-celebration" className="text-sm font-semibold text-slate-200 cursor-pointer">
-              Subsequent Lucid Dream Celebrations
-            </label>
-            <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
-              When turned on, the full-screen celebration erupts whenever you record any lucid dream. When turned off, celebrations only trigger for your first-ever lucid dream, keeping subsequent journal entries quiet and uninterrupted.
-            </p>
-          </div>
-          <div className="flex items-center pt-0.5">
-            <input
-              id="toggle-subsequent-celebration"
-              type="checkbox"
-              checked={subsequentCelebrationEnabled}
-              onChange={(e) => handleToggleSubsequent(e.target.checked)}
-              className="w-5 h-5 rounded bg-slate-800 border-slate-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
-            />
-          </div>
-        </div>
-
-        {/* Diagnostics & Testing Tools */}
-        <div className="space-y-2 pt-2 border-t border-slate-800/60">
-          <div className="text-xs font-semibold text-slate-300">
-            Developer & QA Testing Tools
-          </div>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Preview the full-screen celebration safely without modifying your dream database or creating fake entries.
-          </p>
-
-          <div className="flex flex-wrap items-center gap-3 pt-1">
-            <Button
-              variant="secondary"
-              onClick={() => celebrationService.triggerDevPreview(true)}
-              icon={<Sparkles className="w-4 h-4 text-amber-400" />}
-            >
-              Preview First Lucid Dream (Full Explosion)
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => celebrationService.triggerDevPreview(false)}
-              icon={<CheckCircle2 className="w-4 h-4 text-blue-400" />}
-            >
-              Preview Subsequent Lucid Dream (Standard)
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Section 4: Local Time Zone & Wake-Up Schedule */}
+      {/* 2. Journal & Schedule Category */}
+      {(activeTab === 'all' || activeTab === 'journal') && (
+        <div className="space-y-6">
+          {activeTab === 'all' && (
+            <div className="flex items-center gap-2 pt-2 border-t border-slate-800/60">
+              <BookOpen className="w-4 h-4 text-cyan-400" />
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Journaling & Schedule
+              </h3>
+            </div>
+          )}
+          {/* Section 4: Local Time Zone & Wake-Up Schedule */}
       <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
         <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
           <Clock className="w-5 h-5 text-blue-400" />
@@ -704,8 +577,217 @@ export const SettingsPage: React.FC = () => {
           </div>
         </div>
       </section>
+          {/* Journaling & Entry Defaults */}
+      <JournalPreferencesCard onFeedback={showFeedback} />
+          {/* Section 3: Lucid Dream Celebration / Party Mode Preferences & Diagnostics */}
+      <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-5">
+        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
+          <Sparkles className="w-5 h-5 text-amber-400" />
+          <div>
+            <h2 className="text-base font-bold text-slate-100">Lucid Dream Celebrations</h2>
+            <p className="text-xs text-slate-400">
+              Configure full-screen celebration party mode and testing tools
+            </p>
+          </div>
+        </div>
 
-      {/* Section 5: Privacy & Local Storage Architecture */}
+        {/* Toggle Subsequent Celebrations */}
+        <div className="flex items-start justify-between gap-4 p-4 rounded-lg bg-slate-900/80 border border-slate-800">
+          <div className="space-y-1">
+            <label htmlFor="toggle-subsequent-celebration" className="text-sm font-semibold text-slate-200 cursor-pointer">
+              Subsequent Lucid Dream Celebrations
+            </label>
+            <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
+              When turned on, the full-screen celebration erupts whenever you record any lucid dream. When turned off, celebrations only trigger for your first-ever lucid dream, keeping subsequent journal entries quiet and uninterrupted.
+            </p>
+          </div>
+          <div className="flex items-center pt-0.5">
+            <input
+              id="toggle-subsequent-celebration"
+              type="checkbox"
+              checked={subsequentCelebrationEnabled}
+              onChange={(e) => handleToggleSubsequent(e.target.checked)}
+              className="w-5 h-5 rounded bg-slate-800 border-slate-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            />
+          </div>
+        </div>
+
+        {/* Diagnostics & Testing Tools */}
+        <div className="space-y-2 pt-2 border-t border-slate-800/60">
+          <div className="text-xs font-semibold text-slate-300">
+            Developer & QA Testing Tools
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Preview the full-screen celebration safely without modifying your dream database or creating fake entries.
+          </p>
+
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            <Button
+              variant="secondary"
+              onClick={() => celebrationService.triggerDevPreview(true)}
+              icon={<Sparkles className="w-4 h-4 text-amber-400" />}
+            >
+              Preview First Lucid Dream (Full Explosion)
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => celebrationService.triggerDevPreview(false)}
+              icon={<CheckCircle2 className="w-4 h-4 text-blue-400" />}
+            >
+              Preview Subsequent Lucid Dream (Standard)
+            </Button>
+          </div>
+        </div>
+      </section>
+        </div>
+      )}
+
+      {/* 3. Multi-Device Sync Category */}
+      {(activeTab === 'all' || activeTab === 'sync') && (
+        <div className="space-y-6">
+          {activeTab === 'all' && (
+            <div className="flex items-center gap-2 pt-2 border-t border-slate-800/60">
+              <Cloud className="w-4 h-4 text-blue-400" />
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Cloud & Multi-Device Sync
+              </h3>
+            </div>
+          )}
+          {/* Section 0: End-to-End Multi-Device Sync Card */}
+      <SyncSettingsCard onFeedback={showFeedback} />
+        </div>
+      )}
+
+      {/* 4. Data Vault, Backups & Storage Category */}
+      {(activeTab === 'all' || activeTab === 'vault') && (
+        <div className="space-y-6">
+          {activeTab === 'all' && (
+            <div className="flex items-center gap-2 pt-2 border-t border-slate-800/60">
+              <Database className="w-4 h-4 text-emerald-400" />
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Data Vault & Backups
+              </h3>
+            </div>
+          )}
+          {/* Section 1: Backup & Restoration */}
+      <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
+        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
+          <Database className="w-5 h-5 text-blue-400" />
+          <div>
+            <h2 className="text-base font-bold text-slate-100">Backup & Restoration</h2>
+            <p className="text-xs text-slate-400">Export your journal archive as plain or password-protected encrypted files</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Export Card */}
+          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-200 mb-1">
+                <Download className="w-4 h-4 text-blue-400" />
+                <span>Export Journal Archive</span>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed mb-3">
+                Download a complete, structured file containing all dreams, lucidity notes, tags, dream signs, and technique logs.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleExportPlain}
+                icon={<Download className="w-4 h-4" />}
+                className="flex-1"
+              >
+                Plain JSON
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setExportPassphrase('');
+                  setIsExportEncryptedModalOpen(true);
+                }}
+                icon={<Lock className="w-4 h-4 text-amber-400" />}
+                className="flex-1"
+              >
+                Encrypted (.enc)
+              </Button>
+            </div>
+          </div>
+
+          {/* Import Card */}
+          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col justify-between space-y-3">
+            <div>
+              <div className="flex items-center gap-2 text-sm font-semibold text-slate-200 mb-1">
+                <Upload className="w-4 h-4 text-cyan-400" />
+                <span>Restore from Backup</span>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed mb-3">
+                Upload a verified Oneiric backup (.json or password-protected .enc.json). All data is validated before storage.
+              </p>
+            </div>
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json,.enc.json,application/json"
+                onChange={handleFileChange}
+                className="hidden"
+                id="import-file-input"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full"
+                onClick={() => fileInputRef.current?.click()}
+                icon={<Upload className="w-4 h-4" />}
+              >
+                Select Backup File (.json / .enc)
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+          {/* Section: Recently Deleted Trash Archive */}
+      <RecentlyDeletedCard onFeedback={showFeedback} />
+          {/* Section 2: Sample Data Controls */}
+      <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
+        <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
+          <Sparkles className="w-5 h-5 text-amber-400" />
+          <div>
+            <h2 className="text-base font-bold text-slate-100">Sample Exploration Preview</h2>
+            <p className="text-xs text-slate-400">
+              Preview Oneiric features with realistic dream entries and technique records
+            </p>
+          </div>
+        </div>
+
+        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+          Previewing sample data populates 5 astronomical dream narratives (including 2 lucid experiences) and 4 technique logs. This preview is purely temporary and <strong>will automatically disappear upon page refresh</strong>, leaving your real journal records untouched.
+        </p>
+
+        <div className="flex flex-wrap items-center gap-3 pt-2">
+          <Button
+            variant="secondary"
+            onClick={handleLoadSample}
+            icon={<Sparkles className="w-4 h-4 text-amber-400" />}
+          >
+            Preview Sample Data (Disappears on refresh)
+          </Button>
+
+          {hasSample && (
+            <Button
+              variant="outline"
+              onClick={() => setIsClearSampleDialogOpen(true)}
+            >
+              Exit Preview Now
+            </Button>
+          )}
+        </div>
+      </section>
+          {/* Section 5: Privacy & Local Storage Architecture */}
       <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
         <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
           <ShieldCheck className="w-5 h-5 text-emerald-400" />
@@ -732,11 +814,7 @@ export const SettingsPage: React.FC = () => {
           </ul>
         </div>
       </section>
-
-      {/* Section: Recently Deleted Trash Archive */}
-      <RecentlyDeletedCard onFeedback={showFeedback} />
-
-      {/* Section 6: Danger Zone (Factory Reset) */}
+          {/* Section 6: Danger Zone (Factory Reset) */}
       <section className="p-6 rounded-xl bg-red-950/20 border border-red-900/40 space-y-4">
         <div className="flex items-center gap-2.5 pb-4 border-b border-red-900/40">
           <Trash2 className="w-5 h-5 text-red-400" />
@@ -760,6 +838,9 @@ export const SettingsPage: React.FC = () => {
           </Button>
         </div>
       </section>
+
+        </div>
+      )}
 
       {/* Export Encrypted Backup Modal */}
       {isExportEncryptedModalOpen && (
@@ -1053,3 +1134,4 @@ export const SettingsPage: React.FC = () => {
     </div>
   );
 };
+
