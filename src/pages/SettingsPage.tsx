@@ -60,6 +60,17 @@ export const SettingsPage: React.FC = () => {
     return () => window.removeEventListener(WAKE_TIME_CHANGED_EVENT, handleWakeChange);
   }, []);
 
+  const [liveClockTime, setLiveClockTime] = useState(() =>
+    wakeTimeService.getCurrentTime(wakeConfig.timeZone)
+  );
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setLiveClockTime(wakeTimeService.getCurrentTime(wakeConfig.timeZone));
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [wakeConfig.timeZone]);
+
   const handleWakeTimeChange = (newTime: string) => {
     if (!newTime) return;
     const updated = wakeTimeService.setManualWakeTime(newTime);
@@ -615,31 +626,79 @@ export const SettingsPage: React.FC = () => {
                       : 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60'
                   }`}
                 >
-                  {wakeConfig.isManualOverride ? 'Manual Override' : 'Current Clock Time'}
+                  {wakeConfig.isManualOverride ? 'Fixed Schedule' : 'Auto Live Time'}
                 </span>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed mb-3">
-                Automatically initializes new entries with the actual current time in your local time zone upon waking. You can set a fixed preference here or adjust individual entries in the dream editor.
+                Choose how new dream entries initialize their wake-up time: automatically tracking your live current clock time, or locked to a fixed schedule.
               </p>
-            </div>
 
-            <div className="flex items-center gap-3 pt-2 border-t border-slate-800/60">
-              <input
-                type="time"
-                value={wakeConfig.wakeTime}
-                onChange={(e) => handleWakeTimeChange(e.target.value)}
-                className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 text-sm font-mono focus:outline-none focus:border-blue-500 transition-colors"
-              />
-              {wakeConfig.isManualOverride && (
-                <Button
-                  variant="ghost"
-                  size="xs"
+              {/* Mode Selection Pills */}
+              <div className="flex items-center gap-2 mb-1">
+                <button
+                  type="button"
                   onClick={handleResetWakeTime}
                   disabled={isRefreshingTz}
-                  className="text-xs text-slate-400 hover:text-slate-200"
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors cursor-pointer flex items-center gap-1.5 ${
+                    !wakeConfig.isManualOverride
+                      ? 'bg-blue-950/80 border-blue-500 text-blue-200'
+                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                  }`}
                 >
-                  Reset to Current Time
-                </Button>
+                  <span className={`w-1.5 h-1.5 rounded-full ${!wakeConfig.isManualOverride ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+                  <span>Auto (Live Current Time)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!wakeConfig.isManualOverride) {
+                      handleWakeTimeChange(wakeConfig.wakeTime || '07:30');
+                    }
+                  }}
+                  className={`px-2.5 py-1 rounded-md text-xs font-medium border transition-colors cursor-pointer ${
+                    wakeConfig.isManualOverride
+                      ? 'bg-blue-950/80 border-blue-500 text-blue-200'
+                      : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
+                  }`}
+                >
+                  Fixed Schedule
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 text-xs">
+              {!wakeConfig.isManualOverride ? (
+                <div className="flex items-center justify-between w-full">
+                  <div className="text-slate-300 font-mono flex items-center gap-2">
+                    <span className="text-slate-400 font-sans text-xs">Live Time:</span>
+                    <span className="text-blue-300 font-semibold">{liveClockTime}</span>
+                    <span className="text-[10px] text-slate-500 font-sans">({wakeConfig.timeZone.split('/').pop()?.replace(/_/g, ' ') || wakeConfig.timeZone})</span>
+                  </div>
+                  <span className="text-[10px] text-emerald-400/90 font-sans bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-900/60">
+                    Auto-updates on entry creation
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 text-xs">Fixed time:</span>
+                    <input
+                      type="time"
+                      value={wakeConfig.wakeTime}
+                      onChange={(e) => handleWakeTimeChange(e.target.value)}
+                      className="px-2.5 py-1 rounded-md bg-slate-950 border border-slate-700 text-slate-100 text-xs font-mono focus:outline-none focus:border-blue-500 transition-colors"
+                    />
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    onClick={handleResetWakeTime}
+                    disabled={isRefreshingTz}
+                    className="text-xs text-blue-400 hover:text-blue-300"
+                  >
+                    Switch to Auto
+                  </Button>
+                </div>
               )}
             </div>
           </div>

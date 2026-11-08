@@ -207,6 +207,21 @@ export const wakeTimeService = {
   },
 
   /**
+   * Helper to return the current clock time in the configured (or specified) time zone.
+   */
+  getCurrentTime(timeZone?: string): string {
+    const tz = timeZone || this.getWakeTimeConfig().timeZone;
+    return getCurrentTimeInTimeZone(tz);
+  },
+
+  /**
+   * Checks whether automatic live time mode is active (no manual fixed override).
+   */
+  isAutoMode(): boolean {
+    return !this.getWakeTimeConfig().isManualOverride;
+  },
+
+  /**
    * Asynchronously refreshes time zone via IP/browser and updates configuration.
    * Preserves manual user overrides if set.
    * For automatic users, updates the time zone and recalculates current time.

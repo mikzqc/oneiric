@@ -126,6 +126,12 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   const [wakeConfig, setWakeConfig] = useState<WakeTimeConfig>(() =>
     wakeTimeService.getWakeTimeConfig()
   );
+  // Track whether live clock auto-updating is active for this entry
+  const [isAutoWakeTime, setIsAutoWakeTime] = useState<boolean>(() => {
+    if (isEditing) return false;
+    if (wakeConfig.isManualOverride) return false;
+    return !newDraft?.wakeUpTime;
+  });
   const [wakeUpTime, setWakeUpTime] = useState(() => {
     if (initialDream?.wakeUpTime !== undefined) return initialDream.wakeUpTime;
     if (newDraft?.wakeUpTime !== undefined) return newDraft.wakeUpTime;
@@ -163,26 +169,45 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   const [hasRestoredEditDraft, setHasRestoredEditDraft] = useState(Boolean(recoveredEditDraft));
   const [autosaveTime, setAutosaveTime] = useState<string | null>(null);
 
-  // Sync auto-detected wake time changes
+  // Live auto-updating wake-up time while drafting a new dream
+  useEffect(() => {
+    if (!isAutoWakeTime || isEditing) return;
+
+    const syncCurrentTime = () => {
+      const nowTime = wakeTimeService.getCurrentTime(wakeConfig.timeZone);
+      setWakeUpTime(nowTime);
+    };
+
+    // Keep it synced while writing the dream
+    const interval = setInterval(syncCurrentTime, 15000);
+    return () => clearInterval(interval);
+  }, [isAutoWakeTime, isEditing, wakeConfig.timeZone]);
+
+  // Sync auto-detected wake time changes from settings or network events
   useEffect(() => {
     const handleWakeChange = (e: Event) => {
       const custom = e as CustomEvent<WakeTimeConfig>;
       if (custom.detail) {
         setWakeConfig(custom.detail);
-        if (!isEditing && !newDraft?.wakeUpTime && !custom.detail.isManualOverride) {
+        if (!isEditing && isAutoWakeTime && !custom.detail.isManualOverride) {
           setWakeUpTime(custom.detail.wakeTime);
         }
       }
     };
     window.addEventListener(WAKE_TIME_CHANGED_EVENT, handleWakeChange);
     return () => window.removeEventListener(WAKE_TIME_CHANGED_EVENT, handleWakeChange);
-  }, [isEditing, newDraft]);
+  }, [isEditing, isAutoWakeTime]);
 
   const handleWakeUpTimeChange = (val: string) => {
+    setIsAutoWakeTime(false);
     setWakeUpTime(val);
-    if (!isEditing && val) {
-      wakeTimeService.setManualWakeTime(val);
-    }
+    // Crucial: Individual entry edits do not mutate the user's global settings in localStorage.
+  };
+
+  const handleSetCurrentTime = () => {
+    const nowTime = wakeTimeService.getCurrentTime(wakeConfig.timeZone);
+    setWakeUpTime(nowTime);
+    setIsAutoWakeTime(true);
   };
 
   // Related Dreams Linking
@@ -911,26 +936,55 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
             </label>
             <span
               title={
-                wakeConfig.isManualOverride
-                  ? `Manually set wake-up time (${wakeConfig.timeZone})`
-                  : `Current local time (${wakeConfig.timeZone})`
+                isAutoWakeTime
+                  ? `Auto-updating to live clock time (${wakeConfig.timeZone})`
+                  : wakeConfig.isManualOverride
+                  ? `Fixed schedule default (${wakeConfig.timeZone})`
+                  : `Custom wake-up time for this entry (${wakeConfig.timeZone})`
               }
-              className="text-[10px] text-slate-400 font-normal flex items-center gap-1"
+              className={`text-[10px] px-1.5 py-0.5 rounded border font-mono flex items-center gap-1 ${
+                isAutoWakeTime
+                  ? 'bg-emerald-950/60 text-emerald-300 border-emerald-800/60'
+                  : 'bg-slate-900 text-slate-400 border-slate-800'
+              }`}
             >
-              <Globe className="w-3 h-3 text-slate-500" />
+              <Globe className="w-2.5 h-2.5 text-slate-500" />
               <span className="truncate max-w-[120px]">
-                {wakeConfig.isManualOverride ? 'Manual' : 'Current Time'} ({wakeConfig.timeZone.split('/').pop()?.replace(/_/g, ' ') || wakeConfig.timeZone})
+                {isAutoWakeTime ? 'Auto Live' : 'Manual'} ({wakeConfig.timeZone.split('/').pop()?.replace(/_/g, ' ') || wakeConfig.timeZone})
               </span>
             </span>
           </div>
-          <input
-            id="dream-time"
-            type="time"
-            value={wakeUpTime}
-            onChange={(e) => handleWakeUpTimeChange(e.target.value)}
-            placeholder="HH:mm"
-            className="w-full px-3 py-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-100 text-xs focus:outline-none focus:border-blue-500 transition-colors"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              id="dream-time"
+              type="time"
+              value={wakeUpTime}
+              onChange={(e) => handleWakeUpTimeChange(e.target.value)}
+              placeholder="HH:mm"
+              className="flex-1 px-3 py-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-100 text-xs font-mono focus:outline-none focus:border-blue-500 transition-colors"
+            />
+            {isAutoWakeTime ? (
+              <button
+                type="button"
+                onClick={() => setIsAutoWakeTime(false)}
+                title="Auto-update is active (time keeps updated while writing). Click to pause."
+                className="px-2.5 py-2 rounded-lg bg-emerald-950/50 hover:bg-emerald-900/60 border border-emerald-700/70 text-emerald-300 text-xs font-medium flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Auto</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSetCurrentTime}
+                title="Sync to current clock time and enable automatic updates"
+                className="px-2.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-xs font-medium flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
+              >
+                <Clock className="w-3.5 h-3.5 text-blue-400" />
+                <span>Now</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Recall Quality */}
