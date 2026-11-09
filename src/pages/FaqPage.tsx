@@ -286,6 +286,24 @@ export const FaqPage: React.FC = () => {
         </div>
       ),
     },
+    {
+      id: 'calendar-view-and-day-drawer',
+      category: 'journal',
+      question: 'How do I use the Calendar view and Day Detail Drawer?',
+      answer: (
+        <div className="space-y-2.5 text-slate-300 text-sm leading-relaxed">
+          <p>
+            The <strong>Calendar</strong> view (<code className="text-blue-300 bg-slate-900 px-1 py-0.5 rounded text-xs">/calendar</code>) provides a monthly nocturnal heatmap of your sleep and recall history:
+          </p>
+          <ul className="text-xs space-y-1.5 list-disc list-inside text-slate-300">
+            <li><strong>Visual Recall Badges:</strong> Days with dreams feature recall dots, lucid dream markers, false awakening tags, and multi-entry counter pills.</li>
+            <li><strong>Day Detail Drawer:</strong> Clicking any calendar cell slides open a detailed side panel showing all dreams logged for that specific night, complete with vividness ratings, wake times, emotions, and scene breakdowns.</li>
+            <li><strong>Quick Log from Drawer:</strong> Easily record a dream directly for the selected date by clicking <strong>+ Log Dream</strong> inside the drawer.</li>
+            <li><strong>Unremembered Night Logging:</strong> Click <strong>Log Unremembered</strong> from the calendar drawer to mark nights with zero recall, keeping your habit streaks accurate without falsifying statistics.</li>
+          </ul>
+        </div>
+      ),
+    },
 
     // --- Lucid Induction & Signs ---
     {
@@ -452,6 +470,23 @@ export const FaqPage: React.FC = () => {
             <li><strong>Sign-to-Lucidity Correlation:</strong> Compares lucidity probability when a specific dream sign appears versus your overall baseline lucidity rate.</li>
             <li><strong>Emotion & Complexity Correlation:</strong> Evaluates which emotional tones (e.g., Wonder, Awe, Confusion) and scene complexity counts correspond with heightened dream control.</li>
             <li><strong>Confidence Ratings:</strong> To maintain scientific rigor, correlations require sufficient sample sizes and display ratings: High ($n \ge 5$), Moderate ($3 \le n &lt; 5$), or Low ($n &lt; 3$).</li>
+          </ul>
+        </div>
+      ),
+    },
+    {
+      id: 'technique-logging-and-analytics',
+      category: 'lucid',
+      question: 'How do I log lucid dreaming techniques and evaluate their success rate?',
+      answer: (
+        <div className="space-y-2.5 text-slate-300 text-sm leading-relaxed">
+          <p>
+            The <strong>Techniques</strong> section (<code className="text-blue-300 bg-slate-900 px-1 py-0.5 rounded text-xs">/techniques</code>) features both an educational guide and an empirical logger:
+          </p>
+          <ul className="text-xs space-y-1.5 list-disc list-inside text-slate-300">
+            <li><strong>Log Practice Sessions:</strong> Click <strong>+ Log Practice</strong> to record the technique attempted (MILD, WILD, WBTB, SSILD, Reality Testing, ADA), including target wake time, bedtime, and confidence rating (1–5).</li>
+            <li><strong>Morning Correlation:</strong> When recording your dreams the next morning, Oneiric links your narrative to the practiced technique, tracking whether the protocol produced a lucid dream, a vivid non-lucid dream, or no recall.</li>
+            <li><strong>Sample-Size Transparent Analytics:</strong> In <strong>Analytics</strong> and <strong>Correlations</strong>, inspect your success rate per technique alongside sample sizes ($n = X$). This lets you empirically identify which induction rituals work best for your unique sleep architecture.</li>
           </ul>
         </div>
       ),
@@ -635,6 +670,59 @@ export const FaqPage: React.FC = () => {
         </div>
       ),
     },
+    {
+      id: 'private-dreams-and-vault',
+      category: 'privacy',
+      question: 'How do Private Dreams work, and how does the Private Vault protect them?',
+      answer: (
+        <div className="space-y-2.5 text-slate-300 text-sm leading-relaxed">
+          <p>
+            Oneiric includes a separate, encrypted <strong>Private Vault</strong> (<code className="text-blue-300 bg-slate-900 px-1 py-0.5 rounded text-xs">/vault</code>) for highly sensitive nocturnal entries:
+          </p>
+          <ul className="text-xs space-y-1.5 list-disc list-inside text-slate-300">
+            <li><strong>Stealth Isolation:</strong> When marked private in the Dream Editor or via the lock toggle in the Journal, an entry completely disappears from the standard journal list, recent cards, search, and calendar views.</li>
+            <li><strong>Hardware-Derived AES-256-GCM:</strong> Access to private dreams requires unlocking with your secret PIN or biometric authentication, decrypting the master key in memory.</li>
+            <li><strong>Auto-Lock on Refresh & Close:</strong> To prevent accidental exposure on shared computers, the Private Vault automatically locks whenever the page is refreshed or your browser tab is closed.</li>
+            <li><strong>Analytics Preservation:</strong> Private dreams still increment your total dream count, recall streak, and lucid metrics in Analytics, while keeping titles, narratives, and tags strictly redacted until the vault is unlocked.</li>
+          </ul>
+        </div>
+      ),
+    },
+    {
+      id: 'app-lock-pin-encryption',
+      category: 'privacy',
+      question: 'How does App Lock work, and is my PIN stored on any server?',
+      answer: (
+        <div className="space-y-2.5 text-slate-300 text-sm leading-relaxed">
+          <p>
+            <strong>No, Oneiric never sends or stores your PIN on any server.</strong> All authentication and cryptographic operations run locally on your device:
+          </p>
+          <ul className="text-xs space-y-1.5 list-disc list-inside text-slate-300">
+            <li><strong>Cryptographic PBKDF2 Envelope:</strong> When you set a PIN in <strong>Settings &gt; App Lock & Cryptographic Vault</strong>, Oneiric derives an AES-256-GCM key using PBKDF2 with 100,000 SHA-256 rounds and a unique cryptographic salt.</li>
+            <li><strong>Zero-Knowledge Memory Session:</strong> When you enter your PIN, the key is temporarily decrypted in local memory. Once locked or wiped, the plain key ceases to exist.</li>
+            <li><strong>Optional Auto-Lock on Blur:</strong> Enable <em>Auto-Lock on Inactivity</em> to automatically lock Oneiric whenever you switch browser tabs or minimize your window.</li>
+          </ul>
+        </div>
+      ),
+    },
+    {
+      id: 'biometric-authentication-setup',
+      category: 'privacy',
+      question: 'How do I enable Biometric Unlock (Touch ID, Windows Hello, Face ID)?',
+      answer: (
+        <div className="space-y-2.5 text-slate-300 text-sm leading-relaxed">
+          <p>
+            Oneiric leverages the W3C <strong>WebAuthn</strong> standard to integrate with your operating system's native hardware authenticators:
+          </p>
+          <ul className="text-xs space-y-1.5 list-disc list-inside text-slate-300">
+            <li><strong>Supported Hardware:</strong> Apple Touch ID / Face ID (macOS & iOS), Windows Hello (fingerprint, facial recognition, or PIN), and Android Biometrics.</li>
+            <li><strong>Setup Steps:</strong> First configure a security PIN in <strong>Settings &gt; App Lock & Cryptographic Vault</strong>, then toggle <strong>Enable Biometric Unlock</strong>. Your device will prompt you to confirm your biometric sensor.</li>
+            <li><strong>Hardware Isolation:</strong> Biometric verification happens entirely inside your device's secure enclave (TPM / Apple Secure Enclave). Biometric data never leaves your hardware and is never accessible to website scripts.</li>
+            <li><strong>Fast Unlock:</strong> Once enabled, click <strong>Use Biometrics</strong> on the lock screen or inside the Private Vault for rapid, passwordless access.</li>
+          </ul>
+        </div>
+      ),
+    },
   ];
 
   const filteredItems = faqItems.filter((item) => {
@@ -663,7 +751,7 @@ export const FaqPage: React.FC = () => {
           <span>Frequently Asked Questions & Help Guide</span>
         </h1>
         <p className="text-xs sm:text-sm text-slate-400 mt-1.5">
-          Step-by-step guides for browser setup, voice dictation, deep content search, lucid dreaming protocols, offline operation, and data privacy.
+          Step-by-step guides for browser setup, voice dictation, deep content search, private vault, lucid dreaming protocols, offline operation, and data privacy.
         </p>
       </div>
 
@@ -675,7 +763,7 @@ export const FaqPage: React.FC = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search help topics (e.g., Firefox, voice dictation, search, techniques, offline sync, privacy)..."
+            placeholder="Search help topics (e.g., PIN, vault, biometrics, calendar, techniques, offline sync, privacy)..."
             className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 text-xs sm:text-sm focus:outline-none focus:border-blue-500 placeholder-slate-500 transition-colors"
           />
           {searchQuery && (
