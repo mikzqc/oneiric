@@ -167,10 +167,28 @@ export const PrivateVaultPage: React.FC<PrivateVaultPageProps> = ({
           </div>
         )}
 
-        <form onSubmit={handleUnlockWithPin} className="space-y-3">
+        <div
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              handleUnlockWithPin();
+            }
+          }}
+          className="space-y-3"
+        >
           <input
             type="password"
             inputMode="numeric"
+            name="oneiric-vault-code"
+            id="oneiric-vault-code"
+            autoComplete="one-time-code"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
             value={pinInput}
             onChange={(e) => {
               setPinInput(e.target.value);
@@ -183,7 +201,8 @@ export const PrivateVaultPage: React.FC<PrivateVaultPageProps> = ({
 
           <div className="flex flex-col gap-2">
             <Button
-              type="submit"
+              type="button"
+              onClick={() => handleUnlockWithPin()}
               variant="primary"
               size="md"
               className="w-full justify-center"
@@ -206,7 +225,7 @@ export const PrivateVaultPage: React.FC<PrivateVaultPageProps> = ({
               </Button>
             )}
           </div>
-        </form>
+        </div>
       </div>
     );
   }

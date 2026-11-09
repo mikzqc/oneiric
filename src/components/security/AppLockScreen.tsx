@@ -90,13 +90,31 @@ export const AppLockScreen: React.FC = () => {
         )}
 
         {/* PIN Input Form */}
-        <form onSubmit={handlePinSubmit} className="w-full space-y-4">
+        <div
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              handlePinSubmit();
+            }
+          }}
+          className="w-full space-y-4"
+        >
           <div className="relative">
             <input
               ref={inputRef}
               type="password"
               inputMode="numeric"
               pattern="[0-9]*"
+              name="oneiric-lock-code"
+              id="oneiric-lock-code"
+              autoComplete="one-time-code"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-bwignore="true"
+              data-form-type="other"
               value={pin}
               onChange={(e) => {
                 setPin(e.target.value);
@@ -110,7 +128,8 @@ export const AppLockScreen: React.FC = () => {
 
           <div className="flex flex-col gap-2">
             <Button
-              type="submit"
+              type="button"
+              onClick={() => handlePinSubmit()}
               variant="primary"
               size="md"
               className="w-full justify-center"
@@ -134,7 +153,7 @@ export const AppLockScreen: React.FC = () => {
               </Button>
             )}
           </div>
-        </form>
+        </div>
 
         {/* Cryptographic Protection Guarantee */}
         <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500 font-mono">

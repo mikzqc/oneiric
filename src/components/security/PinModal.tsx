@@ -40,8 +40,8 @@ export const PinModal: React.FC<PinModalProps> = ({
     onClose();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.SyntheticEvent) => {
+    if (e) e.preventDefault();
     setError(null);
     setIsLoading(true);
 
@@ -103,7 +103,15 @@ export const PinModal: React.FC<PinModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose} maxWidth="sm">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <div
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            handleSubmit();
+          }
+        }}
+        className="space-y-4"
+      >
         <div className="flex items-center gap-2.5 pb-3 border-b border-slate-800">
           <div className="p-2 rounded-lg bg-blue-950/60 border border-blue-800/60 text-blue-400">
             <Lock className="w-4 h-4" />
@@ -130,6 +138,16 @@ export const PinModal: React.FC<PinModalProps> = ({
             <input
               type="password"
               inputMode="numeric"
+              name="oneiric-current-code"
+              id="oneiric-current-code"
+              autoComplete="one-time-code"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              data-1p-ignore="true"
+              data-lpignore="true"
+              data-bwignore="true"
+              data-form-type="other"
               value={currentPin}
               onChange={(e) => setCurrentPin(e.target.value)}
               placeholder="••••"
@@ -149,6 +167,16 @@ export const PinModal: React.FC<PinModalProps> = ({
               <input
                 type="password"
                 inputMode="numeric"
+                name="oneiric-new-code"
+                id="oneiric-new-code"
+                autoComplete="one-time-code"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
+                data-form-type="other"
                 value={newPin}
                 onChange={(e) => setNewPin(e.target.value)}
                 placeholder="••••"
@@ -164,6 +192,16 @@ export const PinModal: React.FC<PinModalProps> = ({
               <input
                 type="password"
                 inputMode="numeric"
+                name="oneiric-confirm-code"
+                id="oneiric-confirm-code"
+                autoComplete="one-time-code"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                data-1p-ignore="true"
+                data-lpignore="true"
+                data-bwignore="true"
+                data-form-type="other"
                 value={confirmPin}
                 onChange={(e) => setConfirmPin(e.target.value)}
                 placeholder="••••"
@@ -178,7 +216,8 @@ export const PinModal: React.FC<PinModalProps> = ({
             Cancel
           </Button>
           <Button
-            type="submit"
+            type="button"
+            onClick={() => handleSubmit()}
             variant={isRemoving ? 'danger' : 'primary'}
             size="sm"
             isLoading={isLoading}
@@ -187,7 +226,7 @@ export const PinModal: React.FC<PinModalProps> = ({
             {isSetting ? 'Save PIN' : isChanging ? 'Update PIN' : isRemoving ? 'Remove PIN' : 'Verify'}
           </Button>
         </div>
-      </form>
+      </div>
     </Modal>
   );
 };

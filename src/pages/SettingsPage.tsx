@@ -884,6 +884,10 @@ export const SettingsPage: React.FC = () => {
               <div className="relative">
                 <input
                   type={showExportPassphrase ? 'text' : 'password'}
+                  name="oneiric-export-passphrase"
+                  autoComplete="off"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
                   value={exportPassphrase}
                   onChange={(e) => setExportPassphrase(e.target.value)}
                   placeholder="e.g. astral-lucid-aurora-starlight-prism"
@@ -955,6 +959,10 @@ export const SettingsPage: React.FC = () => {
               <div className="relative">
                 <input
                   type={showDecryptPassphrase ? 'text' : 'password'}
+                  name="oneiric-decrypt-passphrase"
+                  autoComplete="off"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
                   value={decryptPassphrase}
                   onChange={(e) => setDecryptPassphrase(e.target.value)}
                   placeholder="Enter the passphrase used when exporting..."
