@@ -2,7 +2,7 @@ import React from 'react';
 import { DreamEntry, formatTechniqueShortName } from '../../types/dream';
 import { LucidityBadge, EmotionBadge, TagBadge } from '../common/Badge';
 import { formatDate, formatTime } from '../../utils/dateUtils';
-import { Star, Clock, Calendar, Eye, Edit, Trash2, Brain } from 'lucide-react';
+import { Star, Clock, Calendar, Eye, Edit, Trash2, Brain, Bookmark } from 'lucide-react';
 import { SearchMatchDetail } from '../../services/searchService';
 import { preferencesService } from '../../services/preferencesService';
 
@@ -11,6 +11,7 @@ interface DreamCardProps {
   onView: (dream: DreamEntry) => void;
   onEdit: (dream: DreamEntry) => void;
   onDelete: (dream: DreamEntry) => void;
+  onToggleFavorite?: (dream: DreamEntry) => void;
   matchDetails?: SearchMatchDetail[];
   index?: number;
 }
@@ -20,11 +21,14 @@ export const DreamCard: React.FC<DreamCardProps> = ({
   onView,
   onEdit,
   onDelete,
+  onToggleFavorite,
   matchDetails,
   index = 0,
 }) => {
   const isLucid = dream.lucidity === 'lucid';
   const density = preferencesService.getPreferences().cardDensity;
+  const wordCount = dream.narrative ? dream.narrative.trim().split(/\s+/).filter(Boolean).length : 0;
+  const readTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
 
   return (
     <article
@@ -73,18 +77,36 @@ export const DreamCard: React.FC<DreamCardProps> = ({
             )}
           </div>
 
-          {/* Vividness Rating */}
-          <div className="flex items-center gap-0.5" title={`Vividness: ${dream.vividness}/5`}>
-            {[1, 2, 3, 4, 5].map((lvl) => (
-              <Star
-                key={lvl}
-                className={`w-3 h-3 ${
-                  lvl <= dream.vividness
-                    ? 'text-amber-400 fill-amber-400'
-                    : 'text-slate-700'
-                }`}
-              />
-            ))}
+          {/* Vividness Rating & Bookmark */}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite?.(dream);
+              }}
+              className={`p-1 rounded transition-colors ${
+                dream.isFavorite
+                  ? 'text-amber-400 hover:text-amber-300'
+                  : 'text-slate-600 hover:text-slate-400'
+              }`}
+              title={dream.isFavorite ? 'Remove from favorites' : 'Mark as favorite'}
+              aria-label={dream.isFavorite ? 'Remove from favorites' : 'Mark as favorite'}
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${dream.isFavorite ? 'fill-amber-400' : ''}`} />
+            </button>
+            <div className="flex items-center gap-0.5" title={`Vividness: ${dream.vividness}/5`}>
+              {[1, 2, 3, 4, 5].map((lvl) => (
+                <Star
+                  key={lvl}
+                  className={`w-3 h-3 ${
+                    lvl <= dream.vividness
+                      ? 'text-amber-400 fill-amber-400'
+                      : 'text-slate-700'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </div>
 
@@ -128,6 +150,14 @@ export const DreamCard: React.FC<DreamCardProps> = ({
       <div className="pt-2.5 border-t border-slate-800/70 flex flex-wrap items-center justify-between gap-2">
         {/* Emotions & Tags preview */}
         <div className="flex flex-wrap items-center gap-1 max-w-[70%] overflow-hidden">
+          {wordCount > 0 && (
+            <span
+              className="text-[10px] text-slate-400 bg-slate-900/90 px-1.5 py-0.5 rounded border border-slate-800 font-mono shrink-0"
+              title={`${wordCount} words · ~${readTimeMinutes} min read`}
+            >
+              {wordCount}w · {readTimeMinutes}m
+            </span>
+          )}
           {dream.emotions && dream.emotions.slice(0, 2).map((emotion) => (
             <EmotionBadge key={emotion} emotion={emotion} size="sm" />
           ))}

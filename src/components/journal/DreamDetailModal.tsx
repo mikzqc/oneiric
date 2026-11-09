@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { DreamEntry, formatTechniqueDisplayName } from '../../types/dream';
 import { Modal } from '../common/Modal';
 import { LucidityBadge, EmotionBadge, TagBadge } from '../common/Badge';
@@ -16,6 +16,12 @@ import {
   Shield,
   Layers,
   BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Check,
+  Bookmark,
+  FileText,
 } from 'lucide-react';
 
 interface DreamDetailModalProps {
@@ -24,6 +30,11 @@ interface DreamDetailModalProps {
   onClose: () => void;
   onEdit: (dream: DreamEntry) => void;
   onDelete: (dream: DreamEntry) => void;
+  onPrev?: () => void;
+  onNext?: () => void;
+  hasPrev?: boolean;
+  hasNext?: boolean;
+  onToggleFavorite?: (dream: DreamEntry) => void;
 }
 
 export const DreamDetailModal: React.FC<DreamDetailModalProps> = ({
@@ -32,15 +43,100 @@ export const DreamDetailModal: React.FC<DreamDetailModalProps> = ({
   onClose,
   onEdit,
   onDelete,
+  onPrev,
+  onNext,
+  hasPrev,
+  hasNext,
+  onToggleFavorite,
 }) => {
+  const [copied, setCopied] = useState(false);
+
+  // Keyboard navigation for Previous / Next dream
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tagName = target?.tagName?.toLowerCase();
+      if (tagName === 'input' || tagName === 'textarea') return;
+
+      if (e.key === 'ArrowLeft' && hasPrev && onPrev) {
+        e.preventDefault();
+        onPrev();
+      } else if (e.key === 'ArrowRight' && hasNext && onNext) {
+        e.preventDefault();
+        onNext();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, hasPrev, hasNext, onPrev, onNext]);
+
   if (!dream) return null;
+
+  const wordCount = dream.narrative ? dream.narrative.trim().split(/\s+/).filter(Boolean).length : 0;
+  const readTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
+
+  const handleCopyMarkdown = async () => {
+    const lines: string[] = [
+      `# ${dream.title}`,
+      `*Date: ${dream.date}${dream.wakeUpTime ? ` at ${dream.wakeUpTime}` : ''} | Lucidity: ${dream.lucidity} | Vividness: ${dream.vividness}/5*`,
+      '',
+      dream.narrative,
+    ];
+
+    if (dream.interpretationNotes) {
+      lines.push('', '### Interpretation & Reflections', dream.interpretationNotes);
+    }
+    if (dream.dreamSignsNotes) {
+      lines.push('', '### Dream Signs', dream.dreamSignsNotes);
+    }
+    if (dream.tags && dream.tags.length > 0) {
+      lines.push('', `**Tags:** ${dream.tags.join(', ')}`);
+    }
+
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback if clipboard API is restricted
+    }
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} maxWidth="2xl">
       <div className="space-y-6">
-        {/* Top Meta Header */}
+        {/* Top Meta Header & Actions */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
           <div className="flex flex-wrap items-center gap-2.5">
+            {/* Prev / Next Chevrons */}
+            {(onPrev || onNext) && (
+              <div className="flex items-center gap-1 mr-1 border-r border-slate-800 pr-2">
+                <button
+                  type="button"
+                  onClick={onPrev}
+                  disabled={!hasPrev}
+                  className="p-1 rounded-md text-slate-400 hover:text-slate-100 hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                  title="Previous dream (ArrowLeft)"
+                  aria-label="Previous dream"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={onNext}
+                  disabled={!hasNext}
+                  className="p-1 rounded-md text-slate-400 hover:text-slate-100 hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                  title="Next dream (ArrowRight)"
+                  aria-label="Next dream"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
             <LucidityBadge lucidity={dream.lucidity} size="md" />
 
             {dream.falseAwakening && (
@@ -63,7 +159,35 @@ export const DreamDetailModal: React.FC<DreamDetailModalProps> = ({
           </div>
 
           {/* Quick Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            {onToggleFavorite && (
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={
+                  <Bookmark
+                    className={`w-3.5 h-3.5 ${
+                      dream.isFavorite ? 'text-amber-400 fill-amber-400' : 'text-slate-400'
+                    }`}
+                  />
+                }
+                onClick={() => onToggleFavorite(dream)}
+                title={dream.isFavorite ? 'Remove from favorites' : 'Mark as favorite'}
+              >
+                {dream.isFavorite ? 'Starred' : 'Star'}
+              </Button>
+            )}
+
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              onClick={handleCopyMarkdown}
+              title="Copy dream as Markdown"
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </Button>
+
             <Button
               variant="secondary"
               size="sm"
@@ -75,6 +199,7 @@ export const DreamDetailModal: React.FC<DreamDetailModalProps> = ({
             >
               Edit
             </Button>
+
             <Button
               variant="danger"
               size="sm"
@@ -95,7 +220,7 @@ export const DreamDetailModal: React.FC<DreamDetailModalProps> = ({
             {dream.title}
           </h2>
 
-          {/* Quality & Vividness bar */}
+          {/* Quality, Vividness & Reading Metrics bar */}
           <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-slate-400">
             <div className="flex items-center gap-1">
               <span className="text-slate-500">Vividness:</span>
@@ -119,6 +244,13 @@ export const DreamDetailModal: React.FC<DreamDetailModalProps> = ({
               <span className="text-slate-500">Recall:</span>
               <span className="text-slate-300 capitalize font-medium">{dream.recallQuality}</span>
             </div>
+
+            {wordCount > 0 && (
+              <div className="flex items-center gap-1.5 font-mono text-slate-400">
+                <FileText className="w-3.5 h-3.5 text-slate-500" />
+                <span>{wordCount} words · ~{readTimeMinutes}m read</span>
+              </div>
+            )}
 
             {typeof dream.dreamControl === 'number' && dream.dreamControl > 0 && (
               <div className="flex items-center gap-1 text-blue-300">

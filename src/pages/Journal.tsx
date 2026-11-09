@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { dreamService } from '../services/dreamService';
 import { DreamEntry, LucidityLevel, PREDEFINED_EMOTIONS } from '../types/dream';
 import { searchDreams, SearchMatchDetail } from '../services/searchService';
@@ -14,12 +14,15 @@ import {
   Plus,
   BookOpen,
   X,
+  Bookmark,
 } from 'lucide-react';
 
 interface JournalProps {
   onOpenNewDream: () => void;
   onEditDream: (dream: DreamEntry) => void;
 }
+
+type QuickFilter = 'all' | 'starred' | 'lucid' | 'false_awakening' | 'vivid' | 'has_signs';
 
 export const Journal: React.FC<JournalProps> = ({
   onOpenNewDream,
@@ -31,10 +34,14 @@ export const Journal: React.FC<JournalProps> = ({
 
   // Search & Filters state
   const [searchQuery, setSearchQuery] = useState('');
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>('all');
   const [lucidityFilter, setLucidityFilter] = useState<'all' | LucidityLevel>('all');
   const [selectedEmotion, setSelectedEmotion] = useState<string>('all');
   const [selectedTag, setSelectedTag] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+
+  // Input ref for keyboard shortcut focus
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Modals state
   const [selectedDreamForView, setSelectedDreamForView] = useState<DreamEntry | null>(null);
@@ -68,6 +75,24 @@ export const Journal: React.FC<JournalProps> = ({
     };
   }, []);
 
+  // Keyboard shortcut to focus search with '/' or 'Ctrl+K'
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tagName = target?.tagName?.toLowerCase();
+      if (tagName === 'input' || tagName === 'textarea') return;
+
+      if (e.key === '/' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const handleDeleteConfirm = async () => {
     if (!dreamToDelete) return;
     try {
@@ -77,6 +102,16 @@ export const Journal: React.FC<JournalProps> = ({
       await loadJournalData();
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleToggleFavorite = async (dream: DreamEntry) => {
+    const newFav = await dreamService.toggleFavorite(dream.id);
+    setDreams((prev) =>
+      prev.map((d) => (d.id === dream.id ? { ...d, isFavorite: newFav } : d))
+    );
+    if (selectedDreamForView && selectedDreamForView.id === dream.id) {
+      setSelectedDreamForView((prev) => (prev ? { ...prev, isFavorite: newFav } : null));
     }
   };
 
@@ -93,6 +128,23 @@ export const Journal: React.FC<JournalProps> = ({
 
     return baseList
       .filter(({ dream }) => {
+        // Quick filter
+        if (quickFilter === 'starred' && !dream.isFavorite) {
+          return false;
+        }
+        if (quickFilter === 'lucid' && dream.lucidity !== 'lucid') {
+          return false;
+        }
+        if (quickFilter === 'false_awakening' && !dream.falseAwakening) {
+          return false;
+        }
+        if (quickFilter === 'vivid' && (dream.vividness || 0) < 4) {
+          return false;
+        }
+        if (quickFilter === 'has_signs' && (!dream.dreamSignsNotes || !dream.dreamSignsNotes.trim())) {
+          return false;
+        }
+
         // Lucidity filter
         if (lucidityFilter !== 'all' && dream.lucidity !== lucidityFilter) {
           return false;
@@ -119,20 +171,54 @@ export const Journal: React.FC<JournalProps> = ({
         const compare = a.dream.date.localeCompare(b.dream.date) || a.dream.createdAt - b.dream.createdAt;
         return sortOrder === 'newest' ? -compare : compare;
       });
-  }, [dreams, searchQuery, lucidityFilter, selectedEmotion, selectedTag, sortOrder]);
+  }, [dreams, searchQuery, quickFilter, lucidityFilter, selectedEmotion, selectedTag, sortOrder]);
+
+  // Previous / Next Dream Navigation
+  const currentViewIndex = selectedDreamForView
+    ? filteredResults.findIndex((r) => r.dream.id === selectedDreamForView.id)
+    : -1;
+  const hasPrev = currentViewIndex > 0;
+  const hasNext = currentViewIndex >= 0 && currentViewIndex < filteredResults.length - 1;
+
+  const handlePrevDream = () => {
+    if (hasPrev) {
+      setSelectedDreamForView(filteredResults[currentViewIndex - 1].dream);
+    }
+  };
+
+  const handleNextDream = () => {
+    if (hasNext) {
+      setSelectedDreamForView(filteredResults[currentViewIndex + 1].dream);
+    }
+  };
 
   const hasActiveFilters =
     searchQuery.trim() !== '' ||
+    quickFilter !== 'all' ||
     lucidityFilter !== 'all' ||
     selectedEmotion !== 'all' ||
     selectedTag !== 'all';
 
   const resetFilters = () => {
     setSearchQuery('');
+    setQuickFilter('all');
     setLucidityFilter('all');
     setSelectedEmotion('all');
     setSelectedTag('all');
   };
+
+  const quickFilterOptions: { id: QuickFilter; label: string; icon?: React.ReactNode }[] = [
+    { id: 'all', label: 'All' },
+    {
+      id: 'starred',
+      label: 'Starred',
+      icon: <Bookmark className="w-3 h-3 text-amber-400 fill-amber-400" />,
+    },
+    { id: 'lucid', label: 'Lucid Only' },
+    { id: 'false_awakening', label: 'False Awakenings' },
+    { id: 'vivid', label: 'High Vividness (4-5★)' },
+    { id: 'has_signs', label: 'With Dream Signs' },
+  ];
 
   return (
     <div className="space-y-6 animate-fadeIn">
@@ -155,6 +241,28 @@ export const Journal: React.FC<JournalProps> = ({
         </Button>
       </div>
 
+      {/* Quick Filter Pills */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {quickFilterOptions.map((opt) => {
+          const isActive = quickFilter === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setQuickFilter(opt.id)}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer border ${
+                isActive
+                  ? 'bg-blue-600 text-white border-blue-500 shadow-sm'
+                  : 'bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border-slate-800'
+              }`}
+            >
+              {opt.icon}
+              <span>{opt.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Search & Filter Toolbar */}
       <div className="p-3.5 rounded-xl bg-[#0f172a]/70 border border-slate-800 space-y-2.5">
         {/* Search bar + Sort */}
@@ -162,10 +270,11 @@ export const Journal: React.FC<JournalProps> = ({
           <div className="relative grow">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
+              ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search titles, narratives, tags, signs..."
+              placeholder="Search titles, narratives, tags, signs... (Press '/' to focus)"
               className="w-full pl-9 pr-8 py-1.5 rounded-lg bg-slate-900 border border-slate-700/80 text-slate-100 placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             />
             {searchQuery && (
@@ -284,6 +393,7 @@ export const Journal: React.FC<JournalProps> = ({
               onView={setSelectedDreamForView}
               onEdit={onEditDream}
               onDelete={setDreamToDelete}
+              onToggleFavorite={handleToggleFavorite}
             />
           ))}
         </div>
@@ -322,6 +432,11 @@ export const Journal: React.FC<JournalProps> = ({
           setSelectedDreamForView(null);
           setDreamToDelete(d);
         }}
+        onPrev={handlePrevDream}
+        onNext={handleNextDream}
+        hasPrev={hasPrev}
+        hasNext={hasNext}
+        onToggleFavorite={handleToggleFavorite}
       />
 
       {/* Delete Confirmation Dialog */}

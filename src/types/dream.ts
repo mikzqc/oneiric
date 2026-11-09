@@ -98,6 +98,7 @@ export interface DreamEntry {
   interpretationNotes?: string;
   scenes?: DreamScene[];
   relatedDreamIds?: string[];
+  isFavorite?: boolean;
 
   isSample?: boolean;
   createdAt: number;

@@ -4,6 +4,7 @@ import {
   DreamEntry,
   DreamScene,
   PREDEFINED_EMOTIONS,
+  DEFAULT_TAGS,
   LucidityLevel,
   RecallQuality,
   INDUCTION_TECHNIQUE_OPTIONS,
@@ -38,6 +39,7 @@ import {
   Trash2,
   Link2,
   FileText,
+  Bookmark,
   CheckCircle2,
   Globe,
   Mic,
@@ -152,6 +154,9 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   const [tags, setTags] = useState<string[]>(initialDream?.tags ?? newDraft?.tags ?? []);
   const [tagInput, setTagInput] = useState('');
   const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [isFavorite, setIsFavorite] = useState<boolean>(
+    initialDream?.isFavorite ?? newDraft?.isFavorite ?? false
+  );
   const [dreamSignsNotes, setDreamSignsNotes] = useState(
     initialDream?.dreamSignsNotes ?? newDraft?.dreamSignsNotes ?? ''
   );
@@ -168,6 +173,19 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   const [hasRestoredDraft, setHasRestoredDraft] = useState(!isEditing && !!newDraft);
   const [hasRestoredEditDraft, setHasRestoredEditDraft] = useState(Boolean(recoveredEditDraft));
   const [autosaveTime, setAutosaveTime] = useState<string | null>(null);
+
+  // Populate suggestion tags from frequent tags & defaults
+  useEffect(() => {
+    dreamService
+      .getFrequentTags(12)
+      .then((frequent) => {
+        const merged = Array.from(new Set([...frequent, ...DEFAULT_TAGS]));
+        setAvailableTags(merged);
+      })
+      .catch(() => {
+        setAvailableTags([...DEFAULT_TAGS]);
+      });
+  }, []);
 
   // Live auto-updating wake-up time while drafting a new dream
   useEffect(() => {
@@ -453,6 +471,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
         lucidity,
         emotions: selectedEmotions,
         tags,
+        isFavorite,
         dreamSignsNotes,
         techniqueUsed,
         customTechniqueUsed:
@@ -502,6 +521,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     lucidity,
     selectedEmotions,
     tags,
+    isFavorite,
     dreamSignsNotes,
     techniqueUsed,
     customTechniqueUsed,
@@ -529,6 +549,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     if (recoveredEditDraft.lucidity !== undefined) setLucidity(recoveredEditDraft.lucidity);
     if (recoveredEditDraft.emotions !== undefined) setSelectedEmotions(recoveredEditDraft.emotions);
     if (recoveredEditDraft.tags !== undefined) setTags(recoveredEditDraft.tags);
+    if (recoveredEditDraft.isFavorite !== undefined) setIsFavorite(recoveredEditDraft.isFavorite);
     if (recoveredEditDraft.dreamSignsNotes !== undefined) setDreamSignsNotes(recoveredEditDraft.dreamSignsNotes);
     if (recoveredEditDraft.techniqueUsed !== undefined) setTechniqueUsed(recoveredEditDraft.techniqueUsed);
     if (recoveredEditDraft.customTechniqueUsed !== undefined) setCustomTechniqueUsed(recoveredEditDraft.customTechniqueUsed);
@@ -610,8 +631,8 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     setUsefulRealityChecks((prev) => prev.filter((r) => r !== item));
   };
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setValidationError(null);
 
     const cleanTitle = title.trim();
@@ -644,6 +665,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
         lucidity,
         emotions: selectedEmotions,
         tags,
+        isFavorite,
         dreamSignsNotes: dreamSignsNotes.trim() || undefined,
         techniqueUsed: techniqueUsed !== 'none' ? techniqueUsed : undefined,
         customTechniqueUsed:
@@ -710,6 +732,23 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
       setIsSaving(false);
     }
   };
+
+  // Keyboard shortcut: Ctrl+S or Ctrl+Enter to save dream
+  const handleSaveRef = useRef(handleSave);
+  useEffect(() => {
+    handleSaveRef.current = handleSave;
+  });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'Enter' || e.key.toLowerCase() === 's')) {
+        e.preventDefault();
+        handleSaveRef.current();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const clearDraft = () => {
     localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -838,9 +877,24 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
 
       {/* Title */}
       <div>
-        <label htmlFor="dream-title" className="block text-xs font-semibold text-slate-300 mb-1.5">
-          Dream Title <span className="text-blue-400">*</span>
-        </label>
+        <div className="flex items-center justify-between mb-1.5">
+          <label htmlFor="dream-title" className="block text-xs font-semibold text-slate-300">
+            Dream Title <span className="text-blue-400">*</span>
+          </label>
+          <button
+            type="button"
+            onClick={() => setIsFavorite(!isFavorite)}
+            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs transition-colors cursor-pointer border ${
+              isFavorite
+                ? 'bg-amber-950/40 border-amber-600/60 text-amber-300'
+                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
+            title={isFavorite ? 'Remove from favorites' : 'Mark as favorite'}
+          >
+            <Bookmark className={`w-3.5 h-3.5 ${isFavorite ? 'fill-amber-400 text-amber-400' : ''}`} />
+            <span>{isFavorite ? 'Starred' : 'Star'}</span>
+          </button>
+        </div>
         <input
           id="dream-title"
           type="text"
@@ -1739,6 +1793,9 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
           )}
         </div>
         <div className="flex items-center gap-3">
+          <span className="hidden sm:inline text-[11px] text-slate-500 font-mono">
+            Ctrl+S / ↵ to save
+          </span>
           <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>
             Cancel
           </Button>

@@ -238,6 +238,37 @@ export const dreamService = {
     return await db.dreams.where('lucidity').equals('lucid').reverse().sortBy('date');
   },
 
+  async toggleFavorite(id: string): Promise<boolean> {
+    const dream = await db.dreams.get(id);
+    if (!dream) return false;
+    const newFav = !dream.isFavorite;
+    await this.updateDream(id, { isFavorite: newFav });
+    return newFav;
+  },
+
+  async getFavoriteDreams(): Promise<DreamEntry[]> {
+    return await db.dreams.filter((d) => !!d.isFavorite).reverse().sortBy('date');
+  },
+
+  async getFrequentTags(limit: number = 8): Promise<string[]> {
+    const allDreams = await db.dreams.toArray();
+    const counts = new Map<string, number>();
+    for (const d of allDreams) {
+      if (Array.isArray(d.tags)) {
+        for (const t of d.tags) {
+          const trimmed = t.trim();
+          if (trimmed) {
+            counts.set(trimmed, (counts.get(trimmed) || 0) + 1);
+          }
+        }
+      }
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit)
+      .map(([tag]) => tag);
+  },
+
   async getFalseAwakeningDreams(): Promise<DreamEntry[]> {
     return await db.dreams.filter((d) => !!d.falseAwakening).reverse().sortBy('date');
   },

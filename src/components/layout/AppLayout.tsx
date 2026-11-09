@@ -82,6 +82,26 @@ export const AppLayout: React.FC = () => {
     setIsEditorModalOpen(true);
   };
 
+  // Global shortcut: press 'N' to record a new dream when not in an input/textarea
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isEditorModalOpen || celebrationEvent) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      const target = e.target as HTMLElement | null;
+      const tagName = target?.tagName?.toLowerCase();
+      if (tagName === 'input' || tagName === 'textarea' || target?.isContentEditable) return;
+
+      if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        handleOpenNewDream();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isEditorModalOpen, celebrationEvent]);
+
   const handleEditDream = (dream: DreamEntry) => {
     setEditingDream(dream);
     setEditorPrefillDate(undefined);
