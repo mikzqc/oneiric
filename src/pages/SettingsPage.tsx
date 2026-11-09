@@ -34,6 +34,7 @@ import { RecentlyDeletedCard } from '../components/settings/RecentlyDeletedCard'
 import { ThemeSelectorCard } from '../components/settings/ThemeSelectorCard';
 import { DisplayPreferencesCard } from '../components/settings/DisplayPreferencesCard';
 import { JournalPreferencesCard } from '../components/settings/JournalPreferencesCard';
+import { SecuritySettingsCard } from '../components/settings/SecuritySettingsCard';
 
 export const SettingsPage: React.FC = () => {
   type SettingsTab = 'all' | 'appearance' | 'journal' | 'sync' | 'vault';
@@ -670,6 +671,9 @@ export const SettingsPage: React.FC = () => {
               </h3>
             </div>
           )}
+          {/* App Lock & Cryptographic Private Vault Security */}
+          <SecuritySettingsCard />
+
           {/* Section 1: Backup & Restoration */}
       <section className="p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
         <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">

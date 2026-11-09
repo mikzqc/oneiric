@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { dreamService } from '../services/dreamService';
+import { securityService } from '../services/securityService';
 import { DreamEntry, LucidityLevel, PREDEFINED_EMOTIONS } from '../types/dream';
 import { searchDreams, SearchMatchDetail } from '../services/searchService';
 import { DreamCard } from '../components/journal/DreamCard';
@@ -67,9 +68,11 @@ export const Journal: React.FC<JournalProps> = ({
     const handleUpdate = () => {
       loadJournalData();
     };
+    const unsubscribeSecurity = securityService.subscribe(handleUpdate);
     window.addEventListener('oneiric:dream-saved', handleUpdate);
     window.addEventListener('oneiric:sample-data-changed', handleUpdate);
     return () => {
+      unsubscribeSecurity();
       window.removeEventListener('oneiric:dream-saved', handleUpdate);
       window.removeEventListener('oneiric:sample-data-changed', handleUpdate);
     };

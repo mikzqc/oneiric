@@ -99,6 +99,7 @@ export interface DreamEntry {
   scenes?: DreamScene[];
   relatedDreamIds?: string[];
   isFavorite?: boolean;
+  isPrivate?: boolean;
 
   isSample?: boolean;
   createdAt: number;

@@ -14,6 +14,7 @@ import {
   Settings,
   ShieldCheck,
   HelpCircle,
+  Lock,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -27,6 +28,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
       items: [
         { to: '/', label: 'Dashboard', icon: LayoutDashboard },
         { to: '/journal', label: 'Dream Journal', icon: BookOpen },
+        { to: '/vault', label: 'Private Vault', icon: Lock },
         { to: '/timeline', label: 'Timeline', icon: Clock },
         { to: '/calendar', label: 'Calendar', icon: CalendarDays },
       ],
@@ -53,21 +55,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
 
   return (
     <aside className="w-60 h-full flex flex-col bg-[#0b132b] border-r border-slate-800 text-slate-300 shrink-0 select-none">
-      {/* Brand Header */}
+      {/* Brand Header — Minimalist Single-Line */}
       <div className="h-14 px-4 border-b border-slate-800/80 flex items-center gap-2.5 shrink-0">
         <img
           src="/logo.png"
           alt="Oneiric"
-          className="w-7 h-7 object-contain shrink-0"
+          className="w-7 h-7 object-contain shrink-0 select-none"
         />
-        <div className="min-w-0 flex flex-col justify-center">
-          <span className="font-semibold text-sm tracking-tight text-slate-100 leading-none">
-            Oneiric
-          </span>
-          <span className="text-[10px] text-slate-400 font-medium tracking-wide leading-none mt-1 truncate">
-            Dream Journal & Analysis
-          </span>
-        </div>
+        <span className="font-bold text-[15px] tracking-tight text-slate-100 select-none">
+          Oneiric
+        </span>
       </div>
 
       {/* Navigation Links */}

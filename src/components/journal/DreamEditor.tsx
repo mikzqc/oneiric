@@ -40,6 +40,7 @@ import {
   Link2,
   FileText,
   Bookmark,
+  Lock,
   CheckCircle2,
   Globe,
   Mic,
@@ -156,6 +157,9 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [isFavorite, setIsFavorite] = useState<boolean>(
     initialDream?.isFavorite ?? newDraft?.isFavorite ?? false
+  );
+  const [isPrivate, setIsPrivate] = useState<boolean>(
+    initialDream?.isPrivate ?? newDraft?.isPrivate ?? false
   );
   const [dreamSignsNotes, setDreamSignsNotes] = useState(
     initialDream?.dreamSignsNotes ?? newDraft?.dreamSignsNotes ?? ''
@@ -522,6 +526,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     selectedEmotions,
     tags,
     isFavorite,
+    isPrivate,
     dreamSignsNotes,
     techniqueUsed,
     customTechniqueUsed,
@@ -550,6 +555,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     if (recoveredEditDraft.emotions !== undefined) setSelectedEmotions(recoveredEditDraft.emotions);
     if (recoveredEditDraft.tags !== undefined) setTags(recoveredEditDraft.tags);
     if (recoveredEditDraft.isFavorite !== undefined) setIsFavorite(recoveredEditDraft.isFavorite);
+    if (recoveredEditDraft.isPrivate !== undefined) setIsPrivate(recoveredEditDraft.isPrivate);
     if (recoveredEditDraft.dreamSignsNotes !== undefined) setDreamSignsNotes(recoveredEditDraft.dreamSignsNotes);
     if (recoveredEditDraft.techniqueUsed !== undefined) setTechniqueUsed(recoveredEditDraft.techniqueUsed);
     if (recoveredEditDraft.customTechniqueUsed !== undefined) setCustomTechniqueUsed(recoveredEditDraft.customTechniqueUsed);
@@ -666,6 +672,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
         emotions: selectedEmotions,
         tags,
         isFavorite,
+        isPrivate,
         dreamSignsNotes: dreamSignsNotes.trim() || undefined,
         techniqueUsed: techniqueUsed !== 'none' ? techniqueUsed : undefined,
         customTechniqueUsed:
@@ -881,19 +888,34 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
           <label htmlFor="dream-title" className="block text-xs font-semibold text-slate-300">
             Dream Title <span className="text-blue-400">*</span>
           </label>
-          <button
-            type="button"
-            onClick={() => setIsFavorite(!isFavorite)}
-            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs transition-colors cursor-pointer border ${
-              isFavorite
-                ? 'bg-amber-950/40 border-amber-600/60 text-amber-300'
-                : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200'
-            }`}
-            title={isFavorite ? 'Remove from favorites' : 'Mark as favorite'}
-          >
-            <Bookmark className={`w-3.5 h-3.5 ${isFavorite ? 'fill-amber-400 text-amber-400' : ''}`} />
-            <span>{isFavorite ? 'Starred' : 'Star'}</span>
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setIsPrivate(!isPrivate)}
+              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs transition-colors cursor-pointer border ${
+                isPrivate
+                  ? 'bg-amber-950/60 border-amber-600/70 text-amber-300'
+                  : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+              title={isPrivate ? 'Private entry (Stored in Locked Vault)' : 'Mark as private'}
+            >
+              <Lock className={`w-3.5 h-3.5 ${isPrivate ? 'text-amber-400' : ''}`} />
+              <span>{isPrivate ? 'Private' : 'Public'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsFavorite(!isFavorite)}
+              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs transition-colors cursor-pointer border ${
+                isFavorite
+                  ? 'bg-amber-950/40 border-amber-600/60 text-amber-300'
+                  : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-slate-200'
+              }`}
+              title={isFavorite ? 'Remove from favorites' : 'Mark as favorite'}
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${isFavorite ? 'fill-amber-400 text-amber-400' : ''}`} />
+              <span>{isFavorite ? 'Starred' : 'Star'}</span>
+            </button>
+          </div>
         </div>
         <input
           id="dream-title"

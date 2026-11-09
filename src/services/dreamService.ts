@@ -5,6 +5,7 @@ import { dreamSignService } from './dreamSignService';
 import { syncService } from './syncService';
 import { tombstoneService } from '../utils/tombstones';
 import { trashService, TrashedDream } from '../utils/trashService';
+import { securityService } from './securityService';
 
 export type { TrashedDream };
 
@@ -80,8 +81,28 @@ export function calculateRecallChartData(
 }
 
 export const dreamService = {
-  async getAllDreams(): Promise<DreamEntry[]> {
-    return await db.dreams.orderBy('date').reverse().toArray();
+  async getAllDreams(options?: { includePrivate?: boolean }): Promise<DreamEntry[]> {
+    const dreams = await db.dreams.orderBy('date').reverse().toArray();
+    if (options?.includePrivate || securityService.isVaultUnlocked()) {
+      return dreams;
+    }
+    return dreams.filter((d) => !d.isPrivate);
+  },
+
+  async getPublicDreams(): Promise<DreamEntry[]> {
+    return await db.dreams.filter((d) => !d.isPrivate).reverse().sortBy('date');
+  },
+
+  async getPrivateDreams(): Promise<DreamEntry[]> {
+    return await db.dreams.filter((d) => !!d.isPrivate).reverse().sortBy('date');
+  },
+
+  async togglePrivate(id: string): Promise<boolean> {
+    const dream = await db.dreams.get(id);
+    if (!dream) return false;
+    const newPrivate = !dream.isPrivate;
+    await this.updateDream(id, { isPrivate: newPrivate });
+    return newPrivate;
   },
 
   async getDreamById(id: string): Promise<DreamEntry | undefined> {
@@ -318,6 +339,7 @@ export const dreamService = {
 
     // Recent dreams sorted by date descending, then createdAt descending
     const recentDreams = [...allDreams]
+      .filter((d) => securityService.isVaultUnlocked() || !d.isPrivate)
       .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
       .slice(0, 5);
 

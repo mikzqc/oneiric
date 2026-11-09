@@ -2,7 +2,7 @@ import React from 'react';
 import { DreamEntry, formatTechniqueShortName } from '../../types/dream';
 import { LucidityBadge, EmotionBadge, TagBadge } from '../common/Badge';
 import { formatDate, formatTime } from '../../utils/dateUtils';
-import { Star, Clock, Calendar, Eye, Edit, Trash2, Brain, Bookmark } from 'lucide-react';
+import { Star, Clock, Calendar, Eye, Edit, Trash2, Brain, Bookmark, Lock } from 'lucide-react';
 import { SearchMatchDetail } from '../../services/searchService';
 import { preferencesService } from '../../services/preferencesService';
 
@@ -45,6 +45,15 @@ export const DreamCard: React.FC<DreamCardProps> = ({
         <div className="flex items-center justify-between gap-2 mb-2.5">
           <div className="flex flex-wrap items-center gap-1.5">
             <LucidityBadge lucidity={dream.lucidity} size="sm" />
+            {dream.isPrivate && (
+              <span
+                className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-950/60 text-amber-300 border border-amber-800/50 flex items-center gap-1"
+                title="Private Dream"
+              >
+                <Lock className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+                <span>Private</span>
+              </span>
+            )}
             {dream.falseAwakening && (
               <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-blue-950/60 text-blue-300 border border-blue-800/50">
                 FA

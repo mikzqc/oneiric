@@ -22,6 +22,7 @@ import {
   Check,
   Bookmark,
   FileText,
+  Lock,
 } from 'lucide-react';
 
 interface DreamDetailModalProps {
@@ -138,6 +139,13 @@ export const DreamDetailModal: React.FC<DreamDetailModalProps> = ({
             )}
 
             <LucidityBadge lucidity={dream.lucidity} size="md" />
+
+            {dream.isPrivate && (
+              <span className="inline-flex items-center gap-1 font-medium rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20 text-xs px-2 py-0.5">
+                <Lock className="w-3 h-3 text-amber-400" />
+                <span>Private Vault</span>
+              </span>
+            )}
 
             {dream.falseAwakening && (
               <span className="inline-flex items-center gap-1 font-medium rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20 text-xs px-2 py-0.5">

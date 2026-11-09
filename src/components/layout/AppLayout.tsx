@@ -9,6 +9,8 @@ import { backupService } from '../../services/backupService';
 import { celebrationService, LucidCelebrationEvent } from '../../services/celebrationService';
 import { LucidCelebrationModal } from '../celebration/LucidCelebrationModal';
 import { UndoNotification } from '../common/UndoNotification';
+import { securityService } from '../../services/securityService';
+import { AppLockScreen } from '../security/AppLockScreen';
 import { AtmosphericBackground } from './AtmosphericBackground';
 import { X, Info } from 'lucide-react';
 
@@ -22,6 +24,15 @@ export const AppLayout: React.FC = () => {
   const [editorPrefillDate, setEditorPrefillDate] = useState<string | undefined>(undefined);
   const [isSamplePreview, setIsSamplePreview] = useState(false);
   const [celebrationEvent, setCelebrationEvent] = useState<LucidCelebrationEvent | null>(null);
+  const [isAppLocked, setIsAppLocked] = useState(() => securityService.isAppLocked());
+
+  useEffect(() => {
+    const checkLock = () => {
+      setIsAppLocked(securityService.isAppLocked());
+    };
+    const unsubscribe = securityService.subscribe(checkLock);
+    return () => unsubscribe();
+  }, []);
 
   // Subscribe to Lucid Dream Celebration / Party Mode events
   useEffect(() => {
@@ -62,6 +73,7 @@ export const AppLayout: React.FC = () => {
     if (path.startsWith('/correlations')) return { title: 'Correlations', subtitle: 'Descriptive relationships across signs, emotions, and lucidity' };
     if (path.startsWith('/journal/new')) return { title: 'Record Dream', subtitle: 'New journal entry' };
     if (path.startsWith('/journal/edit')) return { title: 'Edit Dream', subtitle: 'Update journal entry' };
+    if (path.startsWith('/vault')) return { title: 'Private Vault', subtitle: 'Encrypted confidential dreams' };
     if (path.startsWith('/journal')) return { title: 'Dream Journal', subtitle: 'Search and inspect entries' };
     if (path.startsWith('/signs')) return { title: 'Dream Signs Library', subtitle: 'Recurring patterns and reality check reminders' };
     if (path.startsWith('/calendar')) return { title: 'Calendar', subtitle: 'Monthly entries overview' };
@@ -117,6 +129,7 @@ export const AppLayout: React.FC = () => {
     }
     if (
       location.pathname !== '/journal' &&
+      location.pathname !== '/vault' &&
       location.pathname !== '/' &&
       location.pathname !== '/calendar' &&
       location.pathname !== '/lucid' &&
@@ -248,6 +261,9 @@ export const AppLayout: React.FC = () => {
 
       {/* Global Non-Intrusive Undo Delete Notification */}
       <UndoNotification />
+
+      {/* Full-Screen Hardware-Backed App Lock Shield */}
+      {isAppLocked && <AppLockScreen />}
     </div>
   );
 };

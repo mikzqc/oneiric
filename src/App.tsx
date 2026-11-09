@@ -7,6 +7,7 @@ import { DreamSignsPage } from './pages/DreamSignsPage';
 import { FalseAwakeningsPage } from './pages/FalseAwakeningsPage';
 import { TimelinePage } from './pages/TimelinePage';
 import { Journal } from './pages/Journal';
+import { PrivateVaultPage } from './pages/PrivateVaultPage';
 import { DreamEditorPage } from './pages/DreamEditorPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { LucidDreamsPage } from './pages/LucidDreamsPage';
@@ -34,6 +35,11 @@ const DashboardRoute: React.FC = () => {
 const JournalRoute: React.FC = () => {
   const { onOpenNewDream, onEditDream } = useOutletContext<LayoutContextType>();
   return <Journal onOpenNewDream={() => onOpenNewDream()} onEditDream={onEditDream} />;
+};
+
+const PrivateVaultRoute: React.FC = () => {
+  const { onOpenNewDream, onEditDream } = useOutletContext<LayoutContextType>();
+  return <PrivateVaultPage onOpenNewDream={() => onOpenNewDream()} onEditDream={onEditDream} />;
 };
 
 const CalendarRoute: React.FC = () => {
@@ -70,6 +76,7 @@ export const App: React.FC = () => {
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="correlations" element={<CorrelationRoute />} />
           <Route path="journal" element={<JournalRoute />} />
+          <Route path="vault" element={<PrivateVaultRoute />} />
           <Route path="journal/new" element={<DreamEditorPage />} />
           <Route path="journal/edit/:id" element={<DreamEditorPage />} />
           <Route path="signs" element={<DreamSignsRoute />} />
