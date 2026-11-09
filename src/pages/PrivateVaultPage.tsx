@@ -61,9 +61,18 @@ export const PrivateVaultPage: React.FC<PrivateVaultPageProps> = ({
     checkSecurity();
     const unsubscribe = securityService.subscribe(checkSecurity);
 
+    const handleAutoLock = () => {
+      securityService.lockVault();
+    };
+
+    window.addEventListener('beforeunload', handleAutoLock);
+    window.addEventListener('pagehide', handleAutoLock);
     window.addEventListener('oneiric:dream-saved', loadVaultDreams);
+
     return () => {
       unsubscribe();
+      window.removeEventListener('beforeunload', handleAutoLock);
+      window.removeEventListener('pagehide', handleAutoLock);
       window.removeEventListener('oneiric:dream-saved', loadVaultDreams);
     };
   }, []);
@@ -73,7 +82,7 @@ export const PrivateVaultPage: React.FC<PrivateVaultPageProps> = ({
     setPinError(null);
     if (!pinInput) return;
 
-    const success = await securityService.unlockWithPin(pinInput);
+    const success = await securityService.unlockVaultWithPin(pinInput);
     if (success) {
       setPinInput('');
       setIsUnlocked(true);
@@ -85,7 +94,7 @@ export const PrivateVaultPage: React.FC<PrivateVaultPageProps> = ({
 
   const handleBiometricUnlock = async () => {
     setPinError(null);
-    const success = await securityService.unlockWithBiometrics();
+    const success = await securityService.unlockVaultWithBiometrics();
     if (success) {
       setIsUnlocked(true);
       await loadVaultDreams();

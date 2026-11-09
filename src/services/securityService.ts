@@ -36,10 +36,26 @@ class SecurityService {
     const config = this.getConfig();
     if (config.isAppLockEnabled && config.hasPin) {
       this.isLocked = true;
-      this.isVaultLocked = true;
     }
+    // Private vault ALWAYS initializes locked whenever the application starts or reloads
+    this.isVaultLocked = true;
 
     if (typeof window !== 'undefined') {
+      // Auto-lock private vault on refresh, page unload, or tab close
+      window.addEventListener('beforeunload', () => {
+        this.lockVault();
+      });
+
+      window.addEventListener('pagehide', () => {
+        this.lockVault();
+      });
+
+      window.addEventListener('pageshow', (event: PageTransitionEvent) => {
+        if (event.persisted) {
+          this.lockVault();
+        }
+      });
+
       // Auto-lock when tab becomes hidden or window loses focus
       window.addEventListener('visibilitychange', () => {
         if (document.hidden) {
@@ -208,13 +224,20 @@ class SecurityService {
   }
 
   /**
-   * Unlocks Oneiric and decrypts the master key using the PIN
+   * Unlocks Oneiric and decrypts the master key using the PIN.
+   * By default, unlocks the application while keeping the Private Vault locked
+   * until explicitly unlocked inside the Vault.
    */
-  public async unlockWithPin(pin: string): Promise<boolean> {
+  public async unlockWithPin(
+    pin: string,
+    options?: { unlockVault?: boolean }
+  ): Promise<boolean> {
     const config = this.getConfig();
     if (!config.encryptedKeyEnvelope) {
       this.isLocked = false;
-      this.isVaultLocked = false;
+      if (options?.unlockVault) {
+        this.isVaultLocked = false;
+      }
       this.notify();
       return true;
     }
@@ -228,12 +251,21 @@ class SecurityService {
 
       this.inMemoryMasterKey = decryptedMasterKey;
       this.isLocked = false;
-      this.isVaultLocked = false;
+      if (options?.unlockVault) {
+        this.isVaultLocked = false;
+      }
       this.notify();
       return true;
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Specifically unlocks the Private Vault with PIN verification
+   */
+  public async unlockVaultWithPin(pin: string): Promise<boolean> {
+    return await this.unlockWithPin(pin, { unlockVault: true });
   }
 
   /**
@@ -363,14 +395,25 @@ class SecurityService {
 
       // Biometric verified successfully by OS hardware!
       // Since WebAuthn platform authenticator confirmed the user's presence,
-      // we unlock the session.
+      // we unlock the app session while keeping Private Vault locked unless requested.
       this.isLocked = false;
-      this.isVaultLocked = false;
       this.notify();
       return true;
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Specifically unlocks the Private Vault with platform biometrics
+   */
+  public async unlockVaultWithBiometrics(): Promise<boolean> {
+    const success = await this.unlockWithBiometrics();
+    if (success) {
+      this.isVaultLocked = false;
+      this.notify();
+    }
+    return success;
   }
 
   public disableBiometrics(): void {

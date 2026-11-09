@@ -137,4 +137,27 @@ describe('Private Dreams & Hardware-Derived App Lock', () => {
       expect(securityService.isAppLocked()).toBe(false);
     });
   });
+
+  it('auto-locks private vault on refresh, pagehide, and keeps vault locked when unlocking app', async () => {
+    await securityService.setPin('1234');
+    expect(securityService.isVaultUnlocked()).toBe(true);
+
+    // Simulate beforeunload / refresh event
+    window.dispatchEvent(new Event('beforeunload'));
+    expect(securityService.isVaultUnlocked()).toBe(false);
+
+    // Unlocking app with PIN does NOT automatically unlock private vault
+    await securityService.unlockWithPin('1234');
+    expect(securityService.isAppLocked()).toBe(false);
+    expect(securityService.isVaultUnlocked()).toBe(false);
+
+    // Unlocking vault explicitly via unlockVaultWithPin unlocks private vault
+    const vaultUnlocked = await securityService.unlockVaultWithPin('1234');
+    expect(vaultUnlocked).toBe(true);
+    expect(securityService.isVaultUnlocked()).toBe(true);
+
+    // Simulate pagehide (closing tab or navigating)
+    window.dispatchEvent(new Event('pagehide'));
+    expect(securityService.isVaultUnlocked()).toBe(false);
+  });
 });
