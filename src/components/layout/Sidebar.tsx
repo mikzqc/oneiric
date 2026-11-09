@@ -54,15 +54,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
   return (
     <aside className="w-60 h-full flex flex-col bg-[#0b132b] border-r border-slate-800 text-slate-300 shrink-0 select-none">
       {/* Brand Header */}
-      <div className="px-5 py-4 border-b border-slate-800 flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-md bg-[#132042] border border-blue-500/30 flex items-center justify-center shrink-0 overflow-hidden p-1">
-          <img src="/logo.png" alt="Oneiric" className="w-full h-full object-contain" />
-        </div>
-        <div>
-          <div className="flex items-center gap-1.5">
-            <span className="font-semibold text-sm tracking-wide text-slate-100">Oneiric</span>
-          </div>
-          <p className="text-[11px] text-slate-400 font-normal">Dream Journal & Analysis</p>
+      <div className="h-14 px-4 border-b border-slate-800/80 flex items-center gap-2.5 shrink-0">
+        <img
+          src="/logo.png"
+          alt="Oneiric"
+          className="w-7 h-7 object-contain shrink-0"
+        />
+        <div className="min-w-0 flex flex-col justify-center">
+          <span className="font-semibold text-sm tracking-tight text-slate-100 leading-none">
+            Oneiric
+          </span>
+          <span className="text-[10px] text-slate-400 font-medium tracking-wide leading-none mt-1 truncate">
+            Dream Journal & Analysis
+          </span>
         </div>
       </div>
 
