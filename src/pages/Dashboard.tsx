@@ -14,6 +14,7 @@ import { EmptyState } from '../components/common/EmptyState';
 import { Button } from '../components/common/Button';
 import { Modal } from '../components/common/Modal';
 import { formatDate, getTodayDateString } from '../utils/dateUtils';
+import { generateRecallGraphDescription } from '../utils/chartExportUtils';
 import { preferencesService, PREFERENCES_CHANGED_EVENT } from '../services/preferencesService';
 import {
   BookOpen,
@@ -24,6 +25,8 @@ import {
   Plus,
   Trash2,
   RotateCcw,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 interface DashboardStats {
@@ -142,6 +145,43 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const isCustomColors =
     chartTotalColor.toLowerCase() !== '#3b82f6' ||
     (chartLucidColor.toLowerCase() !== '#06b6d4' && chartLucidColor.toLowerCase() !== '#06b6d4');
+
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopyGraphText = async () => {
+    if (!stats || !stats.recallChartData) return;
+    const textDescription = generateRecallGraphDescription(
+      stats.recallChartData,
+      recallRange,
+      RECALL_RANGE_TITLES[recallRange]
+    );
+
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(textDescription);
+      } else {
+        throw new Error('Clipboard API unavailable');
+      }
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2500);
+    } catch {
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = textDescription;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2500);
+      } catch (err) {
+        console.error('Failed to copy graph text description:', err);
+      }
+    }
+  };
 
   const loadDashboardData = async (targetRange: RecallRange = recallRange) => {
     try {
@@ -342,6 +382,31 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     );
                   })}
                 </div>
+
+                {/* Copy Graph Text Button */}
+                <button
+                  type="button"
+                  onClick={handleCopyGraphText}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-all duration-150 active:scale-95 cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none ${
+                    isCopied
+                      ? 'bg-emerald-950/70 border-emerald-700/80 text-emerald-300 shadow-sm'
+                      : 'bg-[#0b132b] hover:bg-slate-800/80 border-slate-800 hover:border-slate-700 text-slate-300 hover:text-slate-100'
+                  }`}
+                  title="Copy full text summary of the graph (peaks, dips, lucid/non-lucid breakdown, and date table)"
+                  aria-label="Copy graph in text"
+                >
+                  {isCopied ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span>Copy Graph</span>
+                    </>
+                  )}
+                </button>
 
                 {/* Interactive Legend with Color Pickers */}
                 <div className="flex items-center gap-3 text-xs pl-1">
