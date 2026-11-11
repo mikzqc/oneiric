@@ -1,34 +1,60 @@
 import React, { useState, useEffect } from 'react';
 import { analyticsService, AnalyticsSummary, TimeRangeFilter } from '../services/analyticsService';
+import { dreamService, RecallRange, RecallChartDataPoint } from '../services/dreamService';
 import { LucidityLevel } from '../types/dream';
 import { formatDate } from '../utils/dateUtils';
 import { EmptyState } from '../components/common/EmptyState';
 import { AnimatedNumber } from '../components/common/AnimatedNumber';
 import { preferencesService, PREFERENCES_CHANGED_EVENT } from '../services/preferencesService';
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from 'recharts';
+import { RecallChart } from '../components/dashboard/RecallChart';
+import { generateRecallGraphDescription } from '../utils/chartExportUtils';
 import {
   BarChart3,
   Calendar,
   Sparkles,
-  TrendingUp,
   Info,
   Clock,
   RotateCcw,
+  Copy,
+  Check,
 } from 'lucide-react';
+
+const RECALL_RANGE_OPTIONS: { value: RecallRange; label: string; shortLabel: string }[] = [
+  { value: '1w', label: '1 Week', shortLabel: '1W' },
+  { value: '2w', label: '2 Weeks', shortLabel: '2W' },
+  { value: '3w', label: '3 Weeks', shortLabel: '3W' },
+  { value: '1m', label: '1 Month', shortLabel: '1M' },
+  { value: 'all', label: 'All Time', shortLabel: 'All' },
+];
+
+const RECALL_RANGE_TITLES: Record<RecallRange, string> = {
+  '1w': '7-Day Recall Activity',
+  '2w': '14-Day Recall Activity',
+  '3w': '21-Day Recall Activity',
+  '1m': '30-Day Recall Activity',
+  'all': 'All-Time Recall Activity',
+};
 
 export const AnalyticsPage: React.FC = () => {
   const [timeRange, setTimeRange] = useState<TimeRangeFilter>('30d');
   const [lucidityFilter, setLucidityFilter] = useState<'all' | LucidityLevel>('all');
   const [data, setData] = useState<AnalyticsSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [recallRange, setRecallRange] = useState<RecallRange>(() => {
+    try {
+      const saved = localStorage.getItem('oneiric_recall_range');
+      if (saved === '1w' || saved === '2w' || saved === '3w' || saved === '1m' || saved === 'all') {
+        return saved;
+      }
+    } catch {
+      // ignore
+    }
+    return '1w';
+  });
+
+  const [recallChartData, setRecallChartData] = useState<RecallChartDataPoint[]>([]);
+  const [isCopied, setIsCopied] = useState(false);
 
   const [chartTotalColor, setChartTotalColor] = useState<string>(
     () => preferencesService.getPreferences().chartTotalColor || '#3b82f6'
@@ -49,16 +75,89 @@ export const AnalyticsPage: React.FC = () => {
     return () => window.removeEventListener(PREFERENCES_CHANGED_EVENT, handlePrefsChange);
   }, []);
 
+  const handleUpdateTotalColor = (newColor: string) => {
+    setChartTotalColor(newColor);
+    preferencesService.updatePreferences({ chartTotalColor: newColor });
+  };
+
+  const handleUpdateLucidColor = (newColor: string) => {
+    setChartLucidColor(newColor);
+    preferencesService.updatePreferences({ chartLucidColor: newColor });
+  };
+
+  const handleResetChartColors = () => {
+    setChartTotalColor('#3b82f6');
+    setChartLucidColor('#06b6d4');
+    preferencesService.updatePreferences({
+      chartTotalColor: '#3b82f6',
+      chartLucidColor: '#06b6d4',
+    });
+  };
+
   const isCustomColors =
     chartTotalColor.toLowerCase() !== '#3b82f6' ||
     (chartLucidColor.toLowerCase() !== '#06b6d4' && chartLucidColor.toLowerCase() !== '#06b6d4');
 
+  const handleRangeChange = async (newRange: RecallRange) => {
+    setRecallRange(newRange);
+    try {
+      localStorage.setItem('oneiric_recall_range', newRange);
+    } catch {
+      // ignore
+    }
+    try {
+      const chartData = await dreamService.getRecallChartData(newRange);
+      setRecallChartData(chartData);
+    } catch (err) {
+      console.error('Failed to load recall chart data:', err);
+    }
+  };
+
+  const handleCopyGraphText = async () => {
+    if (!recallChartData || recallChartData.length === 0) return;
+    const textDescription = generateRecallGraphDescription(
+      recallChartData,
+      recallRange,
+      RECALL_RANGE_TITLES[recallRange]
+    );
+
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(textDescription);
+      } else {
+        throw new Error('Clipboard API unavailable');
+      }
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2500);
+    } catch {
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = textDescription;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2500);
+      } catch (err) {
+        console.error('Failed to copy graph text description:', err);
+      }
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
     const fetchData = () => {
-      analyticsService.getAnalytics(timeRange, lucidityFilter).then((res) => {
+      Promise.all([
+        analyticsService.getAnalytics(timeRange, lucidityFilter),
+        dreamService.getRecallChartData(recallRange),
+      ]).then(([res, chartData]) => {
         if (isMounted) {
           setData(res);
+          setRecallChartData(chartData);
           setIsLoading(false);
         }
       });
@@ -71,7 +170,7 @@ export const AnalyticsPage: React.FC = () => {
       window.removeEventListener('oneiric:dream-saved', fetchData);
       window.removeEventListener('oneiric:sample-data-changed', fetchData);
     };
-  }, [timeRange, lucidityFilter]);
+  }, [timeRange, lucidityFilter, recallRange]);
 
   if (isLoading || !data) {
     return (
@@ -80,8 +179,6 @@ export const AnalyticsPage: React.FC = () => {
       </div>
     );
   }
-
-  const maxTimelineCount = Math.max(...data.recallTimeline.map((d) => d.total), 3);
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -232,131 +329,139 @@ export const AnalyticsPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Main Visuals: Recall Timeline Chart */}
-          <div className="p-5 sm:p-6 rounded-xl bg-slate-900/60 border border-slate-800 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          {/* Main Visuals: Recall Activity Chart */}
+          <div className="p-5 sm:p-6 rounded-xl bg-slate-900/60 border border-slate-800">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div>
-                <h2 className="text-sm font-semibold text-slate-100 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-blue-400" />
-                  <span>Recall & Lucidity Volume Over Time</span>
+                <h2 className="text-sm font-semibold text-slate-100">
+                  {RECALL_RANGE_TITLES[recallRange]}
                 </h2>
-                <p className="text-xs text-slate-400">Total remembered dreams vs lucid experiences</p>
+                <p className="text-xs text-slate-400">Total entries and lucid dreams per night</p>
               </div>
 
-              <div className="flex items-center gap-3 text-xs">
-                <label className="flex items-center gap-1.5 cursor-pointer group" title="Change Total line color">
-                  <span className="relative flex items-center justify-center">
-                    <span
-                      className="w-2.5 h-2.5 rounded-sm border border-white/20 shadow-xs transition-transform group-hover:scale-110"
-                      style={{ backgroundColor: chartTotalColor }}
-                    />
-                    <input
-                      type="color"
-                      value={chartTotalColor}
-                      onChange={(e) => {
-                        setChartTotalColor(e.target.value);
-                        preferencesService.updatePreferences({ chartTotalColor: e.target.value });
-                      }}
-                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                      aria-label="Pick color for Total dreams"
-                    />
-                  </span>
-                  <span className="font-medium group-hover:text-white transition-colors">
-                    Total Dreams
-                  </span>
-                </label>
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Range Selector */}
+                <div
+                  role="group"
+                  aria-label="Recall date range"
+                  className="inline-flex items-center p-0.5 rounded-lg bg-[#0b132b] border border-slate-800 text-xs"
+                >
+                  {RECALL_RANGE_OPTIONS.map((opt) => {
+                    const isSelected = recallRange === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => handleRangeChange(opt.value)}
+                        className={`px-2.5 py-1 rounded-md font-medium transition-all duration-150 active:scale-95 cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none ${
+                          isSelected
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'text-slate-400 hover:text-slate-200'
+                        }`}
+                        aria-pressed={isSelected}
+                      >
+                        <span className="hidden sm:inline">{opt.label}</span>
+                        <span className="sm:hidden">{opt.shortLabel}</span>
+                      </button>
+                    );
+                  })}
+                </div>
 
-                <label className="flex items-center gap-1.5 cursor-pointer group" title="Change Lucid line color">
-                  <span className="relative flex items-center justify-center">
-                    <span
-                      className="w-2.5 h-2.5 rounded-sm border border-white/20 shadow-xs transition-transform group-hover:scale-110"
-                      style={{ backgroundColor: chartLucidColor }}
-                    />
-                    <input
-                      type="color"
-                      value={chartLucidColor}
-                      onChange={(e) => {
-                        setChartLucidColor(e.target.value);
-                        preferencesService.updatePreferences({ chartLucidColor: e.target.value });
-                      }}
-                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                      aria-label="Pick color for Lucid awakenings"
-                    />
-                  </span>
-                  <span
-                    className="font-medium group-hover:brightness-125 transition-all"
-                    style={{ color: chartLucidColor }}
-                  >
-                    Lucid Awakenings
-                  </span>
-                </label>
+                {/* Copy Graph Text Button */}
+                <button
+                  type="button"
+                  onClick={handleCopyGraphText}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-all duration-150 active:scale-95 cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none ${
+                    isCopied
+                      ? 'bg-emerald-950/70 border-emerald-700/80 text-emerald-300 shadow-sm'
+                      : 'bg-[#0b132b] hover:bg-slate-800/80 border-slate-800 hover:border-slate-700 text-slate-300 hover:text-slate-100'
+                  }`}
+                  title="Copy full text summary of the graph (peaks, dips, lucid/non-lucid breakdown, and date table)"
+                  aria-label="Copy graph in text"
+                >
+                  {isCopied ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span>Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span>Copy Graph</span>
+                    </>
+                  )}
+                </button>
 
-                {isCustomColors && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setChartTotalColor('#3b82f6');
-                      setChartLucidColor('#06b6d4');
-                      preferencesService.updatePreferences({
-                        chartTotalColor: '#3b82f6',
-                        chartLucidColor: '#06b6d4',
-                      });
-                    }}
-                    className="text-[10px] text-slate-400 hover:text-slate-200 transition-colors flex items-center gap-1 cursor-pointer pl-1 border-l border-slate-800"
-                    title="Reset line colors to default"
+                {/* Interactive Legend with Color Pickers */}
+                <div className="flex items-center gap-3 text-xs pl-1">
+                  <label
+                    className="flex items-center gap-1.5 cursor-pointer group"
+                    title="Click to customize Total dreams line color"
                   >
-                    <RotateCcw className="w-2.5 h-2.5" />
-                    <span>Reset</span>
-                  </button>
-                )}
+                    <span className="relative flex items-center justify-center">
+                      <span
+                        className="w-3 h-3 rounded-sm border border-white/20 shadow-xs transition-transform group-hover:scale-110"
+                        style={{ backgroundColor: chartTotalColor }}
+                      />
+                      <input
+                        type="color"
+                        value={chartTotalColor}
+                        onChange={(e) => handleUpdateTotalColor(e.target.value)}
+                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                        aria-label="Pick color for Total dreams line"
+                      />
+                    </span>
+                    <span className="text-slate-300 font-medium group-hover:text-white transition-colors">
+                      Total
+                    </span>
+                  </label>
+
+                  <label
+                    className="flex items-center gap-1.5 cursor-pointer group"
+                    title="Click to customize Lucid dreams line color"
+                  >
+                    <span className="relative flex items-center justify-center">
+                      <span
+                        className="w-3 h-3 rounded-sm border border-white/20 shadow-xs transition-transform group-hover:scale-110"
+                        style={{ backgroundColor: chartLucidColor }}
+                      />
+                      <input
+                        type="color"
+                        value={chartLucidColor}
+                        onChange={(e) => handleUpdateLucidColor(e.target.value)}
+                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                        aria-label="Pick color for Lucid dreams line"
+                      />
+                    </span>
+                    <span
+                      className="font-medium group-hover:brightness-125 transition-all"
+                      style={{ color: chartLucidColor }}
+                    >
+                      Lucid
+                    </span>
+                  </label>
+
+                  {isCustomColors && (
+                    <button
+                      type="button"
+                      onClick={handleResetChartColors}
+                      className="text-[10px] text-slate-400 hover:text-slate-200 transition-colors flex items-center gap-1 cursor-pointer pl-1 border-l border-slate-800"
+                      title="Reset graph line colors to default"
+                      aria-label="Reset graph line colors to default"
+                    >
+                      <RotateCcw className="w-2.5 h-2.5" />
+                      <span>Reset</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="w-full h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data.recallTimeline} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="anColorTotal" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={chartTotalColor} stopOpacity={0.4} />
-                      <stop offset="95%" stopColor={chartTotalColor} stopOpacity={0.0} />
-                    </linearGradient>
-                    <linearGradient id="anColorLucid" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={chartLucidColor} stopOpacity={0.6} />
-                      <stop offset="95%" stopColor={chartLucidColor} stopOpacity={0.0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.05)" vertical={false} />
-                  <XAxis dataKey="label" stroke="#64748b" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} domain={[0, maxTimelineCount]} />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const item = payload[0].payload;
-                        return (
-                          <div className="p-3 bg-slate-900 border border-slate-700 rounded-lg shadow-xl text-xs space-y-1">
-                            <p className="font-semibold text-slate-200">{formatDate(item.date)}</p>
-                            <p style={{ color: chartTotalColor }}>
-                              Total Dreams: <strong className="text-white">{item.total}</strong>
-                            </p>
-                            <p style={{ color: chartLucidColor }}>
-                              Lucid Dreams: <strong className="text-white">{item.lucid}</strong>
-                            </p>
-                            {item.controlAvg !== null && (
-                              <p className="text-slate-400">
-                                Control Avg: <strong className="text-blue-200">{item.controlAvg}/5</strong>
-                              </p>
-                            )}
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Area type="monotone" dataKey="total" stroke={chartTotalColor} strokeWidth={2} fill="url(#anColorTotal)" />
-                  <Area type="monotone" dataKey="lucid" stroke={chartLucidColor} strokeWidth={2} fill="url(#anColorLucid)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+            <RecallChart
+              data={recallChartData}
+              totalColor={chartTotalColor}
+              lucidColor={chartLucidColor}
+            />
           </div>
 
           {/* Comparative Trends Grid */}
