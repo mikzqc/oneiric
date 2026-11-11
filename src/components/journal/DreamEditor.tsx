@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   DreamDraft,
   DreamEntry,
@@ -14,6 +14,7 @@ import { dreamService } from '../../services/dreamService';
 import { celebrationService } from '../../services/celebrationService';
 import { preferencesService } from '../../services/preferencesService';
 import { wakeTimeService, WakeTimeConfig, WAKE_TIME_CHANGED_EVENT } from '../../services/wakeTimeService';
+import { extractTagSuggestions } from '../../services/tagSuggestionService';
 import {
   isSpeechRecognitionSupported,
   VoiceDictationController,
@@ -46,6 +47,7 @@ import {
   Mic,
   MicOff,
   Square,
+  Sparkles,
 } from 'lucide-react';
 
 interface DreamEditorProps {
@@ -154,7 +156,7 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   );
   const [tags, setTags] = useState<string[]>(initialDream?.tags ?? newDraft?.tags ?? []);
   const [tagInput, setTagInput] = useState('');
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [userDistinctTags, setUserDistinctTags] = useState<string[]>([]);
   const [isFavorite, setIsFavorite] = useState<boolean>(
     initialDream?.isFavorite ?? newDraft?.isFavorite ?? false
   );
@@ -178,16 +180,15 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
   const [hasRestoredEditDraft, setHasRestoredEditDraft] = useState(Boolean(recoveredEditDraft));
   const [autosaveTime, setAutosaveTime] = useState<string | null>(null);
 
-  // Populate suggestion tags from frequent tags & defaults
+  // Populate suggestion tags from frequent tags, distinct tags & defaults
   useEffect(() => {
-    dreamService
-      .getFrequentTags(12)
-      .then((frequent) => {
-        const merged = Array.from(new Set([...frequent, ...DEFAULT_TAGS]));
-        setAvailableTags(merged);
+    Promise.all([dreamService.getFrequentTags(16), dreamService.getDistinctTags()])
+      .then(([frequent, distinct]) => {
+        const merged = Array.from(new Set([...frequent, ...distinct, ...DEFAULT_TAGS]));
+        setUserDistinctTags(merged);
       })
       .catch(() => {
-        setAvailableTags([...DEFAULT_TAGS]);
+        setUserDistinctTags([...DEFAULT_TAGS]);
       });
   }, []);
 
@@ -435,9 +436,8 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     setScenesCount(Math.max(1, renumbered.length));
   };
 
-  // Load distinct tags and existing dreams for linking from DB
+  // Load existing dreams for linking from DB
   useEffect(() => {
-    dreamService.getDistinctTags().then((t) => setAvailableTags(t));
     dreamService.getAllDreams().then((all) => {
       setAvailableDreamsForLinking(all.filter((d) => d.id !== initialDream?.id));
     });
@@ -611,13 +611,47 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
     );
   };
 
+  // Analyze written dream content to generate contextual tag suggestions
+  const combinedDreamText = useMemo(() => {
+    const parts = [title, narrative, dreamSignsNotes, interpretationNotes];
+    if (Array.isArray(scenes)) {
+      for (const scene of scenes) {
+        if (scene.title) parts.push(scene.title);
+        if (scene.narrative) parts.push(scene.narrative);
+      }
+    }
+    return parts.filter(Boolean).join('\n');
+  }, [title, narrative, dreamSignsNotes, interpretationNotes, scenes]);
+
+  const { detectedSuggestions, generalSuggestions } = useMemo(() => {
+    return extractTagSuggestions(combinedDreamText, {
+      existingTags: tags,
+      userDistinctTags,
+      limit: 10,
+    });
+  }, [combinedDreamText, tags, userDistinctTags]);
+
   const handleAddTag = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const cleanTag = tagInput.trim().replace(/^#/, '');
     if (cleanTag && !tags.includes(cleanTag)) {
       setTags((prev) => [...prev, cleanTag]);
       setTagInput('');
+      setUserDistinctTags((prev) => (prev.includes(cleanTag) ? prev : [...prev, cleanTag]));
     }
+  };
+
+  const handleAddSuggestedTag = (tagToAdd: string) => {
+    const cleanTag = tagToAdd.trim().replace(/^#/, '');
+    if (cleanTag && !tags.includes(cleanTag)) {
+      setTags((prev) => [...prev, cleanTag]);
+    }
+  };
+
+  const handleAddAllDetectedTags = () => {
+    if (detectedSuggestions.length === 0) return;
+    const newTags = detectedSuggestions.map((s) => s.tag.trim().replace(/^#/, ''));
+    setTags((prev) => Array.from(new Set([...prev, ...newTags])));
   };
 
   const removeTag = (tagToRemove: string) => {
@@ -1405,23 +1439,60 @@ export const DreamEditor: React.FC<DreamEditorProps> = ({
           </Button>
         </div>
 
-        {/* Quick Suggestions from DB */}
-        {availableTags.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1 items-center">
-            <span className="text-[11px] text-slate-400 mr-1">Suggestions:</span>
-            {availableTags
-              .filter((t) => !tags.includes(t))
-              .slice(0, 6)
-              .map((suggested) => (
+        {/* Smart Suggestions Detected from Dream Content */}
+        {detectedSuggestions.length > 0 && (
+          <div className="mt-3 p-2.5 rounded-lg bg-blue-950/25 border border-blue-900/40">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-semibold text-blue-300 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                <span>Suggested from dream text ({detectedSuggestions.length}):</span>
+              </span>
+              {detectedSuggestions.length > 1 && (
                 <button
-                  key={suggested}
                   type="button"
-                  onClick={() => setTags((prev) => [...prev, suggested])}
-                  className="text-[11px] text-slate-300 hover:text-blue-300 px-2 py-0.5 rounded bg-slate-900/60 hover:bg-slate-800 border border-slate-800 cursor-pointer"
+                  onClick={handleAddAllDetectedTags}
+                  className="text-[11px] font-medium text-blue-400 hover:text-blue-200 cursor-pointer underline decoration-blue-500/40 hover:decoration-blue-400 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded-xs"
                 >
-                  +{suggested}
+                  Add all ({detectedSuggestions.length})
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-1.5 items-center">
+              {detectedSuggestions.map((item) => (
+                <button
+                  key={item.tag}
+                  type="button"
+                  onClick={() => handleAddSuggestedTag(item.tag)}
+                  title={item.matchedKeywords.length > 0 ? `Matched: ${item.matchedKeywords.slice(0, 3).join(', ')}` : undefined}
+                  className="inline-flex items-center gap-1 text-[11px] text-blue-200 hover:text-white px-2 py-0.5 rounded-md bg-blue-900/40 hover:bg-blue-800/70 border border-blue-700/60 hover:border-blue-500 transition-all cursor-pointer group active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                >
+                  <span className="text-blue-400 group-hover:text-blue-300 font-bold">+</span>
+                  <span>{item.tag}</span>
+                  {item.matchCount > 1 && (
+                    <span className="text-[10px] text-blue-300/80 bg-blue-950/80 px-1 rounded-xs font-mono">
+                      ×{item.matchCount}
+                    </span>
+                  )}
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* General & Frequent Suggestions */}
+        {generalSuggestions.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1 items-center">
+            <span className="text-[11px] text-slate-400 mr-1">Frequent:</span>
+            {generalSuggestions.slice(0, 8).map((suggested) => (
+              <button
+                key={suggested}
+                type="button"
+                onClick={() => handleAddSuggestedTag(suggested)}
+                className="text-[11px] text-slate-300 hover:text-blue-300 px-2 py-0.5 rounded bg-slate-900/60 hover:bg-slate-800 border border-slate-800 cursor-pointer transition-colors active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              >
+                +{suggested}
+              </button>
+            ))}
           </div>
         )}
       </div>

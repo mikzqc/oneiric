@@ -1,3 +1,24 @@
+function parseUpstreamJson(text) {
+  if (!text) return null;
+  const trimmed = text.trim();
+  try {
+    return JSON.parse(trimmed);
+  } catch (initialErr) {
+    // Strip trailing markup/html that extendsclass or third-party proxies may append
+    const htmlIndex = trimmed.search(/<(!doctype|html|head|body|\/)/i);
+    if (htmlIndex !== -1) {
+      const clean = trimmed.slice(0, htmlIndex).trim();
+      return JSON.parse(clean);
+    }
+    const firstBrace = trimmed.indexOf('{');
+    const lastBrace = trimmed.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace > firstBrace) {
+      return JSON.parse(trimmed.slice(firstBrace, lastBrace + 1));
+    }
+    throw initialErr;
+  }
+}
+
 export default async function handler(req, res) {
   // Set permissive CORS headers for cross-device requests
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -39,7 +60,7 @@ export default async function handler(req, res) {
           .json({ error: `Upstream storage error (HTTP ${upstreamRes.status})` });
       }
 
-      const data = await upstreamRes.json();
+      const data = parseUpstreamJson(await upstreamRes.text());
       return res.status(200).json(data);
     }
 
@@ -64,7 +85,7 @@ export default async function handler(req, res) {
           .json({ error: `Vault not found or unavailable (HTTP ${upstreamRes.status})` });
       }
 
-      const data = await upstreamRes.json();
+      const data = parseUpstreamJson(await upstreamRes.text());
       const clientDeviceId = req.headers['x-device-id'];
       if (
         clientDeviceId &&
@@ -97,7 +118,7 @@ export default async function handler(req, res) {
           cache: 'no-store',
         });
         if (checkRes.ok) {
-          const existing = await checkRes.json();
+          const existing = parseUpstreamJson(await checkRes.text());
           if (
             clientDeviceId &&
             Array.isArray(existing?.revokedDeviceIds) &&
@@ -127,7 +148,7 @@ export default async function handler(req, res) {
           .json({ error: `Failed to update vault (HTTP ${upstreamRes.status})` });
       }
 
-      const data = await upstreamRes.json();
+      const data = parseUpstreamJson(await upstreamRes.text());
       return res.status(200).json(data);
     }
 
