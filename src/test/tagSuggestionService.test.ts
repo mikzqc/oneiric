@@ -20,12 +20,12 @@ describe('tagSuggestionService', () => {
     const { detectedSuggestions } = extractTagSuggestions(dreamText);
     const detectedTags = detectedSuggestions.map((s) => s.tag);
 
-    expect(detectedTags).toContain('Ocean & Sea');
+    expect(detectedTags).toContain('Ocean');
     expect(detectedTags).toContain('Lucid Dream');
     expect(detectedTags).toContain('Flying');
-    expect(detectedTags).toContain('Space & Planets');
-    expect(detectedTags).toContain('School & Classroom');
-    expect(detectedTags).toContain('Exam & Test');
+    expect(detectedTags).toContain('Space');
+    expect(detectedTags).toContain('School');
+    expect(detectedTags).toContain('Exam');
   });
 
   it('ranks tags with higher keyword occurrences higher', () => {
@@ -43,12 +43,12 @@ describe('tagSuggestionService', () => {
   it('excludes tags that are already selected in existingTags', () => {
     const dreamText = 'I was flying across the ocean and realized I was in a lucid dream.';
     const { detectedSuggestions } = extractTagSuggestions(dreamText, {
-      existingTags: ['Flying', 'Ocean & Sea'],
+      existingTags: ['Flying', 'Ocean'],
     });
 
     const detectedTags = detectedSuggestions.map((s) => s.tag);
     expect(detectedTags).not.toContain('Flying');
-    expect(detectedTags).not.toContain('Ocean & Sea');
+    expect(detectedTags).not.toContain('Ocean');
     expect(detectedTags).toContain('Lucid Dream');
   });
 

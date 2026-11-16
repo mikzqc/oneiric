@@ -41,7 +41,7 @@ describe('DreamEditor Tag Suggestions', () => {
 
     // Check that tags for flying, ocean, and lucid dream are suggested
     expect(screen.getByRole('button', { name: /\+Flying/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /\+Ocean & Sea/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /\+Ocean/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /\+Lucid Dream/i })).toBeInTheDocument();
 
     // Clicking "+Flying" adds it to the active tags
@@ -82,7 +82,7 @@ describe('DreamEditor Tag Suggestions', () => {
     fireEvent.click(addAllBtn);
 
     // Check that both tags are now active
-    expect(screen.getByText('Cemetery & Graves')).toBeInTheDocument();
+    expect(screen.getByText('Cemetery')).toBeInTheDocument();
     expect(screen.getByText('Shadow Figure')).toBeInTheDocument();
 
     // And the suggestion box disappears because all detected tags have been added

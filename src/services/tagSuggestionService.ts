@@ -1,9 +1,9 @@
 /**
  * Tag Suggestion Service
  *
- * Provides intelligent, high-coverage tag suggestions for dream entries by:
- * 1. Analyzing the dream's narrative, title, scenes, and dream sign notes.
- * 2. Matching against a comprehensive dictionary of 140+ dream themes and 2,300+ keywords.
+ * Provides intelligent, high-precision tag suggestions for dream entries by:
+ * 1. Analyzing the dream's narrative, title, scenes, and notes.
+ * 2. Matching against a dictionary of 230 clean, atomic dream tags with tight keyword connections.
  * 3. Incorporating user's custom tags and historical dream tags.
  * 4. Running 100% locally with zero external network or AI dependencies.
  */
@@ -27,8 +27,8 @@ function escapeRegex(str: string): string {
 }
 
 /**
- * Curated, comprehensive dictionary of dream themes and their keyword triggers.
- * Covers 2348+ keywords across 152 themes for high-recall dream tag recommendations.
+ * Curated, clean atomic dream tags with precise, non-vague keyword triggers.
+ * No compound bucket labels (e.g. no "Adventure & Quest" or "Ocean & Sea").
  */
 export const DREAM_TAG_RULES: TagRule[] = [
   {
@@ -50,19 +50,10 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "soaring",
       "soared",
       "airborne",
-      "glid",
       "glide",
       "gliding",
       "glided",
       "wings",
-      "take off",
-      "took off",
-      "in the air",
-      "aloft",
-      "skimming",
-      "flapped",
-      "flapping",
-      "superman flight",
       "flying high",
       "launch into the air",
       "floating upward",
@@ -94,11 +85,7 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "tumbling",
       "toppled",
       "toppling",
-      "tripped",
-      "slipping",
-      "lost my footing",
-      "nosedive",
-      "free falling"
+      "nosedive"
     ]
   },
   {
@@ -121,13 +108,8 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "racing",
       "jogged",
       "sprinted away",
-      "galloping",
-      "darted",
       "bolted",
-      "scrambled",
-      "scrambling",
-      "bounding",
-      "stampede"
+      "scrambled"
     ]
   },
   {
@@ -142,24 +124,18 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "hunted",
       "stalked",
       "running away",
-      "escaping",
       "escaping from",
-      "follower",
       "on the run",
-      "hound",
-      "hounded",
       "tracked down",
       "running for my life",
       "tailing me",
       "in hot pursuit",
-      "cornered",
-      "closing in on me",
-      "could hear footsteps behind"
+      "closing in on me"
     ]
   },
   {
     "tag": "Sleep Paralysis",
-    "category": "action",
+    "category": "consciousness",
     "keywords": [
       "sleep paralysis",
       "paralyzed",
@@ -172,13 +148,8 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "heavy limbs",
       "stuck in bed",
       "weight on my chest",
-      "immobile",
-      "cannot speak",
-      "locked in",
-      "sleep demon",
       "pressure on chest",
-      "tried to scream but nothing came out",
-      "lead limbs"
+      "tried to scream but nothing came out"
     ]
   },
   {
@@ -194,9 +165,6 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "diving",
       "dove",
       "dived",
-      "submerged",
-      "underwater",
-      "deep end",
       "doggy paddle",
       "breaststroke",
       "freestyle",
@@ -204,24 +172,23 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "snorkeling",
       "scuba",
       "paddling",
-      "wading",
-      "waded"
+      "wading"
     ]
   },
   {
-    "tag": "Breathing Underwater",
-    "category": "action",
+    "tag": "Underwater",
+    "category": "nature",
     "keywords": [
+      "underwater",
+      "submerged",
+      "deep underwater",
+      "bottom of the pool",
+      "under the surface",
+      "beneath the surface",
       "breathe underwater",
       "breathing underwater",
-      "breath underwater",
       "inhaled water",
-      "water in lungs",
-      "gills",
-      "underwater breath",
-      "breathed beneath the water",
-      "could breathe under",
-      "oxygen underwater"
+      "gills"
     ]
   },
   {
@@ -239,8 +206,6 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "portal jump",
       "phase shifted",
       "dematerialized",
-      "rematerialized",
-      "teleported to",
       "warp"
     ]
   },
@@ -258,10 +223,7 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "morphed",
       "body change",
       "turned into an animal",
-      "becoming a wolf",
-      "became a bird",
-      "transmuted",
-      "altered form"
+      "transmuted"
     ]
   },
   {
@@ -278,10 +240,8 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "spitting out teeth",
       "broken teeth",
       "cracked tooth",
-      "dentist",
       "gums bleeding",
       "molar fell out",
-      "pulled my tooth",
       "shattered teeth"
     ]
   },
@@ -296,21 +256,18 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "in my underwear",
       "forgot clothes",
       "half naked",
-      "embarrassed without clothes",
       "public nudity",
       "barefoot in public",
-      "caught with no pants",
       "forgot to wear pants",
       "unclothed",
       "exposed"
     ]
   },
   {
-    "tag": "Lost & Wandering",
+    "tag": "Lost",
     "category": "action",
     "keywords": [
       "lost",
-      "wandering",
       "cannot find my way",
       "can't find the way",
       "disoriented",
@@ -319,12 +276,8 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "no way out",
       "directionless",
       "wrong turn",
-      "unfamiliar neighborhood",
       "lost in a building",
-      "missing my way home",
       "where am i",
-      "meandering",
-      "aimlessly wandering",
       "lost my bearings"
     ]
   },
@@ -343,7 +296,6 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "mute",
       "unable to speak",
       "speechless",
-      "choked up",
       "mouth moving but no sound"
     ]
   },
@@ -364,39 +316,27 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "super speed",
       "pyrokinesis",
       "bending elements",
-      "magic powers",
-      "spells",
-      "sorcery",
-      "casting magic",
       "energy shield",
       "superhuman"
     ]
   },
   {
-    "tag": "Climbing & Heights",
+    "tag": "Climbing",
     "category": "action",
     "keywords": [
       "climbing",
       "climbed",
       "scaling",
       "scaled",
-      "cliff climbing",
       "rock climbing",
-      "ladder",
-      "scaffolding",
-      "rooftop edge",
-      "steep incline",
-      "summit",
-      "ridge",
-      "high altitude",
+      "climbing a tree",
+      "climbing a wall",
       "clambered",
-      "hanging on",
-      "gripping ledge",
-      "precipice"
+      "gripping ledge"
     ]
   },
   {
-    "tag": "Hiding & Sneaking",
+    "tag": "Hiding",
     "category": "action",
     "keywords": [
       "hiding",
@@ -410,17 +350,12 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "inside the closet",
       "holding my breath",
       "trying not to be seen",
-      "secretly watching",
-      "tiptoeing",
-      "tiptoed",
       "ducked behind",
-      "camouflage",
-      "concealed",
-      "crawling"
+      "concealed"
     ]
   },
   {
-    "tag": "Fighting & Brawling",
+    "tag": "Fighting",
     "category": "action",
     "keywords": [
       "fight",
@@ -438,16 +373,11 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "wrestling",
       "grappling",
       "defending myself",
-      "blow",
-      "strike",
-      "struck",
-      "knocked down",
-      "self defense",
       "martial arts"
     ]
   },
   {
-    "tag": "Driving & Vehicular",
+    "tag": "Driving",
     "category": "action",
     "keywords": [
       "driving",
@@ -461,33 +391,22 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "gas pedal",
       "speeding",
       "lost control of car",
-      "reversing",
       "highway driving",
-      "backseat driving",
-      "swerving",
-      "drifted"
+      "swerving"
     ]
   },
   {
-    "tag": "Singing & Music Playing",
+    "tag": "Singing",
     "category": "action",
     "keywords": [
       "singing",
       "sang",
       "sung",
       "vocalizing",
-      "playing guitar",
-      "playing piano",
-      "playing drums",
-      "melody",
-      "humming",
-      "performing music",
-      "concert solo",
-      "instrument",
-      "harmonies",
       "choir singing",
-      "rapping",
-      "playing chords"
+      "humming a song",
+      "singing on stage",
+      "singing loud"
     ]
   },
   {
@@ -501,104 +420,184 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "ballet",
       "breakdance",
       "twirling",
-      "spinning on the floor",
-      "ballroom",
       "dance party",
-      "rhythm",
       "choreography",
-      "swaying to music",
       "dance floor"
     ]
   },
   {
-    "tag": "Ocean & Sea",
+    "tag": "Floating",
+    "category": "action",
+    "keywords": [
+      "floating",
+      "weightless",
+      "weightlessness",
+      "drifting in air",
+      "bobbing in air",
+      "anti-gravity",
+      "floating in midair"
+    ]
+  },
+  {
+    "tag": "Drowning",
+    "category": "action",
+    "keywords": [
+      "drowning",
+      "drowned",
+      "sinking in water",
+      "cannot surface",
+      "swallowed water",
+      "pulled underwater",
+      "gasped for air"
+    ]
+  },
+  {
+    "tag": "Searching",
+    "category": "action",
+    "keywords": [
+      "searching",
+      "searching for",
+      "looking everywhere",
+      "scouring",
+      "seeking",
+      "trying to find",
+      "hunting for"
+    ]
+  },
+  {
+    "tag": "Ocean",
     "category": "nature",
     "keywords": [
       "ocean",
-      "sea",
-      "waves",
-      "beach",
-      "coast",
-      "shore",
-      "tide",
-      "tsunami",
-      "marine",
+      "oceans",
+      "oceanic",
       "deep ocean",
-      "coral reef",
-      "seashore",
-      "surf",
-      "cresting wave",
-      "coastal",
       "open water",
-      "breakers",
-      "sandy beach",
       "ocean floor",
-      "pelagic",
       "high seas",
       "abyssal",
-      "deep sea",
-      "whirlpool",
-      "maelstrom"
+      "pacific ocean",
+      "atlantic ocean"
     ]
   },
   {
-    "tag": "River & Water",
+    "tag": "Sea",
+    "category": "nature",
+    "keywords": [
+      "sea",
+      "seas",
+      "deep sea",
+      "seafloor",
+      "seabed",
+      "coral reef",
+      "marine life"
+    ]
+  },
+  {
+    "tag": "Beach",
+    "category": "nature",
+    "keywords": [
+      "beach",
+      "beaches",
+      "shore",
+      "shoreline",
+      "coast",
+      "coastline",
+      "sandy beach",
+      "seashore",
+      "surf",
+      "sand by the water"
+    ]
+  },
+  {
+    "tag": "Waves",
+    "category": "nature",
+    "keywords": [
+      "wave",
+      "waves",
+      "tsunami",
+      "giant wave",
+      "cresting wave",
+      "tidal wave",
+      "breakers",
+      "swell",
+      "rough water"
+    ]
+  },
+  {
+    "tag": "River",
     "category": "nature",
     "keywords": [
       "river",
-      "lake",
+      "rivers",
       "stream",
       "creek",
-      "pond",
-      "waterfall",
-      "rapids",
-      "spring",
-      "flooding",
-      "flood",
-      "fountain",
-      "canal",
-      "estuary",
       "brook",
-      "bayou",
-      "marsh",
-      "swamp",
-      "bog",
-      "water bank",
-      "flowing water",
-      "dam",
-      "reservoir"
+      "rapids",
+      "riverbank",
+      "flowing river"
     ]
   },
   {
-    "tag": "Storm & Rain",
+    "tag": "Lake",
+    "category": "nature",
+    "keywords": [
+      "lake",
+      "lakes",
+      "pond",
+      "lagoon",
+      "reservoir",
+      "lakeside",
+      "quiet lake"
+    ]
+  },
+  {
+    "tag": "Waterfall",
+    "category": "nature",
+    "keywords": [
+      "waterfall",
+      "waterfalls",
+      "cascading water",
+      "cascade",
+      "falling water",
+      "plunge pool"
+    ]
+  },
+  {
+    "tag": "Rain",
     "category": "nature",
     "keywords": [
       "rain",
-      "storm",
-      "thunder",
-      "lightning",
-      "hurricane",
-      "tornado",
-      "tempest",
+      "raining",
+      "rained",
       "downpour",
-      "cyclone",
-      "thunderstorm",
-      "monsoon",
-      "gale",
-      "hail",
-      "hailstorm",
-      "overcast",
-      "dark clouds",
-      "squall",
-      "cloudburst",
-      "flash of lightning",
-      "thunderclap",
       "drizzle",
-      "pouring rain"
+      "pouring rain",
+      "monsoon",
+      "raindrops",
+      "rain shower"
     ]
   },
   {
-    "tag": "Fire & Burning",
+    "tag": "Storm",
+    "category": "nature",
+    "keywords": [
+      "storm",
+      "thunder",
+      "lightning",
+      "thunderstorm",
+      "hurricane",
+      "tornado",
+      "tempest",
+      "cyclone",
+      "gale",
+      "hail",
+      "hailstorm",
+      "thunderclap"
+    ]
+  },
+  {
+    "tag": "Fire",
     "category": "nature",
     "keywords": [
       "fire",
@@ -615,92 +614,119 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "ashes",
       "campfire",
       "fireball",
-      "lava",
-      "magma",
-      "volcano",
-      "erupting",
-      "sparks",
-      "smoldering",
-      "charred",
-      "combustion"
+      "smoldering"
     ]
   },
   {
-    "tag": "Snow & Winter",
+    "tag": "Snow",
     "category": "nature",
     "keywords": [
       "snow",
-      "blizzard",
-      "ice",
-      "frozen",
-      "winter",
-      "frost",
       "snowing",
       "snowstorm",
-      "glacier",
-      "avalanche",
-      "freezing",
-      "icicle",
-      "sleet",
-      "snowy mountain",
+      "blizzard",
+      "snowflakes",
       "snowdrift",
-      "frozen lake",
-      "subzero",
-      "polar",
-      "tundra",
-      "chilly"
+      "deep snow",
+      "fresh snow"
     ]
   },
   {
-    "tag": "Forest & Woods",
+    "tag": "Ice",
+    "category": "nature",
+    "keywords": [
+      "ice",
+      "frozen",
+      "frost",
+      "glacier",
+      "icicle",
+      "freezing cold",
+      "frozen lake",
+      "slippery ice",
+      "subzero"
+    ]
+  },
+  {
+    "tag": "Forest",
     "category": "nature",
     "keywords": [
       "forest",
-      "woods",
-      "trees",
-      "jungle",
-      "rainforest",
       "pine forest",
+      "rainforest",
       "woodland",
-      "clearing",
+      "deep forest",
       "canopy",
-      "branches",
-      "foliage",
-      "grove",
-      "thicket",
+      "tall trees",
       "redwoods",
-      "mossy",
-      "timberland",
-      "deep woods",
-      "roots",
-      "tree trunk",
-      "evergreen"
+      "overgrown forest"
     ]
   },
   {
-    "tag": "Mountain & Cave",
+    "tag": "Woods",
+    "category": "nature",
+    "keywords": [
+      "woods",
+      "in the woods",
+      "clearing in the woods",
+      "grove",
+      "thicket",
+      "timberland"
+    ]
+  },
+  {
+    "tag": "Jungle",
+    "category": "nature",
+    "keywords": [
+      "jungle",
+      "thick jungle",
+      "vines hanging",
+      "exotic jungle",
+      "dense undergrowth",
+      "tropical rainforest"
+    ]
+  },
+  {
+    "tag": "Mountain",
     "category": "nature",
     "keywords": [
       "mountain",
       "mountains",
-      "peak",
+      "mountain peak",
+      "mountain range",
+      "summit",
+      "alpine",
+      "rocky mountain",
+      "climbing a mountain"
+    ]
+  },
+  {
+    "tag": "Cave",
+    "category": "nature",
+    "keywords": [
       "cave",
       "cavern",
-      "cliff",
-      "canyon",
-      "ravine",
-      "gorge",
       "underground cave",
       "stalactite",
       "stalagmite",
-      "boulder",
-      "rocks",
-      "rocky",
+      "dark cave",
+      "grotto",
+      "deep cave"
+    ]
+  },
+  {
+    "tag": "Cliff",
+    "category": "nature",
+    "keywords": [
+      "cliff",
+      "cliffs",
+      "cliffside",
+      "canyon",
+      "ravine",
+      "gorge",
+      "chasm",
+      "precipice",
       "crag",
-      "plateau",
-      "summit",
-      "alpine",
-      "pass"
+      "steep drop"
     ]
   },
   {
@@ -708,43 +734,32 @@ export const DREAM_TAG_RULES: TagRule[] = [
     "category": "nature",
     "keywords": [
       "desert",
-      "sand",
-      "dunes",
+      "sand dunes",
       "sandstorm",
       "sahara",
       "oasis",
       "arid",
-      "barren",
       "mirage",
       "cactus",
-      "scorching sun",
-      "heatwave",
-      "wasteland",
-      "dusty",
-      "sand dune",
-      "dry cracked earth"
+      "scorching desert",
+      "dry wasteland"
     ]
   },
   {
-    "tag": "Island & Tropics",
+    "tag": "Island",
     "category": "nature",
     "keywords": [
       "island",
-      "tropical",
-      "palm tree",
-      "lagoon",
-      "paradise",
-      "atoll",
-      "archipelago",
+      "islands",
       "remote island",
       "deserted island",
-      "coconut tree",
-      "turquoise water",
-      "bay"
+      "tropical island",
+      "atoll",
+      "archipelago"
     ]
   },
   {
-    "tag": "Garden & Flora",
+    "tag": "Garden",
     "category": "nature",
     "keywords": [
       "garden",
@@ -755,22 +770,14 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "botanical",
       "orchard",
       "greenhouse",
-      "vines",
       "petals",
       "tulips",
       "sunflowers",
-      "lilies",
-      "wildflowers",
-      "blossoms",
-      "overgrown garden",
-      "hedges",
-      "lawn",
-      "ivy",
       "meadow"
     ]
   },
   {
-    "tag": "Sun & Sunlight",
+    "tag": "Sun",
     "category": "nature",
     "keywords": [
       "sun",
@@ -781,29 +788,60 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "golden hour",
       "dawn",
       "dusk",
-      "solar",
-      "blinding sun",
-      "sunbeams",
-      "twilight",
-      "daybreak",
-      "sundown"
+      "solar flare",
+      "blinding sun"
     ]
   },
   {
-    "tag": "Earthquake & Landslide",
+    "tag": "Moon",
+    "category": "nature",
+    "keywords": [
+      "moon",
+      "full moon",
+      "crescent moon",
+      "moonlight",
+      "lunar",
+      "blood moon",
+      "eclipse"
+    ]
+  },
+  {
+    "tag": "Night",
+    "category": "nature",
+    "keywords": [
+      "midnight",
+      "night sky",
+      "pitch black",
+      "pitch dark",
+      "nighttime",
+      "in the middle of the night"
+    ]
+  },
+  {
+    "tag": "Earthquake",
     "category": "nature",
     "keywords": [
       "earthquake",
-      "tremor",
       "ground shaking",
+      "tremor",
       "fissure",
       "landslide",
       "sinkhole",
       "aftershock",
-      "cracking ground",
-      "fault line",
-      "ground collapsed",
-      "mudslide"
+      "cracking earth"
+    ]
+  },
+  {
+    "tag": "Volcano",
+    "category": "nature",
+    "keywords": [
+      "volcano",
+      "lava",
+      "magma",
+      "erupting volcano",
+      "volcanic ash",
+      "crater",
+      "molten rock"
     ]
   },
   {
@@ -813,45 +851,41 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "childhood home",
       "childhood house",
       "childhood bedroom",
-      "old house",
+      "old house I lived in",
       "house I grew up in",
       "parents house",
-      "parent's house",
-      "family home",
-      "old neighborhood",
-      "backyard of my childhood",
-      "hometown house"
+      "family home"
     ]
   },
   {
-    "tag": "School & Classroom",
+    "tag": "School",
     "category": "location",
     "keywords": [
       "school",
-      "classroom",
-      "hallway",
-      "locker",
-      "lockers",
-      "principal",
-      "teacher",
-      "cafeteria",
       "high school",
       "elementary school",
       "middle school",
-      "blackboard",
-      "whiteboard",
-      "desk",
-      "gymnasium",
+      "school hallway",
       "school bus",
       "recess",
-      "auditorium",
-      "homework",
-      "chalkboard",
       "kindergarten"
     ]
   },
   {
-    "tag": "University & Campus",
+    "tag": "Classroom",
+    "category": "location",
+    "keywords": [
+      "classroom",
+      "blackboard",
+      "whiteboard",
+      "desk",
+      "chalkboard",
+      "teacher at front",
+      "lecture in class"
+    ]
+  },
+  {
+    "tag": "University",
     "category": "location",
     "keywords": [
       "university",
@@ -862,20 +896,11 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "lecture hall",
       "professor",
       "seminar",
-      "student",
-      "faculty",
-      "quad",
-      "campus grounds",
-      "fraternity",
-      "sorority",
-      "grad student",
-      "thesis",
-      "bachelor",
-      "curriculum"
+      "quad"
     ]
   },
   {
-    "tag": "Exam & Test",
+    "tag": "Exam",
     "category": "location",
     "keywords": [
       "exam",
@@ -885,25 +910,17 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "unprepared for test",
       "did not study",
       "testing room",
-      "scantron",
-      "cheating on test",
       "failed exam",
-      "grading",
-      "oral exam",
       "test anxiety",
-      "forgot about the test",
-      "blank exam sheet"
+      "forgot about the test"
     ]
   },
   {
-    "tag": "Hospital & Medical",
+    "tag": "Hospital",
     "category": "location",
     "keywords": [
       "hospital",
-      "doctor",
-      "nurse",
       "emergency room",
-      "er",
       "clinic",
       "surgery",
       "operating room",
@@ -911,141 +928,150 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "ambulance",
       "stretcher",
       "iv drip",
-      "medication",
-      "bandages",
-      "ward",
-      "intensive care",
-      "icu",
-      "physician",
-      "hospital bed"
+      "hospital bed",
+      "icu"
     ]
   },
   {
-    "tag": "Airport & Airplane",
+    "tag": "Airport",
     "category": "location",
     "keywords": [
       "airport",
-      "airplane",
-      "plane",
-      "flight",
-      "boarding",
       "terminal",
+      "boarding gate",
       "runway",
-      "gate",
       "baggage claim",
-      "passport",
-      "luggage",
-      "customs",
-      "cockpit",
-      "pilot",
-      "flight attendant",
-      "turbulence",
-      "missed my flight",
-      "aircraft"
+      "security checkpoint",
+      "passport control",
+      "tarmac"
     ]
   },
   {
-    "tag": "Train & Subway",
+    "tag": "Airplane",
+    "category": "location",
+    "keywords": [
+      "airplane",
+      "plane",
+      "cockpit",
+      "flight attendant",
+      "turbulence",
+      "aircraft",
+      "boarding the plane",
+      "plane taking off"
+    ]
+  },
+  {
+    "tag": "Train",
     "category": "location",
     "keywords": [
       "train",
-      "subway",
-      "metro",
-      "railway",
       "train station",
-      "platform",
-      "tracks",
+      "railway",
       "locomotive",
-      "carriage",
-      "commuter train",
+      "train tracks",
       "train car",
-      "bullet train",
-      "underground station",
-      "tram",
-      "trolley",
-      "monorail"
+      "commuter train",
+      "bullet train"
     ]
   },
   {
-    "tag": "Hotel & Lodging",
+    "tag": "Subway",
+    "category": "location",
+    "keywords": [
+      "subway",
+      "metro",
+      "subway station",
+      "subway car",
+      "underground station",
+      "turnstile",
+      "metro train"
+    ]
+  },
+  {
+    "tag": "Hotel",
     "category": "location",
     "keywords": [
       "hotel",
       "motel",
-      "resort",
       "hotel room",
       "lobby",
-      "check in",
       "concierge",
-      "inn",
       "hostel",
+      "resort",
       "suite",
       "keycard",
-      "bellhop",
-      "room service",
-      "penthouse"
+      "bellhop"
     ]
   },
   {
-    "tag": "Elevator & Escalator",
+    "tag": "Elevator",
     "category": "location",
     "keywords": [
       "elevator",
       "lift",
-      "escalator",
       "elevator falling",
       "stuck in elevator",
       "elevator shooting up",
-      "wrong floor",
-      "moving stairs",
       "elevator shaft",
       "glass elevator",
-      "cables snapped",
-      "plunging elevator",
       "elevator buttons"
     ]
   },
   {
-    "tag": "Stairs & Hallways",
+    "tag": "Stairs",
     "category": "location",
     "keywords": [
       "stairs",
       "staircase",
       "spiral staircase",
-      "endless hallway",
-      "corridor",
-      "narrow hallway",
       "stairwell",
-      "steps",
+      "creaky stairs",
       "climbing stairs",
-      "descending stairs",
-      "hallway with many doors",
-      "maze of corridors",
-      "creaky stairs"
+      "descending stairs"
     ]
   },
   {
-    "tag": "Maze & Labyrinth",
+    "tag": "Hallway",
     "category": "location",
     "keywords": [
-      "maze",
+      "hallway",
+      "corridor",
+      "narrow hallway",
+      "endless hallway",
+      "hallway with many doors",
+      "maze of corridors"
+    ]
+  },
+  {
+    "tag": "Labyrinth",
+    "category": "location",
+    "keywords": [
       "labyrinth",
+      "maze",
       "hedgemaze",
       "dead end",
       "winding corridors",
-      "twisting paths",
       "lost in a maze",
       "endless rooms",
-      "puzzle room",
       "backrooms"
     ]
   },
   {
-    "tag": "Basement & Underground",
+    "tag": "Basement",
     "category": "location",
     "keywords": [
       "basement",
       "cellar",
+      "dark cellar",
+      "wine cellar",
+      "down in the basement",
+      "creepy basement"
+    ]
+  },
+  {
+    "tag": "Underground",
+    "category": "location",
+    "keywords": [
       "underground",
       "bunker",
       "dungeon",
@@ -1054,59 +1080,82 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "subterranean",
       "tunnel",
       "sewer",
-      "dark cellar",
-      "wine cellar",
       "catacombs",
       "underground facility",
-      "bomb shelter",
-      "underground tunnel"
+      "bomb shelter"
     ]
   },
   {
-    "tag": "Mansion & Castle",
+    "tag": "Castle",
+    "category": "location",
+    "keywords": [
+      "castle",
+      "fortress",
+      "palace",
+      "throne room",
+      "ramparts",
+      "moat",
+      "citadel",
+      "tower",
+      "grand hall"
+    ]
+  },
+  {
+    "tag": "Mansion",
     "category": "location",
     "keywords": [
       "mansion",
-      "castle",
-      "palace",
-      "estate",
       "manor",
       "chateau",
-      "fortress",
-      "grand hall",
-      "ballroom",
-      "tower",
-      "ramparts",
-      "courtyard",
+      "grand estate",
       "chandeliers",
-      "throne room",
-      "historic home",
-      "citadel",
-      "moat"
+      "luxurious house",
+      "historic mansion"
     ]
   },
   {
-    "tag": "Cemetery & Graves",
+    "tag": "Pyramid",
+    "category": "location",
+    "keywords": [
+      "pyramid",
+      "pyramids",
+      "pharaoh",
+      "hieroglyphs",
+      "ancient tomb",
+      "sarcophagus",
+      "egyptian pyramid"
+    ]
+  },
+  {
+    "tag": "Cemetery",
     "category": "location",
     "keywords": [
       "cemetery",
       "graveyard",
-      "grave",
-      "tomb",
-      "headstone",
-      "tombstone",
-      "burial",
-      "mausoleum",
-      "coffin",
       "gravesite",
       "crematorium",
-      "casket",
-      "crypts",
-      "epitaph"
+      "mausoleum",
+      "burial ground"
     ]
   },
   {
-    "tag": "Bridge & Heights",
+    "tag": "Grave",
+    "category": "location",
+    "keywords": [
+      "grave",
+      "graves",
+      "tomb",
+      "tombs",
+      "headstone",
+      "tombstone",
+      "coffin",
+      "casket",
+      "crypts",
+      "burial plot"
+    ]
+  },
+  {
+    "tag": "Bridge",
     "category": "location",
     "keywords": [
       "bridge",
@@ -1114,153 +1163,134 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "rope bridge",
       "crossing the bridge",
       "bridge collapsing",
-      "overpass",
       "viaduct",
-      "footbridge",
-      "precipice",
-      "ledge",
-      "overlook",
-      "pier",
-      "boardwalk"
+      "overpass"
     ]
   },
   {
-    "tag": "City & Streets",
+    "tag": "City",
     "category": "location",
     "keywords": [
       "city",
-      "streets",
       "downtown",
-      "alley",
       "skyscraper",
-      "sidewalk",
-      "crosswalk",
-      "traffic",
+      "skyscrapers",
       "metropolis",
-      "avenue",
-      "boulevard",
-      "neon signs",
-      "intersection",
+      "skyline",
       "urban",
-      "pedestrian",
-      "block",
-      "town square",
-      "skyline"
+      "busy city"
     ]
   },
   {
-    "tag": "Space & Planets",
+    "tag": "Streets",
     "category": "location",
     "keywords": [
-      "space",
-      "planet",
-      "planets",
-      "stars",
-      "galaxy",
-      "spaceship",
-      "asteroid",
-      "orbit",
+      "street",
+      "streets",
+      "alley",
+      "alleyway",
+      "sidewalk",
+      "crosswalk",
+      "intersection",
+      "boulevard",
+      "avenue"
+    ]
+  },
+  {
+    "tag": "Space",
+    "category": "location",
+    "keywords": [
       "outer space",
-      "astronaut",
-      "alien planet",
+      "in space",
+      "galaxy",
       "cosmos",
-      "nebula",
-      "black hole",
       "milky way",
+      "nebula",
       "zero gravity",
-      "shuttle",
-      "starlight",
       "interstellar"
     ]
   },
   {
-    "tag": "Moon & Night",
+    "tag": "Stars",
     "category": "location",
     "keywords": [
-      "moon",
-      "full moon",
-      "crescent moon",
-      "moonlight",
-      "midnight",
-      "night sky",
-      "darkness",
-      "lunar",
-      "blood moon",
-      "eclipse",
-      "nighttime",
-      "pitch black"
+      "stars",
+      "starlight",
+      "constellation",
+      "shooting star",
+      "meteor",
+      "starfield"
     ]
   },
   {
-    "tag": "Work & Office",
+    "tag": "Planet",
+    "category": "location",
+    "keywords": [
+      "planet",
+      "planets",
+      "alien planet",
+      "mars",
+      "orbit",
+      "black hole",
+      "solar system"
+    ]
+  },
+  {
+    "tag": "Office",
     "category": "location",
     "keywords": [
       "office",
       "cubicle",
-      "boss",
-      "coworker",
-      "meeting",
       "conference room",
-      "desk job",
-      "workplace",
-      "fired",
-      "promoted",
       "boardroom",
       "office building",
-      "corporate",
-      "work shift",
-      "breakroom",
-      "manager",
       "water cooler",
-      "deadline"
+      "breakroom"
     ]
   },
   {
-    "tag": "Store & Shopping Mall",
+    "tag": "Store",
     "category": "location",
     "keywords": [
+      "store",
       "mall",
       "shopping mall",
-      "store",
       "supermarket",
       "grocery store",
       "cashier",
       "shopping cart",
-      "boutique",
       "department store",
-      "aisle",
-      "checkout counter",
-      "convenience store",
-      "clothing store",
-      "buying items",
-      "retail shop"
+      "aisle"
     ]
   },
   {
-    "tag": "Restaurant & Cafe",
+    "tag": "Restaurant",
     "category": "location",
     "keywords": [
       "restaurant",
-      "cafe",
-      "coffee shop",
       "diner",
       "bistro",
-      "bar",
-      "pub",
+      "dining table",
       "waiter",
       "waitress",
       "menu",
-      "dining table",
-      "ordering food",
-      "bartender",
       "buffet",
-      "food court",
-      "kitchen of restaurant",
+      "food court"
+    ]
+  },
+  {
+    "tag": "Cafe",
+    "category": "location",
+    "keywords": [
+      "cafe",
+      "coffee shop",
+      "espresso",
+      "barista",
       "bakery"
     ]
   },
   {
-    "tag": "Bathroom & Shower",
+    "tag": "Bathroom",
     "category": "location",
     "keywords": [
       "bathroom",
@@ -1270,107 +1300,84 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "bathtub",
       "sink",
       "public restroom",
-      "no doors on stalls",
-      "clogged toilet",
-      "overflowing toilet",
       "dirty bathroom",
-      "showering",
-      "hot bath",
-      "faucet",
-      "soap",
-      "towel"
+      "overflowing toilet"
     ]
   },
   {
-    "tag": "Kitchen & Cooking",
+    "tag": "Kitchen",
     "category": "location",
     "keywords": [
       "kitchen",
-      "cooking",
       "stove",
       "oven",
       "refrigerator",
       "fridge",
       "pantry",
+      "cooking",
       "baking",
-      "chef",
-      "cutting board",
-      "pots and pans",
-      "skillet",
-      "recipe",
-      "ingredients",
-      "spices",
-      "microwave",
-      "sink faucet"
+      "pots and pans"
     ]
   },
   {
-    "tag": "Amusement Park & Carnival",
+    "tag": "Carnival",
     "category": "location",
     "keywords": [
+      "carnival",
       "amusement park",
       "roller coaster",
       "ferris wheel",
-      "carnival",
-      "fair",
-      "theme park",
-      "merry-go-round",
       "circus",
-      "cotton candy",
       "funhouse",
-      "carnival rides",
-      "bumper cars",
-      "boardwalk games"
+      "carnival rides"
     ]
   },
   {
-    "tag": "Prison & Confinement",
+    "tag": "Prison",
     "category": "location",
     "keywords": [
       "prison",
       "jail",
       "cell",
-      "bars",
+      "jail cell",
       "inmate",
+      "bars",
+      "iron bars",
       "warden",
-      "locked up",
-      "imprisoned",
       "handcuffs",
       "jailbreak",
-      "escape from prison",
-      "guard",
-      "solitary confinement",
-      "cage",
-      "iron bars"
+      "solitary confinement"
     ]
   },
   {
-    "tag": "Church & Sacred Places",
+    "tag": "Church",
     "category": "location",
     "keywords": [
       "church",
-      "temple",
-      "cathedral",
-      "altar",
-      "shrine",
       "chapel",
-      "monastery",
-      "stained glass",
+      "cathedral",
       "pew",
-      "sanctuary",
+      "altar",
+      "stained glass",
       "priest",
-      "monk",
-      "pastor",
-      "cross",
-      "sacred temple",
-      "holy site",
-      "mosque",
-      "synagogue",
-      "zen garden"
+      "pastor"
     ]
   },
   {
-    "tag": "Theater & Cinema",
+    "tag": "Temple",
+    "category": "location",
+    "keywords": [
+      "temple",
+      "shrine",
+      "sanctuary",
+      "monastery",
+      "ancient temple",
+      "sacred altar",
+      "monk"
+    ]
+  },
+  {
+    "tag": "Theater",
     "category": "location",
     "keywords": [
       "theater",
@@ -1380,17 +1387,11 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "auditorium",
       "backstage",
       "red curtain",
-      "audience",
-      "seats",
-      "projection room",
-      "balcony seats",
-      "silver screen",
-      "applause",
-      "performing on stage"
+      "silver screen"
     ]
   },
   {
-    "tag": "Library & Archives",
+    "tag": "Library",
     "category": "location",
     "keywords": [
       "library",
@@ -1399,18 +1400,12 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "archive",
       "ancient books",
       "librarian",
-      "study hall",
-      "scrolls",
-      "tomes",
-      "manuscripts",
-      "quiet room",
-      "dusty books",
-      "stacks",
-      "reading room"
+      "reading room",
+      "stacks"
     ]
   },
   {
-    "tag": "Laboratory & Science",
+    "tag": "Laboratory",
     "category": "location",
     "keywords": [
       "laboratory",
@@ -1420,61 +1415,114 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "beakers",
       "test tubes",
       "microscope",
-      "chemicals",
-      "research facility",
-      "high tech lab",
-      "bunker lab",
-      "scientific equipment",
-      "specimen"
+      "research facility"
+    ]
+  },
+  {
+    "tag": "Rooftop",
+    "category": "location",
+    "keywords": [
+      "rooftop",
+      "roof",
+      "on the roof",
+      "edge of the roof",
+      "chimney",
+      "skylight"
+    ]
+  },
+  {
+    "tag": "Gym",
+    "category": "location",
+    "keywords": [
+      "gym",
+      "gymnasium",
+      "weights",
+      "workout",
+      "treadmill",
+      "locker room",
+      "bleachers",
+      "basketball court"
+    ]
+  },
+  {
+    "tag": "Museum",
+    "category": "location",
+    "keywords": [
+      "museum",
+      "exhibit",
+      "art gallery",
+      "display case",
+      "sculpture",
+      "ancient artifacts"
     ]
   },
   {
     "tag": "Family",
     "category": "character",
     "keywords": [
-      "mother",
-      "mom",
-      "father",
-      "dad",
-      "sister",
-      "brother",
+      "family",
+      "relatives",
       "parents",
-      "grandmother",
-      "grandma",
-      "grandfather",
-      "grandpa",
-      "cousin",
-      "aunt",
-      "uncle",
-      "daughter",
-      "son",
-      "child",
-      "children",
       "sibling",
       "family dinner",
-      "relatives",
-      "in-laws",
-      "stepmother",
-      "stepfather"
+      "in-laws"
     ]
   },
   {
-    "tag": "Deceased Loved One",
+    "tag": "Mother",
     "category": "character",
     "keywords": [
-      "deceased",
-      "dead relative",
-      "passed away",
-      "late father",
-      "late mother",
-      "late grandmother",
-      "late grandfather",
-      "visitation from dead",
-      "ghost of family",
-      "alive again",
-      "back from dead",
-      "hugged deceased",
-      "seeing dead person"
+      "mother",
+      "mom",
+      "mommy",
+      "my mother"
+    ]
+  },
+  {
+    "tag": "Father",
+    "category": "character",
+    "keywords": [
+      "father",
+      "dad",
+      "daddy",
+      "my father"
+    ]
+  },
+  {
+    "tag": "Brother",
+    "category": "character",
+    "keywords": [
+      "brother",
+      "brothers",
+      "my brother"
+    ]
+  },
+  {
+    "tag": "Sister",
+    "category": "character",
+    "keywords": [
+      "sister",
+      "sisters",
+      "my sister"
+    ]
+  },
+  {
+    "tag": "Grandmother",
+    "category": "character",
+    "keywords": [
+      "grandmother",
+      "grandma",
+      "granny",
+      "nana"
+    ]
+  },
+  {
+    "tag": "Grandfather",
+    "category": "character",
+    "keywords": [
+      "grandfather",
+      "grandpa",
+      "gramps"
     ]
   },
   {
@@ -1486,106 +1534,97 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "best friend",
       "old friend",
       "childhood friend",
-      "classmate",
-      "peer",
-      "buddy",
       "pal",
-      "circle of friends",
-      "hanging out",
-      "crew",
-      "roommate"
+      "buddy",
+      "hanging out with friends"
     ]
   },
   {
-    "tag": "Romance & Partner",
+    "tag": "Romance",
+    "category": "character",
+    "keywords": [
+      "romance",
+      "romantic",
+      "crush",
+      "kiss",
+      "kissing",
+      "cuddle",
+      "dating",
+      "holding hands",
+      "lover",
+      "intimacy"
+    ]
+  },
+  {
+    "tag": "Partner",
     "category": "character",
     "keywords": [
       "boyfriend",
       "girlfriend",
       "husband",
       "wife",
-      "partner",
       "fiance",
-      "crush",
-      "kiss",
-      "kissing",
-      "hug",
-      "cuddle",
-      "romantic",
-      "dating",
-      "holding hands",
       "ex-boyfriend",
       "ex-girlfriend",
-      "ex-partner",
-      "lover",
-      "intimacy",
-      "wedding"
+      "spouse"
     ]
   },
   {
-    "tag": "Strangers & Crowds",
+    "tag": "Strangers",
     "category": "character",
     "keywords": [
       "stranger",
+      "strangers",
+      "unfamiliar face",
+      "faceless person",
+      "random person"
+    ]
+  },
+  {
+    "tag": "Crowd",
+    "category": "character",
+    "keywords": [
       "crowd",
       "crowds",
       "mob",
       "group of people",
-      "nameless person",
-      "faceless",
-      "unfamiliar face",
-      "gathering",
       "packed room",
-      "onlookers",
-      "passersby",
       "sea of people",
-      "spectators"
+      "gathering of people"
     ]
   },
   {
     "tag": "Shadow Figure",
     "category": "character",
     "keywords": [
-      "shadow",
-      "shadowy",
-      "shadow person",
       "shadow figure",
+      "shadow person",
       "shadowy figure",
       "silhouette",
       "dark figure",
       "man in black",
       "hooded figure",
       "faceless man",
-      "creeper",
-      "lurking figure",
-      "black shape",
-      "dark silhouette",
       "hat man",
       "shadow entity"
     ]
   },
   {
-    "tag": "Celebrities",
+    "tag": "Celebrity",
     "category": "character",
     "keywords": [
       "celebrity",
       "famous person",
       "actor",
       "actress",
-      "singer",
-      "musician",
-      "president",
-      "politician",
-      "athlete",
-      "movie star",
       "pop star",
-      "author",
-      "famous creator",
-      "influencer"
+      "movie star",
+      "president",
+      "famous musician"
     ]
   },
   {
-    "tag": "Babies & Children",
+    "tag": "Baby",
     "category": "character",
     "keywords": [
       "baby",
@@ -1593,126 +1632,95 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "infant",
       "toddler",
       "newborn",
-      "carrying a baby",
-      "crying baby",
       "stroller",
-      "child playing",
-      "orphan",
-      "nursery",
-      "cradle"
+      "carrying a baby"
     ]
   },
   {
-    "tag": "Monks & Spiritual Guides",
+    "tag": "Teacher",
     "category": "character",
     "keywords": [
-      "guide",
-      "spirit guide",
-      "monk",
-      "guru",
-      "wise old man",
-      "wise old woman",
-      "sage",
-      "oracle",
+      "teacher",
+      "professor",
+      "instructor",
       "mentor",
-      "spiritual teacher",
-      "priestess",
-      "elder"
+      "principal",
+      "sensei"
     ]
   },
   {
-    "tag": "Police & Military",
+    "tag": "Police",
     "category": "character",
     "keywords": [
       "police",
       "cops",
-      "officer",
+      "police officer",
+      "cop",
       "detective",
-      "military",
+      "siren",
+      "arrested",
+      "patrol car"
+    ]
+  },
+  {
+    "tag": "Soldier",
+    "category": "character",
+    "keywords": [
       "soldier",
       "soldiers",
+      "military",
       "army",
+      "troops",
       "commander",
-      "security guard",
-      "siren",
-      "arrest",
-      "swat team",
-      "handcuffing",
-      "uniformed officer",
-      "patrol"
+      "warrior"
     ]
   },
   {
-    "tag": "Animals & Pets",
-    "category": "creature",
+    "tag": "Doctor",
+    "category": "character",
     "keywords": [
-      "dog",
-      "puppy",
-      "cat",
-      "kitten",
-      "pet",
-      "animal",
-      "horse",
-      "bear",
-      "wolf",
-      "deer",
-      "rabbit",
-      "bunny",
-      "fox",
-      "lion",
-      "tiger",
-      "elephant",
-      "monkey",
-      "gorilla",
-      "wild animal",
-      "furry",
-      "paws",
-      "petting"
+      "doctor",
+      "physician",
+      "surgeon",
+      "nurse",
+      "stethoscope"
     ]
   },
   {
-    "tag": "Dogs & Canines",
+    "tag": "Dog",
     "category": "creature",
     "keywords": [
       "dog",
       "dogs",
       "puppy",
-      "hound",
+      "puppies",
       "barking dog",
       "canine",
       "golden retriever",
-      "german shepherd",
-      "stray dog",
-      "dog biting",
-      "friendly dog",
-      "growling dog",
-      "pack of wolves",
-      "howling",
-      "mastiff"
+      "hound",
+      "wolf",
+      "wolves"
     ]
   },
   {
-    "tag": "Cats & Felines",
+    "tag": "Cat",
     "category": "creature",
     "keywords": [
       "cat",
       "cats",
       "kitten",
       "kittens",
-      "black cat",
       "feline",
       "purring",
-      "meowing",
-      "claws",
-      "calico",
+      "black cat",
       "panther",
       "leopard",
-      "cheetah",
-      "lynx"
+      "tiger",
+      "lion"
     ]
   },
   {
-    "tag": "Birds & Avian",
+    "tag": "Bird",
     "category": "creature",
     "keywords": [
       "bird",
@@ -1726,397 +1734,385 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "sparrow",
       "pigeon",
       "feather",
-      "feathers",
       "flock of birds",
-      "nest",
-      "beak",
-      "parrot",
-      "falcon",
-      "swan",
-      "phoenix",
-      "hummingbird"
+      "parrot"
     ]
   },
   {
-    "tag": "Sea Creatures & Sharks",
+    "tag": "Fish",
+    "category": "creature",
+    "keywords": [
+      "fish",
+      "fishes",
+      "school of fish",
+      "goldfish",
+      "coral fish"
+    ]
+  },
+  {
+    "tag": "Shark",
     "category": "creature",
     "keywords": [
       "shark",
-      "whale",
-      "dolphin",
-      "octopus",
-      "squid",
-      "jellyfish",
-      "fish",
-      "crab",
-      "lobster",
-      "sea turtle",
-      "manta ray",
-      "eel",
-      "stingray",
+      "sharks",
       "shark fin",
-      "underwater creature",
-      "coral fish",
-      "clownfish"
+      "great white shark",
+      "hammerhead"
     ]
   },
   {
-    "tag": "Insects & Reptiles",
+    "tag": "Whale",
+    "category": "creature",
+    "keywords": [
+      "whale",
+      "whales",
+      "humpback whale",
+      "blue whale",
+      "dolphin",
+      "dolphins"
+    ]
+  },
+  {
+    "tag": "Snake",
     "category": "creature",
     "keywords": [
       "snake",
+      "snakes",
+      "serpent",
+      "viper",
+      "cobra",
+      "python",
+      "rattlesnake",
+      "bitten by snake"
+    ]
+  },
+  {
+    "tag": "Spider",
+    "category": "creature",
+    "keywords": [
       "spider",
+      "spiders",
       "cobweb",
       "spiderweb",
-      "scorpion",
-      "lizard",
-      "crocodile",
-      "alligator",
-      "frog",
-      "toad",
+      "tarantula",
+      "crawling spider"
+    ]
+  },
+  {
+    "tag": "Insect",
+    "category": "creature",
+    "keywords": [
+      "insect",
+      "insects",
       "bug",
       "bugs",
-      "insect",
       "beetle",
       "wasp",
       "bee",
       "cockroach",
       "ants",
-      "swarm",
-      "crawling on skin",
+      "swarm of bugs",
       "centipede",
       "moth",
-      "butterfly",
-      "dragonfly",
-      "bitten by snake"
+      "butterfly"
     ]
   },
   {
-    "tag": "Monsters & Beasts",
+    "tag": "Horse",
+    "category": "creature",
+    "keywords": [
+      "horse",
+      "horses",
+      "stallion",
+      "mare",
+      "riding a horse",
+      "galloping",
+      "saddle",
+      "pegasus",
+      "unicorn",
+      "pony"
+    ]
+  },
+  {
+    "tag": "Bear",
+    "category": "creature",
+    "keywords": [
+      "bear",
+      "bears",
+      "grizzly bear",
+      "polar bear",
+      "black bear",
+      "bear cub"
+    ]
+  },
+  {
+    "tag": "Monster",
     "category": "creature",
     "keywords": [
       "monster",
-      "creature",
+      "monsters",
       "beast",
       "demon",
-      "dragon",
-      "giant",
-      "mutant",
+      "demons",
+      "creature",
       "abomination",
-      "claws",
-      "fangs",
-      "tentacles",
-      "grotesque",
-      "roaring",
-      "mythical beast",
-      "chupacabra",
-      "hydra",
-      "behemoth"
+      "grotesque creature"
     ]
   },
   {
-    "tag": "Ghosts & Spirits",
+    "tag": "Dragon",
+    "category": "creature",
+    "keywords": [
+      "dragon",
+      "dragons",
+      "breathing fire",
+      "winged dragon",
+      "wyvern"
+    ]
+  },
+  {
+    "tag": "Ghost",
     "category": "creature",
     "keywords": [
       "ghost",
+      "ghosts",
       "spirit",
+      "spirits",
       "apparition",
       "haunted",
-      "haunting",
       "poltergeist",
       "phantom",
       "specter",
-      "wraith",
-      "entity",
-      "supernatural entity",
-      "haunted house",
-      "eerie presence",
-      "cold spot"
+      "wraith"
     ]
   },
   {
-    "tag": "Zombies & Apocalypse",
+    "tag": "Zombie",
     "category": "creature",
     "keywords": [
       "zombie",
       "zombies",
       "undead",
       "walking dead",
-      "apocalypse",
-      "infected",
-      "horde",
-      "outbreak",
-      "survival",
-      "end of the world",
-      "wastelanders",
-      "cannibals",
-      "post-apocalyptic",
-      "quarantine zone"
+      "infected horde",
+      "apocalypse horde"
     ]
   },
   {
-    "tag": "Aliens & UFO",
+    "tag": "Alien",
     "category": "creature",
     "keywords": [
       "alien",
       "aliens",
-      "ufo",
       "extraterrestrial",
-      "flying saucer",
-      "abduction",
-      "abducted",
-      "crop circle",
-      "mothership",
       "martian",
-      "beam of light",
-      "spaceship landing",
-      "grey alien",
-      "intergalactic"
+      "grey alien"
     ]
   },
   {
-    "tag": "Phone & Screens",
+    "tag": "UFO",
+    "category": "object",
+    "keywords": [
+      "ufo",
+      "flying saucer",
+      "mothership",
+      "spaceship landing",
+      "beam of light from sky"
+    ]
+  },
+  {
+    "tag": "Phone",
     "category": "object",
     "keywords": [
       "phone",
       "smartphone",
       "iphone",
       "texting",
-      "call",
-      "calling",
-      "screen",
-      "tablet",
+      "phone call",
+      "cellphone",
       "unable to dial",
-      "wrong number",
       "cracked screen",
-      "battery dead",
-      "dialing 911",
-      "dial 911",
-      "message",
-      "notification",
-      "app",
-      "voicemail"
+      "dialing 911"
     ]
   },
   {
-    "tag": "Computers & Gaming",
+    "tag": "Computer",
     "category": "object",
     "keywords": [
       "computer",
       "laptop",
-      "video game",
-      "videogame",
       "keyboard",
-      "mouse",
-      "glitch",
-      "simulation",
-      "virtual reality",
-      "vr",
+      "screen",
+      "monitor",
+      "pc",
       "software",
-      "coding",
-      "console",
-      "controller",
-      "pixelated",
-      "hud",
-      "gaming",
-      "arcade"
+      "coding"
     ]
   },
   {
-    "tag": "Mirrors & Reflections",
+    "tag": "Gaming",
+    "category": "object",
+    "keywords": [
+      "video game",
+      "videogame",
+      "game console",
+      "controller",
+      "arcade",
+      "pixelated",
+      "hud"
+    ]
+  },
+  {
+    "tag": "Mirror",
     "category": "object",
     "keywords": [
       "mirror",
-      "reflection",
+      "reflection in mirror",
       "looking in the mirror",
-      "distorted face",
-      "strange reflection",
+      "distorted reflection",
       "shattered mirror",
-      "two reflections",
-      "wrong eyes in mirror",
-      "glass reflection",
-      "silver mirror",
-      "looking glass"
+      "strange reflection"
     ]
   },
   {
-    "tag": "Clocks & Time",
+    "tag": "Clock",
     "category": "object",
     "keywords": [
       "clock",
       "watch",
       "wristwatch",
-      "alarm",
+      "alarm clock",
       "timer",
       "hourglass",
-      "spinning hands",
-      "numbers changing",
+      "spinning clock hands",
       "digital clock",
-      "late",
-      "running out of time",
-      "countdown",
-      "ticking",
-      "what time is it",
-      "grandfather clock",
-      "sundial"
+      "grandfather clock"
     ]
   },
   {
-    "tag": "Car & Vehicles",
+    "tag": "Car",
     "category": "object",
     "keywords": [
       "car",
-      "truck",
-      "bus",
+      "cars",
+      "automobile",
       "vehicle",
-      "motorcycle",
-      "bike",
-      "bicycle",
-      "van",
       "sedan",
-      "convertible",
-      "scooter",
-      "cab",
-      "taxi",
-      "jeep",
-      "pickup truck",
-      "police car",
       "sports car",
       "dashboard"
     ]
   },
   {
-    "tag": "Car Crash & Malfunction",
+    "tag": "Crash",
     "category": "object",
     "keywords": [
-      "car crash",
       "crash",
+      "car crash",
       "collision",
-      "airbag",
-      "flipped over",
-      "skidding",
-      "swerve",
-      "head-on",
-      "wreck",
       "totaled car",
-      "windshield broke",
-      "engine smoking",
-      "flat tire",
-      "fender bender",
-      "crash into water"
+      "flipped car",
+      "airbag deployed",
+      "wreck"
     ]
   },
   {
-    "tag": "Boats & Watercraft",
+    "tag": "Boat",
     "category": "object",
     "keywords": [
       "boat",
       "ship",
       "sailboat",
       "yacht",
-      "ferry",
-      "cruise ship",
       "canoe",
       "kayak",
       "raft",
       "rowboat",
       "vessel",
-      "sinking ship",
-      "deck of ship",
-      "captain",
-      "anchor",
-      "mast",
-      "cabin of boat"
+      "sinking boat"
     ]
   },
   {
-    "tag": "Keys & Locks",
+    "tag": "Key",
     "category": "object",
     "keywords": [
       "key",
       "keys",
-      "lock",
-      "padlock",
-      "locked",
-      "unlocking",
-      "wrong key",
-      "keyhole",
       "keychain",
       "lost my keys",
-      "latch",
-      "deadbolt",
-      "key ring"
+      "keyhole",
+      "brass key"
     ]
   },
   {
-    "tag": "Secret Doors & Passages",
+    "tag": "Lock",
+    "category": "object",
+    "keywords": [
+      "lock",
+      "padlock",
+      "locked door",
+      "unlocking",
+      "deadbolt",
+      "combination lock"
+    ]
+  },
+  {
+    "tag": "Secret Door",
     "category": "object",
     "keywords": [
       "secret door",
+      "hidden door",
       "hidden room",
       "secret passage",
       "portal",
-      "hidden door",
       "trapdoor",
-      "false wall",
-      "gateway",
-      "doorway",
-      "passageway",
-      "revolving bookcase",
-      "sliding panel",
-      "secret tunnel"
+      "hidden gateway"
     ]
   },
   {
-    "tag": "Books & Documents",
+    "tag": "Book",
     "category": "object",
     "keywords": [
       "book",
       "books",
-      "pages",
-      "reading",
-      "letters",
-      "words shifting",
+      "reading a book",
+      "pages turning",
+      "novel",
       "diary",
-      "notebook",
-      "journal",
-      "paper",
-      "scroll",
-      "ancient text",
+      "journal notebook",
+      "ancient tome",
       "parchment",
-      "spelling changed",
-      "symbols in book",
-      "manuscript",
-      "binder"
+      "scroll"
     ]
   },
   {
-    "tag": "Weapons & Combat",
+    "tag": "Sword",
+    "category": "object",
+    "keywords": [
+      "sword",
+      "blade",
+      "katana",
+      "dagger",
+      "broadsword",
+      "fencing",
+      "slashing"
+    ]
+  },
+  {
+    "tag": "Gun",
     "category": "object",
     "keywords": [
       "gun",
       "guns",
       "pistol",
       "rifle",
-      "sword",
-      "blade",
-      "knife",
-      "dagger",
-      "shooting",
-      "shot",
+      "shotgun",
+      "firearm",
       "bullets",
-      "bow and arrow",
-      "shield",
-      "armor",
-      "holster",
-      "grenade",
-      "firing weapon",
-      "reload",
-      "ammunition"
+      "shooting gun"
     ]
   },
   {
-    "tag": "Money & Wealth",
+    "tag": "Money",
     "category": "object",
     "keywords": [
       "money",
@@ -2124,51 +2120,57 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "coins",
       "dollar bills",
       "wallet",
-      "gold",
-      "silver",
-      "treasure",
-      "rich",
-      "wealth",
       "bank",
       "atm",
       "credit card",
-      "lottery",
-      "millionaire",
-      "valuables",
-      "fortune",
-      "purse",
-      "bills"
+      "rich",
+      "wealth"
     ]
   },
   {
-    "tag": "Food & Dining",
+    "tag": "Treasure",
+    "category": "object",
+    "keywords": [
+      "treasure",
+      "treasure chest",
+      "gold",
+      "silver",
+      "valuables",
+      "fortune",
+      "ancient treasure"
+    ]
+  },
+  {
+    "tag": "Chest",
+    "category": "object",
+    "keywords": [
+      "chest",
+      "wooden chest",
+      "locked chest",
+      "iron chest",
+      "crate"
+    ]
+  },
+  {
+    "tag": "Food",
     "category": "object",
     "keywords": [
       "food",
       "eating",
       "ate",
-      "feast",
       "meal",
       "dinner",
       "lunch",
       "breakfast",
+      "feast",
       "snack",
       "cake",
       "bread",
-      "fruit",
-      "meat",
-      "drinking",
-      "beverage",
-      "delicious",
-      "tasting food",
-      "starving",
-      "banquet",
-      "pizza",
-      "dessert"
+      "pizza"
     ]
   },
   {
-    "tag": "Clothes & Attire",
+    "tag": "Clothes",
     "category": "object",
     "keywords": [
       "clothes",
@@ -2180,39 +2182,71 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "coat",
       "shoes",
       "boots",
-      "sneakers",
-      "hat",
       "costume",
-      "disguise",
-      "mask",
-      "uniform",
-      "robe",
-      "cape",
-      "gloves",
-      "jewelry",
-      "necklace",
-      "ring"
+      "uniform"
     ]
   },
   {
-    "tag": "Cameras & Photography",
+    "tag": "Camera",
     "category": "object",
     "keywords": [
       "camera",
       "photograph",
       "photo",
       "taking photos",
-      "picture",
-      "filming",
-      "recording",
-      "lens",
-      "flash",
-      "shutter",
+      "taking pictures",
       "polaroid",
-      "video recording",
-      "snapshots",
-      "candid picture",
-      "selfie"
+      "filming"
+    ]
+  },
+  {
+    "tag": "Bicycle",
+    "category": "object",
+    "keywords": [
+      "bicycle",
+      "bike",
+      "riding a bike",
+      "pedaling",
+      "bike ride"
+    ]
+  },
+  {
+    "tag": "Motorcycle",
+    "category": "object",
+    "keywords": [
+      "motorcycle",
+      "motorbike",
+      "scooter",
+      "riding a motorcycle"
+    ]
+  },
+  {
+    "tag": "Jewelry",
+    "category": "object",
+    "keywords": [
+      "jewelry",
+      "ring",
+      "diamond",
+      "necklace",
+      "bracelet",
+      "earrings",
+      "gemstone",
+      "ruby",
+      "emerald"
+    ]
+  },
+  {
+    "tag": "Music",
+    "category": "object",
+    "keywords": [
+      "music",
+      "guitar",
+      "piano",
+      "drums",
+      "violin",
+      "melody",
+      "playing music",
+      "headphones"
     ]
   },
   {
@@ -2223,14 +2257,12 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "lucidity",
       "realized i was dreaming",
       "knew i was dreaming",
-      "became conscious",
+      "became conscious in the dream",
       "conscious in the dream",
-      "dream control",
       "woke up inside the dream",
       "awareness in dream",
       "lucid state",
-      "control the dream",
-      "controlling the dream"
+      "controlled the dream"
     ]
   },
   {
@@ -2241,13 +2273,9 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "looked at my hands",
       "finger through palm",
       "pinched my nose",
-      "nose pinch",
       "counting fingers",
-      "extra fingers",
-      "checked the clock",
-      "read text twice",
-      "light switch",
-      "flicked the switch"
+      "checked the clock in dream",
+      "light switch did not work"
     ]
   },
   {
@@ -2259,12 +2287,8 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "woke up again",
       "woke up in bed",
       "morning routine in dream",
-      "still dreaming",
-      "waking loop",
       "dream loop",
-      "false start",
-      "dream within",
-      "woke up but still asleep"
+      "thought i was awake"
     ]
   },
   {
@@ -2276,20 +2300,11 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "horror",
       "dread",
       "terror",
-      "scared",
-      "screaming",
-      "panic",
       "panicked",
       "frightened",
-      "creepy",
-      "unsettling",
-      "grim",
-      "chilling",
-      "petrified",
-      "shivering in fear",
-      "disturbing",
-      "macabre",
-      "grotesque"
+      "scary dream",
+      "screaming in terror",
+      "petrified"
     ]
   },
   {
@@ -2299,82 +2314,82 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "dream within a dream",
       "nested dream",
       "fell asleep in the dream",
-      "inception",
-      "woke into another dream",
-      "multiple levels of dreaming",
-      "inner dream"
+      "inception dream",
+      "multiple levels of dreaming"
     ]
   },
   {
-    "tag": "Time Travel & Loops",
+    "tag": "Time Travel",
     "category": "consciousness",
     "keywords": [
       "time travel",
-      "time loop",
-      "rewind",
-      "repeating day",
-      "groundhog day",
+      "traveling in time",
       "past era",
-      "the future",
-      "timeline",
-      "reliving the moment",
-      "time warp",
+      "in the future",
       "historical period",
-      "future world",
       "century ago",
-      "temporal"
+      "time loop"
     ]
   },
   {
-    "tag": "Deja Vu & Premonition",
+    "tag": "Deja Vu",
     "category": "consciousness",
     "keywords": [
       "deja vu",
       "premonition",
-      "prophetic",
-      "felt familiar",
-      "foreseeing",
+      "prophetic dream",
       "already happened",
-      "clairvoyant",
-      "precognitive",
-      "sixth sense",
-      "foreshadowing"
+      "foreseeing"
     ]
   },
   {
-    "tag": "Astral & Out of Body",
+    "tag": "Astral Projection",
     "category": "consciousness",
     "keywords": [
-      "out of body",
-      "astral",
       "astral projection",
+      "astral body",
+      "out of body",
       "floating above my body",
       "looking down at myself",
       "silver cord",
-      "ethereal body",
       "separated from body",
-      "vibrational stage",
-      "vibrations",
-      "body buzzing"
+      "vibrational stage"
     ]
   },
   {
-    "tag": "Floating & Zero Gravity",
-    "category": "consciousness",
+    "tag": "Adventure",
+    "category": "theme",
     "keywords": [
-      "floating",
-      "weightless",
-      "zero gravity",
-      "drifting in air",
-      "weightlessness",
-      "hovering effortlessly",
-      "gentle drift",
-      "bobbing in air",
-      "anti-gravity"
+      "adventure",
+      "adventures",
+      "adventuring",
+      "adventurous"
     ]
   },
   {
-    "tag": "Surreal & Bizarre",
+    "tag": "Quest",
+    "category": "theme",
+    "keywords": [
+      "quest",
+      "quests",
+      "questing",
+      "epic quest"
+    ]
+  },
+  {
+    "tag": "Journey",
+    "category": "theme",
+    "keywords": [
+      "journey",
+      "journeying",
+      "journeys",
+      "expedition",
+      "odyssey",
+      "voyage"
+    ]
+  },
+  {
+    "tag": "Surreal",
     "category": "theme",
     "keywords": [
       "surreal",
@@ -2382,123 +2397,41 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "nonsensical",
       "physics broke",
       "impossible architecture",
-      "gravity shifted",
-      "weird",
-      "strange logic",
-      "dream logic",
-      "hallucinatory",
-      "psychedelic",
-      "trippy",
-      "kaleidoscope",
-      "melting",
-      "warped"
+      "strange dream logic",
+      "melting objects",
+      "psychedelic"
     ]
   },
   {
-    "tag": "Adventure & Quest",
-    "category": "theme",
-    "keywords": [
-      "adventure",
-      "quest",
-      "journey",
-      "mission",
-      "exploration",
-      "treasure hunt",
-      "traveling",
-      "expedition",
-      "riddle",
-      "artifact",
-      "destination",
-      "hero",
-      "perilous",
-      "voyage",
-      "odyssey",
-      "cross country"
-    ]
-  },
-  {
-    "tag": "Peaceful & Serene",
-    "category": "theme",
-    "keywords": [
-      "peaceful",
-      "serene",
-      "calm",
-      "relaxing",
-      "tranquil",
-      "blissful",
-      "content",
-      "gentle",
-      "warmth",
-      "soothing",
-      "comforting",
-      "quiet beauty",
-      "harmony",
-      "zen",
-      "rejuvenating",
-      "stillness"
-    ]
-  },
-  {
-    "tag": "Mystery & Investigation",
+    "tag": "Mystery",
     "category": "theme",
     "keywords": [
       "mystery",
       "investigation",
       "clues",
-      "detective",
       "solving a mystery",
-      "puzzle",
-      "uncovering a secret",
-      "conspiracy",
-      "clue",
-      "sleuthing",
-      "footprints",
-      "suspicious",
-      "hidden truth",
-      "interrogation"
+      "detective",
+      "puzzle to solve",
+      "secret uncovered"
     ]
   },
   {
-    "tag": "Dying & Death",
+    "tag": "Death",
     "category": "theme",
     "keywords": [
       "dying",
       "died",
       "death",
       "killed",
-      "fatal",
-      "perished",
       "dead body",
       "corpse",
-      "near death",
-      "passed on",
+      "near death experience",
       "afterlife",
-      "reincarnation",
-      "ghostly realm",
-      "underworld",
-      "crossing over"
+      "passed away"
     ]
   },
   {
-    "tag": "Late & Unprepared",
-    "category": "theme",
-    "keywords": [
-      "late for school",
-      "late for work",
-      "missed the bus",
-      "overslept",
-      "running late",
-      "scrambling",
-      "behind schedule",
-      "forgot my assignment",
-      "forgot my pants",
-      "unprepared",
-      "clocks moving too fast",
-      "missed deadline"
-    ]
-  },
-  {
-    "tag": "War & Battle",
+    "tag": "War",
     "category": "theme",
     "keywords": [
       "war",
@@ -2507,788 +2440,740 @@ export const DREAM_TAG_RULES: TagRule[] = [
       "bombs",
       "bombing",
       "explosions",
-      "airstrike",
       "trenches",
       "warzone",
-      "invading",
-      "artillery",
-      "combat zone",
-      "tactical",
-      "skirmish",
-      "armored vehicle",
-      "barricade",
-      "warriors"
+      "invading army",
+      "artillery"
     ]
   },
   {
-    "tag": "Magic & Sorcery",
+    "tag": "Magic",
     "category": "theme",
     "keywords": [
       "magic",
       "wizard",
       "witch",
-      "spell",
       "casting a spell",
       "incantation",
-      "sorcerer",
       "sorcery",
       "potion",
-      "wand",
-      "cauldron",
-      "enchantment",
-      "magical powers",
-      "alchemy",
-      "curse",
-      "grimoire"
+      "magic wand",
+      "enchantment"
     ]
   },
   {
-    "tag": "Healing & Recovery",
+    "tag": "Healing",
     "category": "theme",
     "keywords": [
       "healing",
       "healed",
       "cure",
-      "medicine",
-      "recovery",
+      "recovering",
       "regenerating",
       "feeling better",
-      "revived",
-      "treatment",
-      "mending",
-      "wellness",
-      "salve"
+      "cured"
     ]
   },
   {
-    "tag": "Celebration & Party",
+    "tag": "Party",
     "category": "theme",
     "keywords": [
       "party",
       "celebration",
-      "birthday",
+      "birthday party",
       "festivities",
-      "confetti",
-      "gathering",
-      "festival",
-      "balloons",
-      "champagne",
-      "cheering",
-      "toast",
-      "banquet",
-      "carnival party",
-      "dancing together"
+      "celebrating with friends"
     ]
   },
   {
-    "tag": "Pregnancy & Birth",
-    "category": "theme",
-    "keywords": [
-      "pregnant",
-      "pregnancy",
-      "giving birth",
-      "baby bump",
-      "labor",
-      "ultrasound",
-      "maternity",
-      "expecting a child",
-      "delivered a baby",
-      "contractions"
-    ]
-  },
-  {
-    "tag": "Wedding & Marriage",
+    "tag": "Wedding",
     "category": "theme",
     "keywords": [
       "wedding",
       "wedding dress",
       "groom",
       "bride",
-      "aisle",
       "wedding ceremony",
-      "marriage",
-      "vows",
-      "altar",
-      "wedding cake",
-      "bridesmaid",
-      "wedding rings"
+      "marriage vows",
+      "altar"
     ]
   },
   {
-    "tag": "Betrayal & Secrets",
-    "category": "theme",
-    "keywords": [
-      "betrayal",
-      "betrayed",
-      "traitor",
-      "stabbed in the back",
-      "secret",
-      "conspiracy",
-      "cheating partner",
-      "lying",
-      "deception",
-      "hidden agenda",
-      "whispering",
-      "revealed truth"
-    ]
-  },
-  {
-    "tag": "Invisibility & Stealth",
+    "tag": "Invisibility",
     "category": "theme",
     "keywords": [
       "invisible",
       "invisibility",
       "unseen",
       "cloaking",
-      "nobody could see me",
-      "vanished",
-      "ghostly form",
-      "transparent body",
-      "stealth mode"
+      "nobody could see me"
     ]
   },
   {
-    "tag": "Giant & Miniature",
-    "category": "theme",
-    "keywords": [
-      "giant",
-      "huge",
-      "colossal",
-      "massive creature",
-      "miniature",
-      "tiny",
-      "shrunk",
-      "shrunken",
-      "dollhouse",
-      "microscopic",
-      "towering over me",
-      "enormous building",
-      "gargantuan"
-    ]
-  },
-  {
-    "tag": "Colors & Vibrance",
-    "category": "theme",
-    "keywords": [
-      "vivid colors",
-      "black and white",
-      "monochrome",
-      "glowing neon",
-      "golden light",
-      "crimson",
-      "emerald green",
-      "violet",
-      "iridescent",
-      "prismatic",
-      "sepia",
-      "saturated",
-      "ultraviolet"
-    ]
-  },
-  {
-    "tag": "Pain & Physical Sensation",
-    "category": "action",
-    "keywords": [
-      "pain",
-      "felt pain",
-      "stinging",
-      "numb",
-      "numbness",
-      "burning sensation",
-      "aching",
-      "headache",
-      "throbbing",
-      "physical pain",
-      "electric shock",
-      "tingling",
-      "cold chill",
-      "heat wave",
-      "dizzy",
-      "dizziness",
-      "fainting",
-      "passed out",
-      "bleeding",
-      "wounded",
-      "bruised",
-      "cuts and scrapes",
-      "scratched"
-    ]
-  },
-  {
-    "tag": "Smell & Taste",
-    "category": "action",
-    "keywords": [
-      "smell",
-      "smelled",
-      "scent",
-      "fragrance",
-      "aroma",
-      "foul odor",
-      "stench",
-      "taste",
-      "tasted",
-      "sweet taste",
-      "bitter",
-      "sour",
-      "metallic taste",
-      "flavor",
-      "tasting food",
-      "pungent",
-      "perfume"
-    ]
-  },
-  {
-    "tag": "Sounds & Acoustic",
-    "category": "action",
-    "keywords": [
-      "whisper",
-      "whispering",
-      "screaming",
-      "shouting",
-      "loud bang",
-      "explosion sound",
-      "ringing in ears",
-      "chimes",
-      "eerie music",
-      "footsteps echoing",
-      "growl",
-      "howl",
-      "knocking on door",
-      "sirens wailing",
-      "static noise",
-      "humming sound",
-      "applause",
-      "cacophony",
-      "thunderous"
-    ]
-  },
-  {
-    "tag": "Sight & Darkness",
-    "category": "action",
-    "keywords": [
-      "blind",
-      "blinded",
-      "cannot see",
-      "couldn't see",
-      "pitch black",
-      "dim light",
-      "blurry vision",
-      "tunnel vision",
-      "blinding flash",
-      "glowing eyes",
-      "foggy",
-      "misty",
-      "mirage",
-      "double vision",
-      "seeing colors",
-      "glowing in dark"
-    ]
-  },
-  {
-    "tag": "Sky & Weather Phenomena",
-    "category": "nature",
-    "keywords": [
-      "aurora borealis",
-      "northern lights",
-      "rainbow",
-      "shooting star",
-      "comet",
-      "meteor shower",
-      "solar flare",
-      "dense fog",
-      "thick mist",
-      "heavy haze",
-      "blood sky",
-      "purple sky",
-      "two suns",
-      "red moon",
-      "whirlwind",
-      "dust devil",
-      "gale force wind",
-      "cloudscape",
-      "cumulus"
-    ]
-  },
-  {
-    "tag": "Canyon & Cliffs",
-    "category": "nature",
-    "keywords": [
-      "canyon",
-      "grand canyon",
-      "ravine",
-      "gorge",
-      "chasm",
-      "precipice",
-      "crag",
-      "cliffside",
-      "red rocks",
-      "plateau",
-      "butte",
-      "steep drop",
-      "edge of the cliff",
-      "abyss below"
-    ]
-  },
-  {
-    "tag": "Jungle & Rainforest",
-    "category": "nature",
-    "keywords": [
-      "jungle",
-      "rainforest",
-      "thick canopy",
-      "vines hanging",
-      "exotic plants",
-      "dense undergrowth",
-      "tropical birds",
-      "bamboo forest",
-      "jungle ruins",
-      "humid air",
-      "machete",
-      "jungle river"
-    ]
-  },
-  {
-    "tag": "Gym & Sports Arena",
-    "category": "location",
-    "keywords": [
-      "gym",
-      "gymnasium",
-      "stadium",
-      "sports arena",
-      "basketball court",
-      "soccer field",
-      "football field",
-      "track and field",
-      "locker room",
-      "bleachers",
-      "weights",
-      "treadmill",
-      "playing a match",
-      "tournament",
-      "referee",
-      "scorekeeper"
-    ]
-  },
-  {
-    "tag": "Museum & Art Gallery",
-    "category": "location",
-    "keywords": [
-      "museum",
-      "art gallery",
-      "exhibit",
-      "sculpture",
-      "paintings",
-      "artifacts",
-      "dinosaur bones",
-      "fossil",
-      "curator",
-      "display case",
-      "ancient relics",
-      "statues",
-      "gallery hall"
-    ]
-  },
-  {
-    "tag": "Subway & Underground Transit",
-    "category": "location",
-    "keywords": [
-      "subway platform",
-      "subway car",
-      "metro train",
-      "turnstile",
-      "underground track",
-      "metro station",
-      "subway map",
-      "missed the train",
-      "stuck in subway",
-      "rattling train",
-      "commute"
-    ]
-  },
-  {
-    "tag": "Bridges & Crossings",
-    "category": "location",
-    "keywords": [
-      "wooden bridge",
-      "stone bridge",
-      "drawbridge",
-      "aqueduct",
-      "over water bridge",
-      "bridge swinging",
-      "crossing a river",
-      "narrow bridge",
-      "bridge snapped"
-    ]
-  },
-  {
-    "tag": "Airport Terminal & Planes",
-    "category": "location",
-    "keywords": [
-      "boarding gate",
-      "security checkpoint",
-      "metal detector",
-      "lost passport",
-      "conveyor belt",
-      "tarmac",
-      "plane engine",
-      "emergency landing",
-      "plane crashed",
-      "plane descending",
-      "overhead compartment"
-    ]
-  },
-  {
-    "tag": "Roads & Highways",
-    "category": "location",
-    "keywords": [
-      "highway",
-      "freeway",
-      "empty highway",
-      "crossroads",
-      "roundabout",
-      "dirt road",
-      "winding road",
-      "mountain road",
-      "intersection",
-      "traffic jam",
-      "broken down on road",
-      "road trip"
-    ]
-  },
-  {
-    "tag": "Jewelry & Valuables",
-    "category": "object",
-    "keywords": [
-      "necklace",
-      "gemstone",
-      "diamond",
-      "ruby",
-      "emerald",
-      "sapphire",
-      "gold ring",
-      "pendant",
-      "bracelet",
-      "earrings",
-      "crown",
-      "tiara",
-      "pearls",
-      "crystal",
-      "crystals",
-      "jeweled box"
-    ]
-  },
-  {
-    "tag": "Boxes & Containers",
-    "category": "object",
-    "keywords": [
-      "chest",
-      "treasure chest",
-      "wooden crate",
-      "locked box",
-      "cardboard box",
-      "container",
-      "urn",
-      "jar",
-      "trunk",
-      "capsule",
-      "package",
-      "mystery box",
-      "unwrapping",
-      "parcel"
-    ]
-  },
-  {
-    "tag": "Weapons & Firearms",
-    "category": "object",
-    "keywords": [
-      "shotgun",
-      "sniper",
-      "revolver",
-      "ammo",
-      "magazine",
-      "katana",
-      "broadsword",
-      "machete",
-      "spear",
-      "javelin",
-      "crossbow",
-      "arrows",
-      "grenades",
-      "explosive",
-      "bulletproof vest"
-    ]
-  },
-  {
-    "tag": "Bicycles & Motorcycles",
-    "category": "object",
-    "keywords": [
-      "bicycle",
-      "bike ride",
-      "cycling",
-      "motorcycle",
-      "motorbike",
-      "scooter",
-      "moped",
-      "helmet",
-      "pedaling",
-      "bike chain",
-      "handlebars",
-      "bmx"
-    ]
-  },
-  {
-    "tag": "Musical Instruments",
-    "category": "object",
-    "keywords": [
-      "guitar",
-      "acoustic guitar",
-      "electric guitar",
-      "piano keys",
-      "grand piano",
-      "drums",
-      "drum kit",
-      "violin",
-      "cello",
-      "flute",
-      "trumpet",
-      "saxophone",
-      "synthesizer",
-      "bass guitar",
-      "harp"
-    ]
-  },
-  {
-    "tag": "Teachers & Mentors",
-    "category": "character",
-    "keywords": [
-      "teacher",
-      "tutor",
-      "instructor",
-      "headmaster",
-      "mentor",
-      "coach",
-      "sensei",
-      "master",
-      "advisor",
-      "trainer",
-      "drill sergeant",
-      "lecturer"
-    ]
-  },
-  {
-    "tag": "Royalty & Leaders",
-    "category": "character",
-    "keywords": [
-      "king",
-      "queen",
-      "prince",
-      "princess",
-      "emperor",
-      "empress",
-      "monarch",
-      "ruler",
-      "lord",
-      "noble",
-      "knight",
-      "knights in armor",
-      "prime minister"
-    ]
-  },
-  {
-    "tag": "Criminals & Thieves",
-    "category": "character",
-    "keywords": [
-      "thief",
-      "robber",
-      "burglar",
-      "gang",
-      "gangsters",
-      "mobsters",
-      "bandit",
-      "outlaw",
-      "smuggler",
-      "assassin",
-      "hitman",
-      "kidnapper",
-      "hostage"
-    ]
-  },
-  {
-    "tag": "Horses & Equine",
-    "category": "creature",
-    "keywords": [
-      "horse",
-      "horses",
-      "stallion",
-      "mare",
-      "riding a horse",
-      "gallop",
-      "trot",
-      "saddle",
-      "pegasus",
-      "unicorn",
-      "pony",
-      "stable",
-      "reins"
-    ]
-  },
-  {
-    "tag": "Reptiles & Amphibians",
-    "category": "creature",
-    "keywords": [
-      "lizard",
-      "gecko",
-      "iguana",
-      "chameleon",
-      "komodo dragon",
-      "tortoise",
-      "turtle",
-      "salamander",
-      "tadpole",
-      "serpent",
-      "constrictor",
-      "viper"
-    ]
-  },
-  {
-    "tag": "Rodents & Small Mammals",
-    "category": "creature",
-    "keywords": [
-      "rat",
-      "rats",
-      "mouse",
-      "mice",
-      "squirrel",
-      "chipmunk",
-      "hamster",
-      "guinea pig",
-      "ferret",
-      "raccoon",
-      "possum",
-      "hedgehog",
-      "badger",
-      "beaver"
-    ]
-  },
-  {
-    "tag": "Loss & Grief",
-    "category": "theme",
-    "keywords": [
-      "grief",
-      "mourning",
-      "sorrow",
-      "crying",
-      "weeping",
-      "tears",
-      "heartbroken",
-      "sadness",
-      "lost forever",
-      "funeral ceremony",
-      "condolences",
-      "eulogy",
-      "bereavement",
-      "deep loss"
-    ]
-  },
-  {
-    "tag": "Guilt & Shame",
-    "category": "theme",
-    "keywords": [
-      "guilt",
-      "guilty",
-      "ashamed",
-      "shame",
-      "remorse",
-      "regret",
-      "caught doing something bad",
-      "blamed",
-      "confessing",
-      "apologizing",
-      "disgraced",
-      "humiliated"
-    ]
-  },
-  {
-    "tag": "Telepathy & Mind Reading",
+    "tag": "Telepathy",
     "category": "theme",
     "keywords": [
       "telepathy",
       "telepathic",
       "reading minds",
       "mind reading",
-      "thought transfer",
       "hearing thoughts",
-      "psychic connection",
-      "mental communication",
-      "shared mind"
+      "mental communication"
     ]
   },
   {
-    "tag": "Transformation & Metamorphosis",
+    "tag": "Darkness",
     "category": "theme",
     "keywords": [
-      "transformation",
-      "metamorphosis",
-      "cocoon",
-      "shedding skin",
-      "evolving",
-      "mutating",
-      "changing into another person",
-      "changing into an object",
-      "transfigured"
+      "darkness",
+      "pitch black",
+      "complete darkness",
+      "dim light",
+      "shadows all around",
+      "dark room"
     ]
   },
   {
-    "tag": "Competition & Sports",
+    "tag": "Light",
     "category": "theme",
     "keywords": [
-      "tournament",
-      "match",
-      "game",
-      "championship",
-      "race",
-      "scoreboard",
-      "winning",
-      "losing",
-      "trophy",
-      "medal",
-      "competing",
-      "opponent",
-      "rival"
+      "blinding light",
+      "glowing light",
+      "beam of light",
+      "radiant light",
+      "bright glow",
+      "golden light"
     ]
   },
   {
-    "tag": "Wealth & Luxury",
-    "category": "theme",
+    "tag": "Wolf",
+    "category": "creature",
     "keywords": [
-      "luxury",
-      "limousine",
-      "private jet",
-      "luxurious",
-      "extravagant",
-      "diamonds",
-      "silk sheets",
-      "champagne lifestyle",
-      "golden",
-      "mansions",
-      "first class"
+      "wolf",
+      "wolves",
+      "howling wolf",
+      "pack of wolves",
+      "lone wolf",
+      "white wolf",
+      "howling at moon"
     ]
   },
   {
-    "tag": "Poverty & Scarcity",
+    "tag": "Rabbit",
+    "category": "creature",
+    "keywords": [
+      "rabbit",
+      "bunny",
+      "rabbits",
+      "white rabbit",
+      "cottontail",
+      "hare",
+      "pet rabbit"
+    ]
+  },
+  {
+    "tag": "Fox",
+    "category": "creature",
+    "keywords": [
+      "fox",
+      "foxes",
+      "red fox",
+      "wild fox",
+      "clever fox"
+    ]
+  },
+  {
+    "tag": "Deer",
+    "category": "creature",
+    "keywords": [
+      "deer",
+      "stag",
+      "doe",
+      "fawn",
+      "antlers",
+      "wild deer"
+    ]
+  },
+  {
+    "tag": "Lion",
+    "category": "creature",
+    "keywords": [
+      "lion",
+      "lions",
+      "lioness",
+      "roaring lion",
+      "lion cub",
+      "mane"
+    ]
+  },
+  {
+    "tag": "Tiger",
+    "category": "creature",
+    "keywords": [
+      "tiger",
+      "tigers",
+      "bengal tiger",
+      "white tiger",
+      "tiger stripes",
+      "prowling tiger"
+    ]
+  },
+  {
+    "tag": "Elephant",
+    "category": "creature",
+    "keywords": [
+      "elephant",
+      "elephants",
+      "trunk",
+      "tusks",
+      "huge elephant",
+      "baby elephant"
+    ]
+  },
+  {
+    "tag": "Monkey",
+    "category": "creature",
+    "keywords": [
+      "monkey",
+      "monkeys",
+      "ape",
+      "chimpanzee",
+      "gorilla",
+      "baboon",
+      "swinging on branches"
+    ]
+  },
+  {
+    "tag": "Frog",
+    "category": "creature",
+    "keywords": [
+      "frog",
+      "frogs",
+      "toad",
+      "toads",
+      "croaking frog",
+      "tree frog",
+      "tadpole"
+    ]
+  },
+  {
+    "tag": "Turtle",
+    "category": "creature",
+    "keywords": [
+      "turtle",
+      "turtles",
+      "sea turtle",
+      "tortoise",
+      "turtle shell"
+    ]
+  },
+  {
+    "tag": "Dolphin",
+    "category": "creature",
+    "keywords": [
+      "dolphin",
+      "dolphins",
+      "swimming with dolphins",
+      "jumping dolphin",
+      "playful dolphin"
+    ]
+  },
+  {
+    "tag": "Octopus",
+    "category": "creature",
+    "keywords": [
+      "octopus",
+      "squid",
+      "tentacles",
+      "kraken",
+      "giant squid",
+      "sea octopus"
+    ]
+  },
+  {
+    "tag": "Owl",
+    "category": "creature",
+    "keywords": [
+      "owl",
+      "owls",
+      "hoot owl",
+      "barn owl",
+      "screech owl",
+      "wise owl"
+    ]
+  },
+  {
+    "tag": "Eagle",
+    "category": "creature",
+    "keywords": [
+      "eagle",
+      "eagles",
+      "bald eagle",
+      "soaring eagle",
+      "golden eagle",
+      "eagle talons"
+    ]
+  },
+  {
+    "tag": "Crow",
+    "category": "creature",
+    "keywords": [
+      "crow",
+      "crows",
+      "raven",
+      "ravens",
+      "black crow",
+      "cawing crow",
+      "murder of crows"
+    ]
+  },
+  {
+    "tag": "Tower",
+    "category": "location",
+    "keywords": [
+      "tower",
+      "towers",
+      "watchtower",
+      "stone tower",
+      "spire",
+      "bell tower",
+      "clock tower",
+      "high tower"
+    ]
+  },
+  {
+    "tag": "Lighthouse",
+    "category": "location",
+    "keywords": [
+      "lighthouse",
+      "beacon",
+      "lighthouse beam",
+      "tower by the sea",
+      "coastal lighthouse"
+    ]
+  },
+  {
+    "tag": "Tunnel",
+    "category": "location",
+    "keywords": [
+      "tunnel",
+      "tunnels",
+      "underground tunnel",
+      "dark tunnel",
+      "train tunnel",
+      "secret tunnel"
+    ]
+  },
+  {
+    "tag": "Bunker",
+    "category": "location",
+    "keywords": [
+      "bunker",
+      "bunkers",
+      "bomb shelter",
+      "underground bunker",
+      "fallout shelter",
+      "concrete bunker"
+    ]
+  },
+  {
+    "tag": "Attic",
+    "category": "location",
+    "keywords": [
+      "attic",
+      "dusty attic",
+      "crawlspace",
+      "in the attic",
+      "attic stairs",
+      "climbing to attic"
+    ]
+  },
+  {
+    "tag": "Balcony",
+    "category": "location",
+    "keywords": [
+      "balcony",
+      "porch",
+      "veranda",
+      "patio",
+      "balcony railing",
+      "standing on the balcony"
+    ]
+  },
+  {
+    "tag": "Alley",
+    "category": "location",
+    "keywords": [
+      "alley",
+      "alleys",
+      "alleyway",
+      "back alley",
+      "dark alley",
+      "narrow alley"
+    ]
+  },
+  {
+    "tag": "Highway",
+    "category": "location",
+    "keywords": [
+      "highway",
+      "freeway",
+      "motorway",
+      "interstate",
+      "empty highway",
+      "driving on the highway"
+    ]
+  },
+  {
+    "tag": "Crossroads",
+    "category": "location",
+    "keywords": [
+      "crossroads",
+      "intersection",
+      "fork in the road",
+      "four-way stop"
+    ]
+  },
+  {
+    "tag": "Oasis",
+    "category": "location",
+    "keywords": [
+      "oasis",
+      "desert oasis",
+      "water in desert",
+      "palm trees in desert"
+    ]
+  },
+  {
+    "tag": "Swamp",
+    "category": "location",
+    "keywords": [
+      "swamp",
+      "marsh",
+      "bog",
+      "bayou",
+      "wetlands",
+      "swamp water",
+      "muddy swamp"
+    ]
+  },
+  {
+    "tag": "Armor",
+    "category": "object",
+    "keywords": [
+      "armor",
+      "suit of armor",
+      "plate armor",
+      "chainmail",
+      "breastplate",
+      "armored"
+    ]
+  },
+  {
+    "tag": "Shield",
+    "category": "object",
+    "keywords": [
+      "shield",
+      "shields",
+      "wooden shield",
+      "iron shield",
+      "deflecting with shield"
+    ]
+  },
+  {
+    "tag": "Knife",
+    "category": "object",
+    "keywords": [
+      "knife",
+      "knives",
+      "dagger",
+      "pocket knife",
+      "blade knife",
+      "sharp knife"
+    ]
+  },
+  {
+    "tag": "Backpack",
+    "category": "object",
+    "keywords": [
+      "backpack",
+      "bag",
+      "duffel bag",
+      "luggage",
+      "suitcase",
+      "carrying a backpack",
+      "school bag"
+    ]
+  },
+  {
+    "tag": "Wallet",
+    "category": "object",
+    "keywords": [
+      "wallet",
+      "purse",
+      "lost my wallet",
+      "stolen wallet",
+      "empty wallet",
+      "leather wallet"
+    ]
+  },
+  {
+    "tag": "Mask",
+    "category": "object",
+    "keywords": [
+      "mask",
+      "masks",
+      "wearing a mask",
+      "disguise",
+      "masquerade",
+      "hidden face"
+    ]
+  },
+  {
+    "tag": "Shoes",
+    "category": "object",
+    "keywords": [
+      "shoes",
+      "boots",
+      "sneakers",
+      "barefoot",
+      "lost my shoes",
+      "high heels",
+      "running shoes",
+      "untied shoes"
+    ]
+  },
+  {
+    "tag": "Candle",
+    "category": "object",
+    "keywords": [
+      "candle",
+      "candles",
+      "candlestick",
+      "candlelight",
+      "lit a candle",
+      "flickering candle"
+    ]
+  },
+  {
+    "tag": "Painting",
+    "category": "object",
+    "keywords": [
+      "painting",
+      "paintings",
+      "canvas",
+      "portrait",
+      "mural",
+      "painted picture",
+      "gallery painting"
+    ]
+  },
+  {
+    "tag": "Guitar",
+    "category": "object",
+    "keywords": [
+      "guitar",
+      "acoustic guitar",
+      "electric guitar",
+      "strumming guitar",
+      "guitar strings",
+      "bass guitar",
+      "playing guitar"
+    ]
+  },
+  {
+    "tag": "Piano",
+    "category": "object",
+    "keywords": [
+      "piano",
+      "grand piano",
+      "piano keys",
+      "playing piano",
+      "keyboard piano"
+    ]
+  },
+  {
+    "tag": "Drums",
+    "category": "object",
+    "keywords": [
+      "drum",
+      "drums",
+      "drumming",
+      "drum set",
+      "drum kit",
+      "percussion"
+    ]
+  },
+  {
+    "tag": "Helicopter",
+    "category": "object",
+    "keywords": [
+      "helicopter",
+      "chopper",
+      "helicopter blades",
+      "flying in helicopter",
+      "helipad"
+    ]
+  },
+  {
+    "tag": "Spaceship",
+    "category": "object",
+    "keywords": [
+      "spaceship",
+      "spacecraft",
+      "starship",
+      "rocket",
+      "shuttle",
+      "cockpit of spaceship"
+    ]
+  },
+  {
+    "tag": "Submarine",
+    "category": "object",
+    "keywords": [
+      "submarine",
+      "sub",
+      "underwater vessel",
+      "periscope",
+      "sonar"
+    ]
+  },
+  {
+    "tag": "Potion",
+    "category": "object",
+    "keywords": [
+      "potion",
+      "elixir",
+      "drank a potion",
+      "magic bottle",
+      "glowing liquid"
+    ]
+  },
+  {
+    "tag": "Wand",
+    "category": "object",
+    "keywords": [
+      "wand",
+      "magic wand",
+      "pointing wand",
+      "casting with wand"
+    ]
+  },
+  {
+    "tag": "Crown",
+    "category": "object",
+    "keywords": [
+      "crown",
+      "tiara",
+      "golden crown",
+      "wearing a crown"
+    ]
+  },
+  {
+    "tag": "Knight",
+    "category": "character",
+    "keywords": [
+      "knight",
+      "knights",
+      "knight in armor",
+      "paladin",
+      "chivalry"
+    ]
+  },
+  {
+    "tag": "King",
+    "category": "character",
+    "keywords": [
+      "king",
+      "kings",
+      "monarch",
+      "royal throne"
+    ]
+  },
+  {
+    "tag": "Queen",
+    "category": "character",
+    "keywords": [
+      "queen",
+      "queens",
+      "empress",
+      "royal queen"
+    ]
+  },
+  {
+    "tag": "Prince",
+    "category": "character",
+    "keywords": [
+      "prince",
+      "royal prince"
+    ]
+  },
+  {
+    "tag": "Princess",
+    "category": "character",
+    "keywords": [
+      "princess",
+      "royal princess"
+    ]
+  },
+  {
+    "tag": "Thief",
+    "category": "character",
+    "keywords": [
+      "thief",
+      "robber",
+      "burglar",
+      "stole",
+      "stolen",
+      "robbery",
+      "pickpocket"
+    ]
+  },
+  {
+    "tag": "Wizard",
+    "category": "character",
+    "keywords": [
+      "wizard",
+      "sorcerer",
+      "mage",
+      "warlock",
+      "wise wizard",
+      "spellcaster"
+    ]
+  },
+  {
+    "tag": "Witch",
+    "category": "character",
+    "keywords": [
+      "witch",
+      "witches",
+      "witchcraft",
+      "coven",
+      "enchantress"
+    ]
+  },
+  {
+    "tag": "Giant",
+    "category": "character",
+    "keywords": [
+      "giant",
+      "giants",
+      "colossal figure",
+      "towering giant",
+      "huge giant"
+    ]
+  },
+  {
+    "tag": "Late",
     "category": "theme",
     "keywords": [
-      "homeless",
-      "begging",
-      "destitute",
-      "no money",
-      "starving",
-      "empty pockets",
-      "shantytown",
-      "slums",
-      "scavenging",
-      "worn out shoes",
-      "ragged clothes"
+      "late for school",
+      "late for work",
+      "running late",
+      "missed the bus",
+      "overslept",
+      "missed deadline",
+      "alarm did not go off"
     ]
   }
 ];
@@ -3332,7 +3217,6 @@ export function extractTagSuggestions(
   }
 
   const combinedText = textParts.join(' ').toLowerCase();
-  // Normalize punctuation and whitespace for regex boundary safety
   const normalizedText = ' ' + combinedText.replace(/[\r\n\t]+/g, ' ') + ' ';
 
   const detectedMap = new Map<string, TagSuggestion>();
