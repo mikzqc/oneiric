@@ -72,13 +72,13 @@ export const Modal: React.FC<ModalProps> = ({
 
       {/* Modal Container */}
       <div
-        className={`relative w-full ${maxWidthClasses[maxWidth]} bg-[#0f172a] border border-slate-800 rounded-xl shadow-xl z-10 overflow-hidden my-auto max-h-[90vh] flex flex-col animate-modal`}
+        className={`relative w-full ${maxWidthClasses[maxWidth]} bg-slate-900 border border-slate-800 rounded-xl shadow-xl z-10 overflow-hidden my-auto max-h-[90vh] flex flex-col animate-modal`}
       >
         {/* Header */}
-        {(title || showCloseButton) && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-[#0b132b] shrink-0">
+        {title ? (
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/70 shrink-0">
             <div>
-              {title && <h2 className="text-base font-semibold text-slate-100">{title}</h2>}
+              <h2 className="text-base font-semibold text-slate-100">{title}</h2>
               {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
             </div>
             {showCloseButton && (
@@ -92,7 +92,16 @@ export const Modal: React.FC<ModalProps> = ({
               </button>
             )}
           </div>
-        )}
+        ) : showCloseButton ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-4 right-4 z-20 text-slate-400 hover:text-slate-200 p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+            aria-label="Close dialog"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        ) : null}
 
         {/* Content Body */}
         <div ref={contentBodyRef} className="p-6 overflow-y-auto grow custom-scrollbar">{children}</div>
