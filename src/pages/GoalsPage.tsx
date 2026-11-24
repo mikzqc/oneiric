@@ -157,7 +157,7 @@ export const GoalsPage: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fadeIn pb-12">
       {/* ── Page Header & Description ── */}
-      <div className="p-5 md:p-6 rounded-xl bg-[#101a38] border border-slate-800/80 shadow-md">
+      <div className="p-5 md:p-6 rounded-xl bg-slate-900/60 border border-slate-800/80 shadow-md">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2.5">
@@ -189,7 +189,7 @@ export const GoalsPage: React.FC = () => {
       {/* ── Tabs & Category Filter ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3">
         {/* Status Tabs */}
-        <div className="flex items-center gap-1.5 p-1 rounded-lg bg-[#0c142b] border border-slate-800/80 text-xs">
+        <div className="flex items-center gap-1.5 p-1 rounded-lg bg-slate-950/60 border border-slate-800/80 text-xs">
           <button
             type="button"
             onClick={() => setActiveTab('active')}
@@ -247,7 +247,7 @@ export const GoalsPage: React.FC = () => {
 
       {/* ── Goals List ── */}
       {filteredGoals.length === 0 ? (
-        <div className="p-10 rounded-xl bg-[#0f1733]/60 border border-slate-800/80 text-center space-y-3">
+        <div className="p-10 rounded-xl bg-slate-900/40 border border-slate-800/80 text-center space-y-3">
           <div className="w-10 h-10 rounded-full bg-slate-800/60 border border-slate-700/60 text-slate-400 mx-auto flex items-center justify-center">
             <Target className="w-5 h-5" />
           </div>
@@ -291,7 +291,7 @@ export const GoalsPage: React.FC = () => {
                     ? 'bg-slate-900/35 border-slate-800/60 text-slate-400'
                     : isArchived
                     ? 'bg-slate-900/25 border-slate-800/40 text-slate-400'
-                    : 'bg-[#101a38] border-slate-800/90 text-slate-100 shadow-sm hover:border-slate-700/80'
+                    : 'bg-slate-900/60 border-slate-800/90 text-slate-100 shadow-sm hover:border-slate-700/80'
                 }`}
               >
                 <div className="flex items-start gap-3.5">

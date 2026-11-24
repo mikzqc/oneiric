@@ -38,26 +38,41 @@
 }
 
 /* Global Theme Harmonizers for Hardcoded Background and Border Utility Tokens */
-[data-theme] .bg-\[\#0b132b\] {
+[data-theme] .bg-\[\#0b132b\],
+[data-theme] [class*="bg-[#0b132b]"],
+[data-theme] [class*="bg-[#0c142b]"],
+[data-theme] [class*="bg-[#0e162e]"] {
   background-color: var(--bg-base) !important;
 }
 
 [data-theme] .bg-\[\#101a38\],
-[data-theme] .bg-\[\#0f172a\] {
+[data-theme] .bg-\[\#0f172a\],
+[data-theme] [class*="bg-[#101a38]"],
+[data-theme] [class*="bg-[#0f172a]"],
+[data-theme] [class*="bg-[#0f1733]"],
+[data-theme] [class*="bg-[#0d152e]"] {
   background-color: var(--bg-surface) !important;
 }
 
 [data-theme] .bg-\[\#121c38\],
 [data-theme] .bg-\[\#132042\],
-[data-theme] .bg-\[\#152248\] {
+[data-theme] .bg-\[\#152248\],
+[data-theme] [class*="bg-[#121c38]"],
+[data-theme] [class*="bg-[#132042]"],
+[data-theme] [class*="bg-[#152248]"],
+[data-theme] [class*="bg-[#121c35]"],
+[data-theme] [class*="bg-[#131d36]"],
+[data-theme] [class*="bg-[#121a30]"] {
   background-color: var(--bg-surface-raised) !important;
 }
 
-[data-theme] .border-slate-800 {
+[data-theme] .border-slate-800,
+[data-theme] [class*="border-slate-800"] {
   border-color: var(--border-subtle) !important;
 }
 
-[data-theme] .border-slate-700 {
+[data-theme] .border-slate-700,
+[data-theme] [class*="border-slate-700"] {
   border-color: var(--border-strong) !important;
 }
 

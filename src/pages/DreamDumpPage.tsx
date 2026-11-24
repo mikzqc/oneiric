@@ -272,15 +272,15 @@ export const DreamDumpPage: React.FC = () => {
   }
 
   return (
-    <div className="relative flex flex-col md:flex-row h-[calc(100vh-8.5rem)] min-h-[500px] w-full rounded-xl bg-[#0e162e] border border-slate-800/80 overflow-hidden shadow-xl">
+    <div className="relative flex flex-col md:flex-row h-[calc(100vh-8.5rem)] min-h-[500px] w-full rounded-xl bg-slate-900/60 border border-slate-800/80 overflow-hidden shadow-xl">
       {/* ── Left Sidebar / Fragments List ── */}
       <div
-        className={`fixed md:relative inset-y-0 left-0 z-30 w-80 max-w-[85vw] flex flex-col bg-[#0b132b] border-r border-slate-800/90 transition-transform duration-200 ease-out md:translate-x-0 ${
+        className={`fixed md:relative inset-y-0 left-0 z-30 w-80 max-w-[85vw] flex flex-col bg-slate-950/70 border-r border-slate-800/90 transition-transform duration-200 ease-out md:translate-x-0 ${
           isMobileListOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
         {/* Sidebar Header */}
-        <div className="p-3.5 border-b border-slate-800/80 flex items-center justify-between shrink-0">
+        <div className="p-3.5 border-b border-slate-800/80 flex items-center justify-between shrink-0 bg-slate-950/40">
           <div className="flex items-center gap-2">
             <PenLine className="w-4 h-4 text-blue-400" />
             <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-300">
@@ -371,9 +371,9 @@ export const DreamDumpPage: React.FC = () => {
       )}
 
       {/* ── Main Writing Canvas ── */}
-      <div className="flex-1 flex flex-col h-full bg-[#101a38]/80 overflow-hidden">
+      <div className="flex-1 flex flex-col h-full bg-slate-900/40 overflow-hidden">
         {/* Top Action Bar */}
-        <div className="h-13 px-4 border-b border-slate-800/80 flex items-center justify-between shrink-0 bg-[#0c142b]/60">
+        <div className="h-13 px-4 border-b border-slate-800/80 flex items-center justify-between shrink-0 bg-slate-950/40">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -459,7 +459,7 @@ export const DreamDumpPage: React.FC = () => {
         </div>
 
         {/* Bottom Status / Stats */}
-        <div className="h-9 px-5 border-t border-slate-800/70 flex items-center justify-between text-[11px] text-slate-400 font-mono bg-[#0b132b]/50">
+        <div className="h-9 px-5 border-t border-slate-800/70 flex items-center justify-between text-[11px] text-slate-400 font-mono bg-slate-950/40">
           <div className="flex items-center gap-2">
             <FileText className="w-3 h-3 text-slate-400" />
             <span>Frictionless Scratchpad</span>
