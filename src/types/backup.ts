@@ -1,6 +1,8 @@
 import { DreamEntry } from './dream';
 import { TechniqueLog } from './technique';
 import { DreamSign } from './dreamSign';
+import { DreamDumpNote } from './dreamDump';
+import { GoalItem } from './goal';
 
 export interface CustomTag {
   id: string;
@@ -16,6 +18,8 @@ export interface BackupPayload {
   techniqueLogs: TechniqueLog[];
   customTags?: CustomTag[];
   dreamSigns?: DreamSign[];
+  dreamDumps?: DreamDumpNote[];
+  goals?: GoalItem[];
   deletedIds?: string[];
   tombstones?: Record<string, number>; // ID -> deletion timestamp for deterministic conflict resolution
 }
@@ -43,5 +47,7 @@ export interface ImportValidationResult {
     techniqueCount: number;
     dreamSignCount?: number;
     falseAwakeningCount?: number;
+    dumpCount?: number;
+    goalCount?: number;
   };
 }

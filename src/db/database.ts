@@ -3,12 +3,16 @@ import { DreamEntry } from '../types/dream';
 import { TechniqueLog } from '../types/technique';
 import { CustomTag } from '../types/backup';
 import { DreamSign } from '../types/dreamSign';
+import { DreamDumpNote } from '../types/dreamDump';
+import { GoalItem } from '../types/goal';
 
 export class OneiricDatabase extends Dexie {
   dreams!: Table<DreamEntry, string>;
   techniqueLogs!: Table<TechniqueLog, string>;
   customTags!: Table<CustomTag, string>;
   dreamSigns!: Table<DreamSign, string>;
+  dreamDumps!: Table<DreamDumpNote, string>;
+  goals!: Table<GoalItem, string>;
 
   constructor() {
     super('OneiricDB');
@@ -46,6 +50,16 @@ export class OneiricDatabase extends Dexie {
       techniqueLogs: 'id, date, technique, outcome, createdAt, isSample',
       customTags: 'id, name, createdAt',
       dreamSigns: 'id, name, category, status, distinctDreamCount, lastOccurred, isRealityCheckReminder, createdAt, updatedAt, *keywords, isSample',
+    });
+
+    // Version 4: Dream Dump & Personal Intentions / Goals
+    this.version(4).stores({
+      dreams: 'id, date, lucidity, falseAwakening, isPrivate, createdAt, updatedAt, *tags, *emotions, isSample',
+      techniqueLogs: 'id, date, technique, outcome, createdAt, isSample',
+      customTags: 'id, name, createdAt',
+      dreamSigns: 'id, name, category, status, distinctDreamCount, lastOccurred, isRealityCheckReminder, createdAt, updatedAt, *keywords, isSample',
+      dreamDumps: 'id, createdAt, updatedAt',
+      goals: 'id, status, category, targetDate, createdAt, updatedAt',
     });
   }
 }

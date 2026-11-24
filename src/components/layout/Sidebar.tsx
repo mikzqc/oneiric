@@ -12,9 +12,11 @@ import {
   AlertTriangle,
   Network,
   Settings,
-  ShieldCheck,
   HelpCircle,
   Lock,
+  PenLine,
+  Target,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -27,7 +29,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
       title: 'Journal',
       items: [
         { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+        { to: '/dump', label: 'Dream Dump', icon: PenLine },
         { to: '/journal', label: 'Dream Journal', icon: BookOpen },
+        { to: '/goals', label: 'Goals', icon: Target },
         { to: '/vault', label: 'Private Vault', icon: Lock },
         { to: '/timeline', label: 'Timeline', icon: Clock },
         { to: '/calendar', label: 'Calendar', icon: CalendarDays },

@@ -21,6 +21,8 @@ export const backupService = {
     const techniqueLogs = (await db.techniqueLogs.toArray()).filter((t) => !t.isSample);
     const customTags = await db.customTags.toArray();
     const dreamSigns = (await db.dreamSigns.toArray()).filter((s) => !s.isSample);
+    const dreamDumps = await db.dreamDumps.toArray();
+    const goals = await db.goals.toArray();
     const deletedIds = tombstoneService.getDeletedIds();
     const tombstones = tombstoneService.getTombstonesMap();
 
@@ -32,6 +34,8 @@ export const backupService = {
       techniqueLogs,
       customTags,
       dreamSigns,
+      dreamDumps,
+      goals,
       deletedIds,
       tombstones,
     };
@@ -214,12 +218,24 @@ export const backupService = {
       }
     }
 
+    // Validate dream dumps if present
+    if (payload.dreamDumps !== undefined && !Array.isArray(payload.dreamDumps)) {
+      return { valid: false, error: 'dreamDumps must be an array.' };
+    }
+
+    // Validate goals if present
+    if (payload.goals !== undefined && !Array.isArray(payload.goals)) {
+      return { valid: false, error: 'goals must be an array.' };
+    }
+
     const typedData = payload as unknown as BackupPayload;
     const dreamCount = typedData.dreams.length;
     const lucidCount = typedData.dreams.filter((d) => d.lucidity === 'lucid').length;
     const falseAwakeningCount = typedData.dreams.filter((d) => !!d.falseAwakening).length;
     const techniqueCount = typedData.techniqueLogs?.length || 0;
     const dreamSignCount = typedData.dreamSigns?.length || 0;
+    const dumpCount = typedData.dreamDumps?.length || 0;
+    const goalCount = typedData.goals?.length || 0;
 
     return {
       valid: true,
@@ -230,6 +246,8 @@ export const backupService = {
         techniqueCount,
         dreamSignCount,
         falseAwakeningCount,
+        dumpCount,
+        goalCount,
       },
     };
   },
@@ -260,11 +278,13 @@ export const backupService = {
       }
 
       newDreamsCount = payload.dreams.length;
-      await db.transaction('rw', [db.dreams, db.techniqueLogs, db.customTags, db.dreamSigns], async () => {
+      await db.transaction('rw', [db.dreams, db.techniqueLogs, db.customTags, db.dreamSigns, db.dreamDumps, db.goals], async () => {
         await db.dreams.clear();
         await db.techniqueLogs.clear();
         await db.customTags.clear();
         await db.dreamSigns.clear();
+        await db.dreamDumps.clear();
+        await db.goals.clear();
 
         if (payload.dreams.length > 0) {
           // Normalize dreams before insertion
@@ -289,6 +309,12 @@ export const backupService = {
         if (signs.length > 0) {
           await db.dreamSigns.bulkAdd(signs);
         }
+        if (payload.dreamDumps && payload.dreamDumps.length > 0) {
+          await db.dreamDumps.bulkAdd(payload.dreamDumps);
+        }
+        if (payload.goals && payload.goals.length > 0) {
+          await db.goals.bulkAdd(payload.goals);
+        }
       });
     } else {
       // Merge mode:
@@ -307,7 +333,7 @@ export const backupService = {
 
       if (Object.keys(incomingTombstones).length > 0) {
         tombstoneService.mergeTombstones(incomingTombstones);
-        await db.transaction('rw', [db.dreams, db.techniqueLogs, db.dreamSigns], async () => {
+        await db.transaction('rw', [db.dreams, db.techniqueLogs, db.dreamSigns, db.dreamDumps, db.goals], async () => {
           for (const [delId, delTs] of Object.entries(incomingTombstones)) {
             const localDream = await db.dreams.get(delId);
             if (localDream) {
@@ -337,6 +363,26 @@ export const backupService = {
                 tombstoneService.removeTombstone(delId);
               } else {
                 await db.dreamSigns.delete(delId);
+              }
+            }
+
+            const localDump = await db.dreamDumps.get(delId);
+            if (localDump) {
+              const localUpdated = Number(localDump.updatedAt || localDump.createdAt || 0);
+              if (localUpdated > delTs) {
+                tombstoneService.removeTombstone(delId);
+              } else {
+                await db.dreamDumps.delete(delId);
+              }
+            }
+
+            const localGoal = await db.goals.get(delId);
+            if (localGoal) {
+              const localUpdated = Number(localGoal.updatedAt || localGoal.createdAt || 0);
+              if (localUpdated > delTs) {
+                tombstoneService.removeTombstone(delId);
+              } else {
+                await db.goals.delete(delId);
               }
             }
           }
@@ -489,7 +535,67 @@ export const backupService = {
         }
       }
 
-      await db.transaction('rw', [db.dreams, db.techniqueLogs, db.customTags, db.dreamSigns], async () => {
+      // 5. Merge dream dumps with Last-Write-Wins and skip deleted items
+      const dumpsToPut: import('../types/dreamDump').DreamDumpNote[] = [];
+      if (payload.dreamDumps && payload.dreamDumps.length > 0) {
+        const existingDumps = await db.dreamDumps.toArray();
+        const existingMap = new Map(existingDumps.map((d) => [d.id, d]));
+
+        for (const dump of payload.dreamDumps) {
+          const incomingUpdated = Number(dump.updatedAt || dump.createdAt || 0);
+          const delTimestamp = tombstoneService.getDeletionTimestamp(dump.id);
+
+          if (delTimestamp !== null) {
+            if (incomingUpdated > delTimestamp) {
+              tombstoneService.removeTombstone(dump.id);
+            } else {
+              continue;
+            }
+          }
+
+          const existing = existingMap.get(dump.id);
+          if (!existing) {
+            dumpsToPut.push(dump);
+          } else {
+            const existingUpdated = Number(existing.updatedAt || existing.createdAt || 0);
+            if (incomingUpdated >= existingUpdated) {
+              dumpsToPut.push(dump);
+            }
+          }
+        }
+      }
+
+      // 6. Merge goals with Last-Write-Wins and skip deleted items
+      const goalsToPut: import('../types/goal').GoalItem[] = [];
+      if (payload.goals && payload.goals.length > 0) {
+        const existingGoals = await db.goals.toArray();
+        const existingMap = new Map(existingGoals.map((g) => [g.id, g]));
+
+        for (const goal of payload.goals) {
+          const incomingUpdated = Number(goal.updatedAt || goal.createdAt || 0);
+          const delTimestamp = tombstoneService.getDeletionTimestamp(goal.id);
+
+          if (delTimestamp !== null) {
+            if (incomingUpdated > delTimestamp) {
+              tombstoneService.removeTombstone(goal.id);
+            } else {
+              continue;
+            }
+          }
+
+          const existing = existingMap.get(goal.id);
+          if (!existing) {
+            goalsToPut.push(goal);
+          } else {
+            const existingUpdated = Number(existing.updatedAt || existing.createdAt || 0);
+            if (incomingUpdated >= existingUpdated) {
+              goalsToPut.push(goal);
+            }
+          }
+        }
+      }
+
+      await db.transaction('rw', [db.dreams, db.techniqueLogs, db.customTags, db.dreamSigns, db.dreamDumps, db.goals], async () => {
         if (dreamsToPut.length > 0) {
           await db.dreams.bulkPut(dreamsToPut);
         }
@@ -501,6 +607,12 @@ export const backupService = {
         }
         if (signsToPut.length > 0) {
           await db.dreamSigns.bulkPut(signsToPut);
+        }
+        if (dumpsToPut.length > 0) {
+          await db.dreamDumps.bulkPut(dumpsToPut);
+        }
+        if (goalsToPut.length > 0) {
+          await db.goals.bulkPut(goalsToPut);
         }
       });
 

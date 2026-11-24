@@ -9,6 +9,8 @@ import { TimelinePage } from './pages/TimelinePage';
 import { Journal } from './pages/Journal';
 import { PrivateVaultPage } from './pages/PrivateVaultPage';
 import { DreamEditorPage } from './pages/DreamEditorPage';
+import { DreamDumpPage } from './pages/DreamDumpPage';
+import { GoalsPage } from './pages/GoalsPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { LucidDreamsPage } from './pages/LucidDreamsPage';
 import { TechniquesPage } from './pages/TechniquesPage';
@@ -75,8 +77,10 @@ export const App: React.FC = () => {
           <Route index element={<DashboardRoute />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="correlations" element={<CorrelationRoute />} />
+          <Route path="dump" element={<DreamDumpPage />} />
           <Route path="journal" element={<JournalRoute />} />
           <Route path="vault" element={<PrivateVaultRoute />} />
+          <Route path="goals" element={<GoalsPage />} />
           <Route path="journal/new" element={<DreamEditorPage />} />
           <Route path="journal/edit/:id" element={<DreamEditorPage />} />
           <Route path="signs" element={<DreamSignsRoute />} />

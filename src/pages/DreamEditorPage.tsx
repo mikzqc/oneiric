@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { dreamService } from '../services/dreamService';
 import { DreamEntry } from '../types/dream';
 import { DreamEditor } from '../components/journal/DreamEditor';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '../components/common/Button';
+import { getTodayDateString } from '../utils/dateUtils';
 
 export const DreamEditorPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
 
   const [initialDream, setInitialDream] = useState<DreamEntry | undefined>(undefined);
@@ -18,6 +20,8 @@ export const DreamEditorPage: React.FC = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const prefillDate = searchParams.get('date');
+  const locationState = location.state as { prefillNarrative?: string; fromDumpId?: string } | undefined;
+  const prefillNarrative = locationState?.prefillNarrative || searchParams.get('narrative');
 
   useEffect(() => {
     if (id) {
@@ -56,14 +60,14 @@ export const DreamEditorPage: React.FC = () => {
     );
   }
 
-  // If prefilling date for a new dream
+  // If prefilling date or narrative from Dream Dump for a new dream
   const dreamWithPrefill = initialDream
     ? initialDream
-    : prefillDate
+    : (prefillDate || prefillNarrative)
     ? ({
-        date: prefillDate,
+        date: prefillDate || getTodayDateString(),
         title: '',
-        narrative: '',
+        narrative: prefillNarrative || '',
         vividness: 3,
         recallQuality: 'detailed',
         lucidity: 'non-lucid',

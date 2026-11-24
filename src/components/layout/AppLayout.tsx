@@ -69,6 +69,8 @@ export const AppLayout: React.FC = () => {
   const getPageMeta = () => {
     const path = location.pathname;
     if (path === '/') return { title: 'Dashboard', subtitle: 'Overview and recall metrics' };
+    if (path.startsWith('/dump')) return { title: 'Dream Dump', subtitle: 'Fast, frictionless nocturnal fragment capture' };
+    if (path.startsWith('/goals')) return { title: 'Goals', subtitle: 'Personal intentions and nocturnal aspirations' };
     if (path.startsWith('/analytics')) return { title: 'Analytics', subtitle: 'Recall rates, heatmaps, and pattern trends' };
     if (path.startsWith('/correlations')) return { title: 'Correlations', subtitle: 'Descriptive relationships across signs, emotions, and lucidity' };
     if (path.startsWith('/journal/new')) return { title: 'Record Dream', subtitle: 'New journal entry' };
